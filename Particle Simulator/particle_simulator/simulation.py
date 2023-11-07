@@ -1,12 +1,34 @@
-from particle_simulator import *
+import math
+import time
+import tkinter as tk
+from tkinter import messagebox
+
+import cv2
+import numpy as np
+from PIL import ImageTk, Image
+from .grid import Grid
+from .gui import GUI
+from .particle import Particle
+from .saveManager import SaveManager
+from pynput.keyboard import Listener, Key, KeyCode
 
 
 class Simulation:
-    def __init__(self, width=650, height=600, title="Simulation", gridres=(50, 50),
-                 temperature=0, g=0.1, air_res=0.05, ground_friction=0, fps_update_delay=0.5):
+    def __init__(
+        self,
+        width=650,
+        height=600,
+        title="Simulation",
+        gridres=(50, 50),
+        temperature=0,
+        g=0.1,
+        air_res=0.05,
+        ground_friction=0,
+        fps_update_delay=0.5,
+    ):
         self.width = width
         self.height = height
-        
+
         self.temperature = temperature
         self.g = g  # gravity
         self.g_dir = np.array([0, 1])
@@ -21,7 +43,7 @@ class Simulation:
         self.fps_update_delay = fps_update_delay
         self.mx, self.my = 0, 0
         self.prev_mx, self.prev_my = 0, 0
-        self.mouse_mode = 'MOVE'  # 'SELECT', 'MOVE', 'ADD'
+        self.mouse_mode = "MOVE"  # 'SELECT', 'MOVE', 'ADD'
         self.rotate_mode = False
         self.min_spawn_delay = 0.05
         self.min_hold_delay = 1
@@ -57,11 +79,11 @@ class Simulation:
         self.save_manager = SaveManager(self)
 
         # Keyboard- and mouse-controls
-        self.gui.canvas.bind('<B1-Motion>', self.mouse_m)
-        self.gui.canvas.bind('<Button-1>', self.mouse_p)
-        self.gui.canvas.bind('<ButtonRelease-1>', self.mouse_r)
-        self.gui.canvas.bind('<B3-Motion>', self.right_mouse)
-        self.gui.canvas.bind('<Button-3>', self.right_mouse)
+        self.gui.canvas.bind("<B1-Motion>", self.mouse_m)
+        self.gui.canvas.bind("<Button-1>", self.mouse_p)
+        self.gui.canvas.bind("<ButtonRelease-1>", self.mouse_r)
+        self.gui.canvas.bind("<B3-Motion>", self.right_mouse)
+        self.gui.canvas.bind("<Button-3>", self.right_mouse)
         self.gui.canvas.bind("<MouseWheel>", self.on_scroll)
 
         self.listener = Listener(on_press=self.on_press, on_release=self.on_release)
@@ -74,38 +96,41 @@ class Simulation:
         self.selection = []
         self.clipboard = []
         self.pasting = False
-        self.groups = {'group1': []}
+        self.groups = {"group1": []}
 
     def mouse_p(self, event):
         self.gui.canvas.focus_set()
         self.mouse_down_start = time.time()
         self.mouse_down = True
-        if self.mouse_mode == 'SELECT' or self.mouse_mode == 'MOVE':
+        if self.mouse_mode == "SELECT" or self.mouse_mode == "MOVE":
             selected = False
             for p in self.particles:
                 if p.mouse_p(event):
                     selected = True
             if not selected:
                 self.selection = []
-            elif self.mouse_mode == 'MOVE':
+            elif self.mouse_mode == "MOVE":
                 for particle in self.selection:
                     particle.mouse = True
-        elif self.mouse_mode == 'ADD':
+        elif self.mouse_mode == "ADD":
             if len(self.selection) > 0:
                 self.selection = []
 
             self.add_particle(event.x, event.y)
 
     def mouse_m(self, event):
-        if self.mouse_mode == 'SELECT':
+        if self.mouse_mode == "SELECT":
             for p in self.particles:
                 p.mouse_p(event)
-        elif self.mouse_mode == 'ADD' and time.time() - self.last_mouse_time >= self.min_spawn_delay:
+        elif (
+            self.mouse_mode == "ADD"
+            and time.time() - self.last_mouse_time >= self.min_spawn_delay
+        ):
             self.add_particle(event.x, event.y)
 
     def mouse_r(self, event):
         self.mouse_down = False
-        if self.mouse_mode == 'MOVE' or self.pasting:
+        if self.mouse_mode == "MOVE" or self.pasting:
             for p in self.particles:
                 if p.mouse:
                     p.mouse_r(event)
@@ -115,7 +140,9 @@ class Simulation:
         self.gui.canvas.focus_set()
         temp = self.particles.copy()
         for p in temp:
-            if np.sqrt((event.x - p.x) ** 2 + (event.y - p.y) ** 2) <= max(int(self.mr), p.r):
+            if np.sqrt((event.x - p.x) ** 2 + (event.y - p.y) ** 2) <= max(
+                int(self.mr), p.r
+            ):
                 p.delete()
 
     def rotate_2d(self, x, y, cx, cy, angle):
@@ -124,7 +151,7 @@ class Simulation:
         dist_y = y - cy
         current_angle = math.atan2(dist_y, dist_x)
         angle_rad += current_angle
-        radius = np.sqrt(dist_x ** 2 + dist_y ** 2)
+        radius = np.sqrt(dist_x**2 + dist_y**2)
         x = cx + radius * np.cos(angle_rad)
         y = cy + radius * np.sin(angle_rad)
 
@@ -133,7 +160,9 @@ class Simulation:
     def on_scroll(self, event):
         if self.rotate_mode:
             for p in self.selection:
-                p.x, p.y = self.rotate_2d(p.x, p.y, event.x, event.y, event.delta / 500 * self.mr)
+                p.x, p.y = self.rotate_2d(
+                    p.x, p.y, event.x, event.y, event.delta / 500 * self.mr
+                )
         else:
             self.mr = max(self.mr * 2 ** (event.delta / 500), 1)
 
@@ -194,7 +223,9 @@ class Simulation:
 
     def update_grid(self, *event):
         try:
-            self.grid = Grid(self, self.gui.grid_res_x_value.get(), self.gui.grid_res_y_value.get())
+            self.grid = Grid(
+                self, self.gui.grid_res_x_value.get(), self.gui.grid_res_y_value.get()
+            )
         except:
             pass
 
@@ -203,25 +234,27 @@ class Simulation:
 
     def change_mode(self, mode):
         self.mouse_mode = mode
-        if mode == 'SELECT':
-            self.gui.gui_canvas.itemconfig(self.gui.select_rect, state='normal')
-            self.gui.gui_canvas.itemconfig(self.gui.move_rect, state='hidden')
-            self.gui.gui_canvas.itemconfig(self.gui.add_rect, state='hidden')
-        elif mode == 'MOVE':
-            self.gui.gui_canvas.itemconfig(self.gui.select_rect, state='hidden')
-            self.gui.gui_canvas.itemconfig(self.gui.move_rect, state='normal')
-            self.gui.gui_canvas.itemconfig(self.gui.add_rect, state='hidden')
-        elif mode == 'ADD':
-            self.gui.gui_canvas.itemconfig(self.gui.select_rect, state='hidden')
-            self.gui.gui_canvas.itemconfig(self.gui.move_rect, state='hidden')
-            self.gui.gui_canvas.itemconfig(self.gui.add_rect, state='normal')
+        if mode == "SELECT":
+            self.gui.gui_canvas.itemconfig(self.gui.select_rect, state="normal")
+            self.gui.gui_canvas.itemconfig(self.gui.move_rect, state="hidden")
+            self.gui.gui_canvas.itemconfig(self.gui.add_rect, state="hidden")
+        elif mode == "MOVE":
+            self.gui.gui_canvas.itemconfig(self.gui.select_rect, state="hidden")
+            self.gui.gui_canvas.itemconfig(self.gui.move_rect, state="normal")
+            self.gui.gui_canvas.itemconfig(self.gui.add_rect, state="hidden")
+        elif mode == "ADD":
+            self.gui.gui_canvas.itemconfig(self.gui.select_rect, state="hidden")
+            self.gui.gui_canvas.itemconfig(self.gui.move_rect, state="hidden")
+            self.gui.gui_canvas.itemconfig(self.gui.add_rect, state="normal")
 
     def add_group(self):
         for i in range(1, max(self.gui.group_indices) + 2):
             if i not in self.gui.group_indices:
-                name = f'group{i}'
+                name = f"group{i}"
                 self.gui.group_indices.append(i)
-                self.gui.groups_entry['values'] = [f'group{index}' for index in sorted(self.gui.group_indices)]
+                self.gui.groups_entry["values"] = [
+                    f"group{index}" for index in sorted(self.gui.group_indices)
+                ]
                 self.gui.groups_entry.current(i - 1)
                 self.groups[name] = []
                 break
@@ -233,24 +266,37 @@ class Simulation:
 
     def inputs2dict(self):
         try:
-            radius = int(self.mr) if self.gui.radius_entry.get() == 'scroll' else eval(self.gui.radius_entry.get())
+            radius = (
+                int(self.mr)
+                if self.gui.radius_entry.get() == "scroll"
+                else eval(self.gui.radius_entry.get())
+            )
 
             try:
-                color = self.gui.color_entry.get().replace('[', '').replace(']', '').split(',')
+                color = (
+                    self.gui.color_entry.get()
+                    .replace("[", "")
+                    .replace("]", "")
+                    .split(",")
+                )
                 color = list(map(lambda x: int(x), color))
             except ValueError:
                 color = self.gui.color_entry.get()
 
-            kwargs = {'mass': self.gui.mass_entry.get(),
-                      'velocity': [self.gui.velocity_x_entry.get(), self.gui.velocity_y_entry.get()],
-                      'bounciness': self.gui.bounciness_entry.get(),
-                      'attract_r': self.gui.attr_r_entry.get(),
-                      'repel_r': self.gui.repel_r_entry.get(),
-                      'attraction_strength': self.gui.attr_strength_entry.get(),
-                      'repulsion_strength': self.gui.repel_strength_entry.get(),
-                      'link_attr_breaking_force': self.gui.link_attr_break_entry.get(),
-                      'link_repel_breaking_force': self.gui.link_repel_break_entry.get(),
-                      }
+            kwargs = {
+                "mass": self.gui.mass_entry.get(),
+                "velocity": [
+                    self.gui.velocity_x_entry.get(),
+                    self.gui.velocity_y_entry.get(),
+                ],
+                "bounciness": self.gui.bounciness_entry.get(),
+                "attract_r": self.gui.attr_r_entry.get(),
+                "repel_r": self.gui.repel_r_entry.get(),
+                "attraction_strength": self.gui.attr_strength_entry.get(),
+                "repulsion_strength": self.gui.repel_strength_entry.get(),
+                "link_attr_breaking_force": self.gui.link_attr_break_entry.get(),
+                "link_repel_breaking_force": self.gui.link_repel_break_entry.get(),
+            }
 
             for key, value in kwargs.items():
                 try:
@@ -259,18 +305,18 @@ class Simulation:
                     for i, element in enumerate(value):
                         kwargs[key][i] = eval(element)
 
-            kwargs['radius'] = radius
-            kwargs['color'] = color
-            kwargs['collisions'] = self.gui.do_collision_bool.get()
-            kwargs['locked'] = self.gui.locked_bool.get()
-            kwargs['linked_group_particles'] = self.gui.linked_group_bool.get()
-            kwargs['group'] = self.gui.groups_entry.get()
-            kwargs['separate_group'] = self.gui.separate_group_bool.get()
-            kwargs['gravity_mode'] = self.gui.gravity_mode_bool.get()
+            kwargs["radius"] = radius
+            kwargs["color"] = color
+            kwargs["collisions"] = self.gui.do_collision_bool.get()
+            kwargs["locked"] = self.gui.locked_bool.get()
+            kwargs["linked_group_particles"] = self.gui.linked_group_bool.get()
+            kwargs["group"] = self.gui.groups_entry.get()
+            kwargs["separate_group"] = self.gui.separate_group_bool.get()
+            kwargs["gravity_mode"] = self.gui.gravity_mode_bool.get()
 
             return kwargs
         except Exception as error:
-            self.error = ['Input-Error', error]
+            self.error = ["Input-Error", error]
 
     def set_selected(self):
         kwargs = self.inputs2dict()
@@ -283,7 +329,7 @@ class Simulation:
                 p = Particle(self, px, py, **kwargs)
                 self.selection.append(p)
                 for link, length in temp_link_lengths.items():
-                    self.link([link, p], fit_link=length != 'repel', distance=length)
+                    self.link([link, p], fit_link=length != "repel", distance=length)
 
     def set_all(self):
         temp = self.particles.copy()
@@ -295,49 +341,50 @@ class Simulation:
                 p.delete()
                 p = Particle(self, px, py, **kwargs)
                 for link, length in temp_link_lengths.items():
-                    self.link([link, p], fit_link=length != 'repel', distance=length)
+                    self.link([link, p], fit_link=length != "repel", distance=length)
 
     def copy_from_selected(self):
-        variable_names = {'radius_entry': ['r', 'entry'],
-                          'color_entry': ['color', 'entry'],
-                          'mass_entry': ['m', 'entry'],
-                          'velocity_x_entry': ['v[0]', 'entry'],
-                          'velocity_y_entry': ['v[1]', 'entry'],
-                          'bounciness_entry': ['bounciness', 'entry'],
-                          'do_collision_bool': ['collision_bool', 'set'],
-                          'locked_bool': ['locked', 'set'],
-                          'linked_group_bool': ['linked_group_particles', 'set'],
-                          'attr_r_entry': ['attr_r', 'entry'],
-                          'repel_r_entry': ['repel_r', 'entry'],
-                          'attr_strength_entry': ['attr', 'entry'],
-                          'repel_strength_entry': ['repel', 'entry'],
-                          'link_attr_break_entry': ['link_attr_breaking_force', 'entry'],
-                          'link_repel_break_entry': ['link_repel_breaking_force', 'entry'],
-                          'groups_entry': ['group', 'entry'],
-                          'separate_group_bool': ['separate_group', 'set'],
-                          'gravity_mode_bool': ['gravity_mode', 'set']
-                          }
+        variable_names = {
+            "radius_entry": ["r", "entry"],
+            "color_entry": ["color", "entry"],
+            "mass_entry": ["m", "entry"],
+            "velocity_x_entry": ["v[0]", "entry"],
+            "velocity_y_entry": ["v[1]", "entry"],
+            "bounciness_entry": ["bounciness", "entry"],
+            "do_collision_bool": ["collision_bool", "set"],
+            "locked_bool": ["locked", "set"],
+            "linked_group_bool": ["linked_group_particles", "set"],
+            "attr_r_entry": ["attr_r", "entry"],
+            "repel_r_entry": ["repel_r", "entry"],
+            "attr_strength_entry": ["attr", "entry"],
+            "repel_strength_entry": ["repel", "entry"],
+            "link_attr_break_entry": ["link_attr_breaking_force", "entry"],
+            "link_repel_break_entry": ["link_repel_breaking_force", "entry"],
+            "groups_entry": ["group", "entry"],
+            "separate_group_bool": ["separate_group", "set"],
+            "gravity_mode_bool": ["gravity_mode", "set"],
+        }
         particle_settings = variable_names.copy()
 
         for i, p in enumerate(self.selection):
             for key, value in variable_names.items():
-                val = eval('p.' + value[0])
+                val = eval("p." + value[0])
 
                 if i == 0:
                     particle_settings[key] = val
 
                 same = particle_settings[key] == val
-                if value[1] == 'set':
+                if value[1] == "set":
                     if same:
                         vars(self.gui)[key].set(val)
                     else:
                         vars(self.gui)[key].set(False)
                 else:
                     if same:
-                        vars(self.gui)[key].delete(0, END)
+                        vars(self.gui)[key].delete(0, tk.END)
                         vars(self.gui)[key].insert(0, str(val))
                     else:
-                        vars(self.gui)[key].delete(0, END)
+                        vars(self.gui)[key].delete(0, tk.END)
 
     def add_particle(self, x, y):
         kwargs = self.inputs2dict()
@@ -350,21 +397,21 @@ class Simulation:
         self.clipboard = []
         for p in self.selection:
             dictionary = p.return_dict(index_source=self.selection)
-            dictionary['x'] -= self.mx
-            dictionary['y'] -= self.my
+            dictionary["x"] -= self.mx
+            dictionary["y"] -= self.my
             self.clipboard.append(dictionary)
 
     def paste(self):
         self.pasting = True
         temp_particles = []
         for data in self.clipboard:
-            temp_particles.append(Particle(self, 0, 0, group=data['group']))
+            temp_particles.append(Particle(self, 0, 0, group=data["group"]))
 
         for i, data in enumerate(self.clipboard):
             d = data.copy()
             particle = temp_particles[i]
-            d['x'] += self.mx
-            d['y'] += self.my
+            d["x"] += self.mx
+            d["y"] += self.my
             for key, value in d.items():
                 try:
                     vars(particle)[key] = value.copy()
@@ -373,8 +420,10 @@ class Simulation:
 
             particle.init_constants()
             particle.linked = [temp_particles[index] for index in particle.linked]
-            particle.link_lengths = {temp_particles[index]: value for index, value in
-                                     particle.link_lengths.items()}
+            particle.link_lengths = {
+                temp_particles[index]: value
+                for index, value in particle.link_lengths.items()
+            }
             particle.mouse = True
         self.selection = temp_particles
 
@@ -399,9 +448,12 @@ class Simulation:
 
             for particle in particles:
                 if fit_link:
-                    length = np.linalg.norm(
-                        position - np.array([particle.x, particle.y])) if distance is None else distance
-                p.link_lengths[particle] = length if fit_link else 'repel'
+                    length = (
+                        np.linalg.norm(position - np.array([particle.x, particle.y]))
+                        if distance is None
+                        else distance
+                    )
+                p.link_lengths[particle] = length if fit_link else "repel"
 
             p.linked = list(set(p.linked + particles.copy()))
             p.linked.remove(p)
@@ -410,24 +462,33 @@ class Simulation:
     def unlink(self, particles):
         for p in particles:
             p.linked = [link for link in p.linked if link not in particles]
-            p.link_lengths = {link: length for link, length in p.link_lengths.items() if link not in particles}
+            p.link_lengths = {
+                link: length
+                for link, length in p.link_lengths.items()
+                if link not in particles
+            }
 
     def change_link_lengths(self, particles, amount):
         for p in particles:
             for link, value in p.link_lengths.items():
-                if value != 'repel':
+                if value != "repel":
                     self.link([p, link], fit_link=True, distance=value + amount)
 
     def execute(self, code):
         try:
             exec(code)
         except Exception as error:
-            self.error = ['Code-Error:', error]
+            self.error = ["Code-Error:", error]
 
     def update_vars(self):
-        for var, entry in [('g', 'gravity_entry'), ('air_res', 'air_res_entry'), ('ground_friction', 'friction_entry'),
-                           ('use_grid', 'grid_bool'), ('min_spawn_delay', 'delay_entry'),
-                           ('calculate_radii_diff', 'calculate_radii_diff_bool')]:
+        for var, entry in [
+            ("g", "gravity_entry"),
+            ("air_res", "air_res_entry"),
+            ("ground_friction", "friction_entry"),
+            ("use_grid", "grid_bool"),
+            ("min_spawn_delay", "delay_entry"),
+            ("calculate_radii_diff", "calculate_radii_diff_bool"),
+        ]:
             try:
                 vars(self)[var] = float(eval(vars(self.gui)[entry].get()))
             except:
@@ -456,19 +517,24 @@ class Simulation:
                 self.grid.init_grid()
             if self.toggle_pause:
                 self.paused = not self.paused
-                self.gui.pause_button.config(image=self.gui.play_photo if self.paused else self.gui.pause_photo)
+                self.gui.pause_button.config(
+                    image=self.gui.play_photo if self.paused else self.gui.pause_photo
+                )
 
                 if not self.paused:
                     self.selection = []
                 self.toggle_pause = False
 
-            if self.mouse_down and time.time() - self.mouse_down_start >= self.min_hold_delay:
-                event = Event()
+            if (
+                self.mouse_down
+                and time.time() - self.mouse_down_start >= self.min_hold_delay
+            ):
+                event = tk.Event()
                 event.x, event.y = self.mx, self.my
                 self.mouse_m(event)
 
             try:
-                self.focus = type(self.gui.tk.focus_displayof()) in [Canvas, Tk]
+                self.focus = type(self.gui.tk.focus_displayof()) in [tk.Canvas, tk.Tk]
             except KeyError:
                 # Combobox
                 self.focus = False
@@ -491,18 +557,44 @@ class Simulation:
             if self.gui.show_links.get():
                 if self.stress_visualization and not self.paused:
                     for p1, p2, percentage in self.link_colors:
-                        color = [max(255 * percentage, 235)] + [235 * (1 - percentage)] * 2
-                        cv2.line(image, (int(p1.x), int(p1.y)), (int(p2.x), int(p2.y)), color, 1)
+                        color = [max(255 * percentage, 235)] + [
+                            235 * (1 - percentage)
+                        ] * 2
+                        cv2.line(
+                            image,
+                            (int(p1.x), int(p1.y)),
+                            (int(p2.x), int(p2.y)),
+                            color,
+                            1,
+                        )
                 else:
                     for p1 in self.particles:
                         for p2 in p1.linked:
-                            cv2.line(image, (int(p1.x), int(p1.y)), (int(p2.x), int(p2.y)), [235] * 3, 1)
+                            cv2.line(
+                                image,
+                                (int(p1.x), int(p1.y)),
+                                (int(p2.x), int(p2.y)),
+                                [235] * 3,
+                                1,
+                            )
 
             for particle in self.particles:
-                cv2.circle(image, (int(particle.x), int(particle.y)), particle.r, particle.color, -1)
+                cv2.circle(
+                    image,
+                    (int(particle.x), int(particle.y)),
+                    particle.r,
+                    particle.color,
+                    -1,
+                )
 
             for particle in self.selection:
-                cv2.circle(image, (int(particle.x), int(particle.y)), particle.r, [0, 0, 255], 2)
+                cv2.circle(
+                    image,
+                    (int(particle.x), int(particle.y)),
+                    particle.r,
+                    [0, 0, 255],
+                    2,
+                )
 
             cv2.circle(image, (self.mx, self.my), int(self.mr), [127] * 3)
 
@@ -514,14 +606,26 @@ class Simulation:
                 self.start_time = time.time()
             self.prev_time = time.time()
 
-            photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(image.astype(np.uint8)), master=self.gui.tk)
-            self.gui.canvas.create_image(0, 0, image=photo, anchor=NW)
+            photo = ImageTk.PhotoImage(
+                image=Image.fromarray(image.astype(np.uint8)), master=self.gui.tk
+            )
+            self.gui.canvas.create_image(0, 0, image=photo, anchor=tk.NW)
             if self.gui.show_fps.get():
-                self.gui.canvas.create_text(10, 10, text=f"FPS: {round(self.fps, 2)}", anchor='nw',
-                                        font=('Helvetica', 9, 'bold'))
+                self.gui.canvas.create_text(
+                    10,
+                    10,
+                    text=f"FPS: {round(self.fps, 2)}",
+                    anchor="nw",
+                    font=("Helvetica", 9, "bold"),
+                )
             if self.gui.show_num.get():
-                self.gui.canvas.create_text(10, 25, text=f"Particles: {len(self.particles)}", anchor='nw',
-                                        font=('Helvetica', 9, 'bold'))
+                self.gui.canvas.create_text(
+                    10,
+                    25,
+                    text=f"Particles: {len(self.particles)}",
+                    anchor="nw",
+                    font=("Helvetica", 9, "bold"),
+                )
 
             self.prev_mx, self.prev_my = self.mx, self.my
             self.mx = self.gui.tk.winfo_pointerx() - self.gui.tk.winfo_rootx()
