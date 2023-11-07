@@ -483,7 +483,7 @@ class Simulation:
         except Exception as error:
             self.error = ["Code-Error:", error]
 
-    def update_vars(self):
+    def _update_vars(self):
         for var, entry in [
             ("g", "gravity_entry"),
             ("air_res", "air_res_entry"),
@@ -513,7 +513,7 @@ class Simulation:
             image = np.full((self.height, self.width, 3), self.bg_color[0])
             self.link_colors = []
 
-            self.update_vars()
+            self._update_vars()
             self.g_vector = self.g_dir * self.g
             self.air_res_calc = (1 - self.air_res) ** self.speed
             if self.gui.grid_bool.get():

@@ -1,4 +1,3 @@
-import math
 from typing import Self
 
 import numpy as np
@@ -147,10 +146,10 @@ class Particle:
 
         return dictionary
 
-    def applyForce(self, force):
+    def _apply_force(self, force):
         self.a = self.a + force / abs(self.m)
 
-    def calc_attraction_force(
+    def _calc_attraction_force(
         self,
         distance,
         direction,
@@ -193,7 +192,7 @@ class Particle:
 
         return direction * magnitude
 
-    def return_particles(self, grid) -> list[Self]:
+    def _return_particles(self, grid) -> list[Self]:
         if self.return_none:
             return []
         if self.return_all:
@@ -208,15 +207,15 @@ class Particle:
 
     def update(self, grid):
         if not self.sim.paused:
-            self.a = self.sim.g_vector * math.copysign(1, self.m)  # Gravity
+            self.a = self.sim.g_vector * np.sign(self.m)  # Gravity
 
-            self.applyForce(self.sim.wind_force * self.r)
+            self._apply_force(self.sim.wind_force * self.r)
 
             for force in self.forces:
-                self.applyForce(force)
+                self._apply_force(force)
 
             if self.sim.use_grid:
-                near_particles = self.return_particles(grid)
+                near_particles = self._return_particles(grid)
             else:
                 near_particles = self.sim.particles
 
@@ -292,7 +291,7 @@ class Particle:
                                         if i == 1 and new_inputs == inputs:
                                             force *= 2
                                         else:
-                                            force += self.calc_attraction_force(
+                                            force += self._calc_attraction_force(
                                                 *new_inputs, particle
                                             )
                                             inputs = new_inputs.copy()
@@ -303,7 +302,7 @@ class Particle:
                                     else repel_r
                                 )
 
-                                force = self.calc_attraction_force(
+                                force = self._calc_attraction_force(
                                     distance,
                                     direction,
                                     repel_r_,
@@ -318,7 +317,7 @@ class Particle:
                                     p,
                                 )
 
-                        self.applyForce(force)
+                        self._apply_force(force)
                         p.forces.append(-force)
                         p.collisions.append(self)
 
