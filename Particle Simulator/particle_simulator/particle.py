@@ -1,4 +1,5 @@
 import math
+from typing import Self
 
 import numpy as np
 
@@ -192,6 +193,19 @@ class Particle:
 
         return direction * magnitude
 
+    def return_particles(self, grid) -> list[Self]:
+        if self.return_none:
+            return []
+        if self.return_all:
+            return self.sim.particles
+
+        if self.attr == 0 and self.repel == 0 and not self.collision_bool:
+            return []
+        if self.attr_r < 0 and self.attr != 0:
+            return self.sim.particles
+
+        return grid.return_particles(self)
+
     def update(self, grid):
         if not self.sim.paused:
             self.a = self.sim.g_vector * math.copysign(1, self.m)  # Gravity
@@ -202,7 +216,7 @@ class Particle:
                 self.applyForce(force)
 
             if self.sim.use_grid:
-                near_particles = grid.return_particles(self, self.sim.particles)
+                near_particles = self.return_particles(grid)
             else:
                 near_particles = self.sim.particles
 

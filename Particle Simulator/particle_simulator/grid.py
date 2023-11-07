@@ -1,6 +1,7 @@
-from typing import Iterable, List
+from typing import Iterable
 
 import numpy as np
+
 from .particle import Particle
 
 
@@ -30,25 +31,13 @@ class Grid:
     def return_column(self, x):
         return min(int(x // self.column_width), self.rows - 1)
 
-    def return_particles(
-        self, particle: Particle, particles: List[Particle]
-    ) -> List[Particle]:
-        if particle.return_none:
-            return []
-        if particle.return_all:
-            return particles
-
+    def return_particles(self, particle: Particle) -> list[Particle]:
         min_row = self.return_row(particle.y - particle.range_)
         max_row = self.return_row(particle.y + particle.range_)
         min_col = self.return_column(particle.x - particle.range_)
         max_col = self.return_column(particle.x + particle.range_)
 
-        if particle.attr == 0 and particle.repel == 0 and not particle.collision_bool:
-            return []
-        if particle.attr_r < 0 and particle.attr != 0:
-            return particles
-
-        near_particles = []
+        near_particles: list[Particle] = []
         for i in range(min_row, max_row + 1):
             for j in range(min_col, max_col + 1):
                 if 0 <= i < self.rows and 0 <= j < self.columns:
