@@ -120,8 +120,9 @@ class Particle:
         del self
 
     def select(self):
-        if not self in self.sim.selection:
-            self.sim.selection.append(self)
+        if self in self.sim.selection:
+            return
+        self.sim.selection.append(self)
 
     def return_dict(self, index_source="all"):
         if index_source == "all":
@@ -201,7 +202,7 @@ class Particle:
                 self.applyForce(force)
 
             if self.sim.use_grid:
-                near_particles = grid.return_particles(self)
+                near_particles = grid.return_particles(self, self.sim.particles)
             else:
                 near_particles = self.sim.particles
 

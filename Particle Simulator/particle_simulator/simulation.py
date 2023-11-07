@@ -75,7 +75,7 @@ class Simulation:
         self.code = 'print("Hello World")'
 
         self.gui = GUI(self, title, gridres)
-        self.grid = Grid(self, *gridres)
+        self.grid = Grid(*gridres, height=height, width=width)
         self.save_manager = SaveManager(self)
 
         # Keyboard- and mouse-controls
@@ -224,7 +224,10 @@ class Simulation:
     def update_grid(self, *event):
         try:
             self.grid = Grid(
-                self, self.gui.grid_res_x_value.get(), self.gui.grid_res_y_value.get()
+                self.gui.grid_res_x_value.get(),
+                self.gui.grid_res_y_value.get(),
+                height=self.height,
+                width=self.width,
             )
         except:
             pass
@@ -514,7 +517,7 @@ class Simulation:
             self.g_vector = self.g_dir * self.g
             self.air_res_calc = (1 - self.air_res) ** self.speed
             if self.gui.grid_bool.get():
-                self.grid.init_grid()
+                self.grid.init_grid(self.particles)
             if self.toggle_pause:
                 self.paused = not self.paused
                 self.gui.pause_button.config(

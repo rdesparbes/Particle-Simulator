@@ -1,22 +1,24 @@
+from typing import Iterable, List
+
 import numpy as np
+from .particle import Particle
 
 
 class Grid:
-    def __init__(self, sim, rows, columns):
-        self.sim = sim
+    def __init__(self, rows, columns, height, width) -> None:
         self.grid = None
         self.rows = rows
         self.columns = columns
-        self.row_height = sim.height / self.rows
-        self.column_width = sim.width / self.columns
+        self.row_height = height / self.rows
+        self.column_width = width / self.columns
 
-    def init_grid(self):
+    def init_grid(self, particles: Iterable[Particle]):
         self.grid = np.empty((self.rows, self.columns), dtype="object")
         for i in range(self.rows):
             for j in range(self.columns):
                 self.grid[i, j] = []
 
-        for particle in self.sim.particles:
+        for particle in particles:
             row = self.return_row(particle.y)
             column = self.return_column(particle.x)
             if 0 <= row < self.rows and 0 <= column < self.columns:
@@ -28,11 +30,13 @@ class Grid:
     def return_column(self, x):
         return min(int(x // self.column_width), self.rows - 1)
 
-    def return_particles(self, particle):
+    def return_particles(
+        self, particle: Particle, particles: List[Particle]
+    ) -> List[Particle]:
         if particle.return_none:
             return []
         if particle.return_all:
-            return self.sim.particles
+            return particles
 
         min_row = self.return_row(particle.y - particle.range_)
         max_row = self.return_row(particle.y + particle.range_)
@@ -42,7 +46,7 @@ class Grid:
         if particle.attr == 0 and particle.repel == 0 and not particle.collision_bool:
             return []
         if particle.attr_r < 0 and particle.attr != 0:
-            return self.sim.particles
+            return particles
 
         near_particles = []
         for i in range(min_row, max_row + 1):

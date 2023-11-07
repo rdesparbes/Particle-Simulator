@@ -15,7 +15,7 @@ class GUI:
 
         self.tk = tk.Tk()
         self.tk.title(title)
-        self.tk.resizable(0, 0)
+        self.tk.resizable(False, False)
         self.tk.protocol("WM_DELETE_WINDOW", self.destroy)
         self.gui_canvas = tk.Canvas(
             self.tk, width=self.sim.width + 200, height=self.sim.height + 30
