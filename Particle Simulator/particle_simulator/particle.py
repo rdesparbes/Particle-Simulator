@@ -20,7 +20,7 @@ class Particle(ParticleData):
             int(self.sim.mr), self.r
         ):
             if self.sim.mouse_mode == "SELECT":
-                self.select()
+                self.sim.select_particle(self)
                 return True
 
             self.mouse = True
@@ -30,11 +30,6 @@ class Particle(ParticleData):
 
     def mouse_r(self, event: tk.Event) -> None:
         self.mouse = False
-
-    def select(self) -> None:
-        if self in self.sim.selection:
-            return
-        self.sim.selection.append(self)
 
     def _calc_attraction_force(
         self,

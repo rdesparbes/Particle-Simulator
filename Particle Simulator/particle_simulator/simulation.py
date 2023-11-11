@@ -181,7 +181,7 @@ class Simulation:
             # CTRL + A to select all
             elif KeyCode.from_char(key).char == r"'\x01'":
                 for p in self.particles:
-                    p.select()
+                    self.select_particle(p)
             # CTRL + C to copy
             elif KeyCode.from_char(key).char == r"'\x03'":
                 self.copy_selected()
@@ -263,9 +263,7 @@ class Simulation:
                 break
 
     def select_group(self):
-        self.selection = []
-        for p in self.groups[self.gui.groups_entry.get()]:
-            p.select()
+        self.selection = list(self.groups[self.gui.groups_entry.get()])
 
     def inputs2dict(self):
         try:
@@ -320,6 +318,11 @@ class Simulation:
             return kwargs
         except Exception as error:
             self.error = ["Input-Error", error]
+
+    def select_particle(self, particle: Particle) -> None:
+        if particle in self.selection:
+            return
+        self.selection.append(particle)
 
     def register_particle(self, particle: Particle) -> None:
         try:
