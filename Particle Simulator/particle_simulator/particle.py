@@ -1,32 +1,38 @@
-from typing import Self
+from typing import Self, List, Union, Literal, Dict, Any, Optional, Sequence
 
+import tkinter as tk
 import numpy as np
+import numpy.typing as npt
+
+
+_Simulation = Any
+_Grid = Any
 
 
 class Particle:
     def __init__(
         self,
-        sim,
-        x,
-        y,
-        radius=4,
-        color="random",
-        mass=1,
-        velocity=np.zeros(2),
-        bounciness=0.7,
-        locked=False,
-        collisions=False,
-        attract_r=-1,
-        repel_r=10,
-        attraction_strength=0.5,
-        repulsion_strength=1,
-        linked_group_particles=True,
-        link_attr_breaking_force=-1,
-        link_repel_breaking_force=-1,
-        group="group1",
-        separate_group=False,
-        gravity_mode=False,
-    ):
+        sim: _Simulation,
+        x: float,
+        y: float,
+        radius: int = 4,
+        color: Union[List[int], Literal["random"]] = "random",
+        mass: int = 1,
+        velocity: npt.NDArray[np.float_] = np.zeros(2),
+        bounciness: float = 0.7,
+        locked: bool = False,
+        collisions: bool = False,
+        attract_r: int = -1,
+        repel_r: int = 10,
+        attraction_strength: float = 0.5,
+        repulsion_strength: float = 1,
+        linked_group_particles: bool = True,
+        link_attr_breaking_force: int = -1,
+        link_repel_breaking_force: int = -1,
+        group: str = "group1",
+        separate_group: bool = False,
+        gravity_mode: bool = False,
+    ) -> None:
         self.sim = sim
         self.x = x
         self.y = y
@@ -49,13 +55,13 @@ class Particle:
         self.repel = repulsion_strength
         self.gravity_mode = gravity_mode
 
-        self.return_all = None
-        self.return_none = None
-        self.range_ = None
+        self.return_all: Optional[bool] = None
+        self.return_none: Optional[bool] = None
+        self.range_: Optional[int] = None
         self.init_constants()
 
-        self.linked = []
-        self.link_lengths = {}
+        self.linked: List[Particle] = []
+        self.link_lengths: Dict[Particle, Union[Literal["repel"], float]] = {}
         self.linked_group_particles = linked_group_particles
         self.link_attr_breaking_force = link_attr_breaking_force
         self.link_repel_breaking_force = link_repel_breaking_force
@@ -71,14 +77,14 @@ class Particle:
                 f"group{i}" for i in sorted(self.sim.gui.group_indices)
             ]
 
-        self.collisions = []
-        self.forces = []
+        self.collisions: List[Particle] = []
+        self.forces: List[npt.NDArray[np.float_]] = []
 
         self.mouse = False
 
         self.sim.particles.append(self)
 
-    def init_constants(self):
+    def init_constants(self) -> None:
         self.return_all = self.attr_r < 0 and self.attr != 0
         self.return_none = (
             self.attr == 0 and self.repel == 0 and not self.collision_bool
@@ -94,7 +100,7 @@ class Particle:
         else:
             self.range_ = self.r
 
-    def mouse_p(self, event):
+    def mouse_p(self, event: tk.Event) -> bool:
         if np.sqrt((event.x - self.x) ** 2 + (event.y - self.y) ** 2) <= max(
             int(self.sim.mr), self.r
         ):
@@ -105,11 +111,12 @@ class Particle:
             self.mouse = True
             if self in self.sim.selection:
                 return True
+        return False
 
-    def mouse_r(self, event):
+    def mouse_r(self, event: tk.Event) -> None:
         self.mouse = False
 
-    def delete(self):
+    def delete(self) -> None:
         self.sim.particles.remove(self)
         if self in self.sim.selection:
             self.sim.selection.remove(self)
@@ -119,12 +126,14 @@ class Particle:
         self.sim.groups[self.group].remove(self)
         del self
 
-    def select(self):
+    def select(self) -> None:
         if self in self.sim.selection:
             return
         self.sim.selection.append(self)
 
-    def return_dict(self, index_source="all"):
+    def return_dict(
+        self, index_source: Union[Literal["all"], Sequence[Self]] = "all"
+    ) -> Dict[str, Any]:
         if index_source == "all":
             index_source = self.sim.particles
 
@@ -146,25 +155,25 @@ class Particle:
 
         return dictionary
 
-    def _apply_force(self, force):
+    def _apply_force(self, force: npt.NDArray[np.float_]) -> None:
         self.a = self.a + force / abs(self.m)
 
     def _calc_attraction_force(
         self,
-        distance,
-        direction,
-        repel_r,
-        attr,
-        repel,
-        rest_distance,
-        is_in_group,
-        is_linked,
-        link_attr_breaking_force,
-        link_repel_breaking_force,
-        gravity,
-        part,
-    ):
-        magnitude = 0
+        distance: float,
+        direction: npt.NDArray[np.float_],
+        repel_r: float,
+        attr: float,
+        repel: float,
+        rest_distance: float,
+        is_in_group: bool,
+        is_linked: bool,
+        link_attr_breaking_force: int,
+        link_repel_breaking_force: int,
+        gravity: bool,
+        part: Self,
+    ) -> npt.NDArray[np.float_]:
+        magnitude = 0.0
         attract = True
         if distance < repel_r:
             magnitude = -repel * rest_distance / 10
@@ -192,7 +201,7 @@ class Particle:
 
         return direction * magnitude
 
-    def _return_particles(self, grid) -> list[Self]:
+    def _return_particles(self, grid: _Grid) -> list[Self]:
         if self.return_none:
             return []
         if self.return_all:
@@ -205,7 +214,7 @@ class Particle:
 
         return grid.return_particles(self)
 
-    def update(self, grid):
+    def update(self, grid: _Grid) -> None:
         if not self.sim.paused:
             self.a = self.sim.g_vector * np.sign(self.m)  # Gravity
 
@@ -242,7 +251,7 @@ class Particle:
                         repel_r = self.link_lengths[p]
 
                     direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
-                    distance = np.linalg.norm(direction)
+                    distance: float = np.linalg.norm(direction)
                     if distance != 0:
                         direction = direction / distance
                     conditions = [
@@ -262,12 +271,12 @@ class Particle:
                                 force = force / np.linalg.norm(force) * -self.repel
                         else:
                             if self.sim.calculate_radii_diff:
-                                force = 0
+                                force = np.zeros(2)
                                 inputs = []
 
                                 for i, particle in enumerate([p, self]):
                                     if conditions[i]:
-                                        repel_r_ = (
+                                        repel_r_: float = (
                                             particle.repel_r
                                             if repel_r is None
                                             else repel_r
@@ -369,7 +378,7 @@ class Particle:
                             self.sim.mx - self.sim.prev_mx,
                             self.sim.my - self.sim.prev_my,
                         ],
-                        dtype="float64",
+                        dtype=np.float64,
                     )
                     / self.sim.speed
                 )
