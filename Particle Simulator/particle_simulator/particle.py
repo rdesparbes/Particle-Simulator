@@ -120,12 +120,7 @@ class Particle:
             return
         self.sim.selection.append(self)
 
-    def return_dict(
-        self, index_source: Union[Literal["all"], Sequence[Self]] = "all"
-    ) -> Dict[str, Any]:
-        if index_source == "all":
-            index_source = self.sim.particles
-
+    def return_dict(self, index_source: Sequence[Self]) -> Dict[str, Any]:
         dictionary = self.__dict__.copy()
         del dictionary["sim"]
         del dictionary["collisions"]

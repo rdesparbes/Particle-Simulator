@@ -89,7 +89,8 @@ class SaveManager:
 
                 data = {
                     "particles": [
-                        particle.return_dict() for particle in self.sim.particles
+                        particle.return_dict(index_source=self.sim.particles)
+                        for particle in self.sim.particles
                     ],
                     "particle-settings": particle_settings,
                     "sim-settings": sim_settings,
