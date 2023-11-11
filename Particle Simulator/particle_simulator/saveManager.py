@@ -135,7 +135,8 @@ class SaveManager:
                 self.sim.gui.group_indices = []
                 self.sim.gui.groups_entry["values"] = []
                 for i in range(len(data["particles"])):
-                    Particle(self.sim, 0, 0, group=data["particles"][i]["group"])
+                    p = Particle(self.sim, 0, 0, group=data["particles"][i]["group"])
+                    self.sim.register_particle(p)
 
                 for i, d in enumerate(data["particles"]):
                     particle = self.sim.particles[i]

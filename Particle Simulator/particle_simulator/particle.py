@@ -67,21 +67,11 @@ class Particle:
         self.separate_group = separate_group
 
         self.group = group
-        try:
-            self.sim.groups[self.group].append(self)
-        except KeyError:
-            self.sim.groups[self.group] = [self]
-            self.sim.gui.group_indices.append(int(self.group.replace("group", "")))
-            self.sim.gui.groups_entry["values"] = [
-                f"group{i}" for i in sorted(self.sim.gui.group_indices)
-            ]
 
         self.collisions: List[Particle] = []
         self.forces: List[npt.NDArray[np.float_]] = []
 
         self.mouse = False
-
-        self.sim.particles.append(self)
 
     def init_constants(self) -> None:
         self.return_all = self.attr_r < 0 and self.attr != 0

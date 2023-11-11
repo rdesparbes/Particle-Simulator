@@ -321,6 +321,17 @@ class Simulation:
         except Exception as error:
             self.error = ["Input-Error", error]
 
+    def register_particle(self, particle: Particle) -> None:
+        try:
+            self.groups[particle.group].append(particle)
+        except KeyError:
+            self.groups[particle.group] = [particle]
+            self.gui.group_indices.append(int(particle.group.replace("group", "")))
+            self.gui.groups_entry["values"] = [
+                f"group{i}" for i in sorted(self.gui.group_indices)
+            ]
+        self.particles.append(particle)
+
     def set_selected(self):
         kwargs = self.inputs2dict()
         if kwargs is not None:
@@ -330,6 +341,7 @@ class Simulation:
                 px, py = p.x, p.y
                 p.delete()
                 p = Particle(self, px, py, **kwargs)
+                self.register_particle(p)
                 self.selection.append(p)
                 for link, length in temp_link_lengths.items():
                     self.link([link, p], fit_link=length != "repel", distance=length)
@@ -343,6 +355,7 @@ class Simulation:
                 px, py = p.x, p.y
                 p.delete()
                 p = Particle(self, px, py, **kwargs)
+                self.register_particle(p)
                 for link, length in temp_link_lengths.items():
                     self.link([link, p], fit_link=length != "repel", distance=length)
 
@@ -392,8 +405,8 @@ class Simulation:
     def add_particle(self, x, y):
         kwargs = self.inputs2dict()
         if kwargs is not None:
-            Particle(self, x, y, **kwargs)
-
+            p = Particle(self, x, y, **kwargs)
+            self.register_particle(p)
             self.last_mouse_time = time.time()
 
     def copy_selected(self):
@@ -408,7 +421,9 @@ class Simulation:
         self.pasting = True
         temp_particles = []
         for data in self.clipboard:
-            temp_particles.append(Particle(self, 0, 0, group=data["group"]))
+            p = Particle(self, 0, 0, group=data["group"])
+            self.register_particle(p)
+            temp_particles.append(p)
 
         for i, data in enumerate(self.clipboard):
             d = data.copy()

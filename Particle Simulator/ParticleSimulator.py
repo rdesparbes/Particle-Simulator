@@ -19,7 +19,7 @@ sim = Simulation(
 # Random particle-positions
 for i in range(50):
     s = 4
-    Particle(
+    p = Particle(
         sim,
         random.normalvariate(sim.width / 2, sim.width / 5),
         random.normalvariate(sim.height / 2, sim.height / 5),
@@ -34,6 +34,7 @@ for i in range(50):
         attraction_strength=0.25,
         repulsion_strength=1,
     )
+    sim.register_particle(p)
 
 # Rope (for code-window)
 # for i in range(1, len(self.particles)):
