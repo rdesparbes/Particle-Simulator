@@ -105,16 +105,6 @@ class Particle:
     def mouse_r(self, event: tk.Event) -> None:
         self.mouse = False
 
-    def delete(self) -> None:
-        self.sim.particles.remove(self)
-        if self in self.sim.selection:
-            self.sim.selection.remove(self)
-        for p in self.linked:
-            del p.link_lengths[self]
-            p.linked.remove(self)
-        self.sim.groups[self.group].remove(self)
-        del self
-
     def select(self) -> None:
         if self in self.sim.selection:
             return
@@ -351,7 +341,7 @@ class Particle:
             or self.y - self.r >= self.sim.height
             or self.y + self.r <= 0
         ):
-            self.delete()
+            self.sim.remove_particle(self)
             return
 
         self.collisions = []

@@ -143,7 +143,7 @@ class Simulation:
             if np.sqrt((event.x - p.x) ** 2 + (event.y - p.y) ** 2) <= max(
                 int(self.mr), p.r
             ):
-                p.delete()
+                self.remove_particle(p)
 
     def rotate_2d(self, x, y, cx, cy, angle):
         angle_rad = -np.radians(angle)
@@ -175,7 +175,7 @@ class Simulation:
             elif key == Key.delete:
                 temp = self.selection.copy()
                 for p in temp:
-                    p.delete()
+                    self.remove_particle(p)
             elif key == Key.shift_l or key == Key.shift_r:
                 self.shift = True
             # CTRL + A to select all
@@ -339,7 +339,7 @@ class Simulation:
             for p in temp:
                 temp_link_lengths = p.link_lengths.copy()
                 px, py = p.x, p.y
-                p.delete()
+                self.remove_particle(p)
                 p = Particle(self, px, py, **kwargs)
                 self.register_particle(p)
                 self.selection.append(p)
@@ -353,7 +353,7 @@ class Simulation:
             if kwargs is not None:
                 temp_link_lengths = p.link_lengths.copy()
                 px, py = p.x, p.y
-                p.delete()
+                self.remove_particle(p)
                 p = Particle(self, px, py, **kwargs)
                 self.register_particle(p)
                 for link, length in temp_link_lengths.items():
@@ -409,6 +409,16 @@ class Simulation:
             self.register_particle(p)
             self.last_mouse_time = time.time()
 
+    def remove_particle(self, particle: Particle) -> None:
+        self.particles.remove(particle)
+        if particle in self.selection:
+            self.selection.remove(particle)
+        for p in particle.linked:
+            del p.link_lengths[particle]
+            p.linked.remove(particle)
+        self.groups[particle.group].remove(particle)
+        del particle
+
     def copy_selected(self):
         self.clipboard = []
         for p in self.selection:
@@ -449,7 +459,7 @@ class Simulation:
         self.copy_selected()
         temp = self.selection.copy()
         for p in temp:
-            p.delete()
+            self.remove_particle(p)
 
     def link_selection(self, fit_link=False):
         self.link(self.selection, fit_link=fit_link)

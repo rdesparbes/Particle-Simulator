@@ -130,7 +130,7 @@ class SaveManager:
 
                 temp = self.sim.particles.copy()
                 for p in temp:
-                    p.delete()
+                    self.sim.remove_particle(p)
 
                 self.sim.groups = {}
                 self.sim.gui.group_indices = []
