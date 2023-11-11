@@ -2,55 +2,59 @@ import math
 import time
 import tkinter as tk
 from tkinter import messagebox
+from typing import List, Collection, Iterable, Optional, Any, Dict, Tuple
 
 import cv2
 import numpy as np
+import numpy.typing as npt
 from PIL import ImageTk, Image
-from .grid import Grid
-from .gui import GUI
-from .particle import Particle
-from .saveManager import SaveManager
 from pynput.keyboard import Listener, Key, KeyCode
+
+from .error import Error
+from .grid import Grid
+from .gui import GUI, Mode
+from .particle import Particle, Link
+from .saveManager import SaveManager
 
 
 class Simulation:
     def __init__(
         self,
-        width=650,
-        height=600,
-        title="Simulation",
-        gridres=(50, 50),
-        temperature=0,
-        g=0.1,
-        air_res=0.05,
-        ground_friction=0,
-        fps_update_delay=0.5,
+        width: int = 650,
+        height: int = 600,
+        title: str = "Simulation",
+        gridres: Tuple[int, int] = (50, 50),
+        temperature: float = 0,
+        g: float = 0.1,
+        air_res: float = 0.05,
+        ground_friction: float = 0,
+        fps_update_delay: float = 0.5,
     ):
         self.width = width
         self.height = height
 
         self.temperature = temperature
         self.g = g  # gravity
-        self.g_dir = np.array([0, 1])
-        self.g_vector = np.array([0, -g])
-        self.wind_force = np.array([0, 0])
+        self.g_dir: npt.NDArray[np.float_] = np.array([0, 1])
+        self.g_vector: npt.NDArray[np.float_] = np.array([0, -g])
+        self.wind_force: npt.NDArray[np.float_] = np.array([0, 0])
         self.air_res = air_res
-        self.air_res_calc = 1 - self.air_res
+        self.air_res_calc = 1.0 - self.air_res
         self.ground_friction = ground_friction
-        self.speed = 1
+        self.speed: float = 1.0
 
         self.fps = 0
         self.fps_update_delay = fps_update_delay
         self.mx, self.my = 0, 0
         self.prev_mx, self.prev_my = 0, 0
-        self.mouse_mode = "MOVE"  # 'SELECT', 'MOVE', 'ADD'
+        self.mouse_mode: Mode = "MOVE"  # 'SELECT', 'MOVE', 'ADD'
         self.rotate_mode = False
         self.min_spawn_delay = 0.05
         self.min_hold_delay = 1
         self.last_mouse_time = 0
         self.mr = 5
         self.mouse_down = False
-        self.mouse_down_start = None
+        self.mouse_down_start: Optional[float] = None
         self.shift = False
         self.start_save = False
         self.start_load = False
@@ -58,7 +62,7 @@ class Simulation:
         self.toggle_pause = False
         self.running = True
         self.focus = True
-        self.error = None
+        self.error: Optional[Error] = None
         self.use_grid = True
         self.calculate_radii_diff = False
 
@@ -68,11 +72,11 @@ class Simulation:
         self.right = True
         self.void_edges = False
 
-        self.bg_color = [[255, 255, 255], "#ffffff"]
+        self.bg_color = [255, 255, 255], "#ffffff"
         self.stress_visualization = False
-        self.link_colors = []
+        self.link_colors: List[Link] = []
 
-        self.code = 'print("Hello World")'
+        self.code: str = 'print("Hello World")'
 
         self.gui = GUI(self, title, gridres)
         self.grid = Grid(*gridres, height=height, width=width)
@@ -92,11 +96,11 @@ class Simulation:
         self.start_time = time.time()
         self.prev_time = self.start_time
 
-        self.particles = []
-        self.selection = []
-        self.clipboard = []
+        self.particles: List[Particle] = []
+        self.selection: List[Particle] = []
+        self.clipboard: List[Dict[str, Any]] = []
         self.pasting = False
-        self.groups = {"group1": []}
+        self.groups: Dict[str, List[Particle]] = {"group1": []}
 
     def _mouse_p(self, particle: Particle, event: tk.Event) -> bool:
         if np.sqrt((event.x - particle.x) ** 2 + (event.y - particle.y) ** 2) <= max(
@@ -224,13 +228,13 @@ class Simulation:
             elif KeyCode.from_char(key).char == r"'\x0f'":
                 self.start_load = True
 
-    def on_release(self, key):
+    def on_release(self, key) -> None:
         if key == Key.shift_l or key == Key.shift_r:
             self.shift = False
         elif KeyCode.from_char(key).char == "'r'":
             self.rotate_mode = False
 
-    def update_grid(self, *event):
+    def update_grid(self, *event) -> None:
         try:
             self.grid = Grid(
                 self.gui.grid_res_x_value.get(),
@@ -241,10 +245,10 @@ class Simulation:
         except:
             pass
 
-    def toggle_paused(self):
+    def toggle_paused(self) -> None:
         self.toggle_pause = True
 
-    def change_mode(self, mode):
+    def change_mode(self, mode: Mode) -> None:
         self.mouse_mode = mode
         if mode == "SELECT":
             self.gui.gui_canvas.itemconfig(self.gui.select_rect, state="normal")
@@ -259,7 +263,7 @@ class Simulation:
             self.gui.gui_canvas.itemconfig(self.gui.move_rect, state="hidden")
             self.gui.gui_canvas.itemconfig(self.gui.add_rect, state="normal")
 
-    def add_group(self):
+    def add_group(self) -> None:
         for i in range(1, max(self.gui.group_indices) + 2):
             if i not in self.gui.group_indices:
                 name = f"group{i}"
@@ -271,10 +275,10 @@ class Simulation:
                 self.groups[name] = []
                 break
 
-    def select_group(self):
+    def select_group(self) -> None:
         self.selection = list(self.groups[self.gui.groups_entry.get()])
 
-    def inputs2dict(self):
+    def inputs2dict(self) -> Optional[Dict[str, Any]]:
         try:
             radius = (
                 int(self.mr)
@@ -326,7 +330,7 @@ class Simulation:
 
             return kwargs
         except Exception as error:
-            self.error = ["Input-Error", error]
+            self.error = Error("Input-Error", error)
 
     def select_particle(self, particle: Particle) -> None:
         if particle in self.selection:
@@ -344,7 +348,7 @@ class Simulation:
             ]
         self.particles.append(particle)
 
-    def set_selected(self):
+    def set_selected(self) -> None:
         kwargs = self.inputs2dict()
         if kwargs is not None:
             temp = self.selection.copy()
@@ -358,7 +362,7 @@ class Simulation:
                 for link, length in temp_link_lengths.items():
                     self.link([link, p], fit_link=length != "repel", distance=length)
 
-    def set_all(self):
+    def set_all(self) -> None:
         temp = self.particles.copy()
         for p in temp:
             kwargs = self.inputs2dict()  # Update for each particle in case of 'random'
@@ -371,7 +375,7 @@ class Simulation:
                 for link, length in temp_link_lengths.items():
                     self.link([link, p], fit_link=length != "repel", distance=length)
 
-    def copy_from_selected(self):
+    def copy_from_selected(self) -> None:
         variable_names = {
             "radius_entry": ["r", "entry"],
             "color_entry": ["color", "entry"],
@@ -414,7 +418,7 @@ class Simulation:
                     else:
                         vars(self.gui)[key].delete(0, tk.END)
 
-    def add_particle(self, x, y):
+    def add_particle(self, x: float, y: float) -> None:
         kwargs = self.inputs2dict()
         if kwargs is not None:
             p = Particle(self, x, y, **kwargs)
@@ -431,7 +435,7 @@ class Simulation:
         self.groups[particle.group].remove(particle)
         del particle
 
-    def copy_selected(self):
+    def copy_selected(self) -> None:
         self.clipboard = []
         for p in self.selection:
             dictionary = p.return_dict(index_source=self.selection)
@@ -439,7 +443,7 @@ class Simulation:
             dictionary["y"] -= self.my
             self.clipboard.append(dictionary)
 
-    def paste(self):
+    def paste(self) -> None:
         self.pasting = True
         temp_particles = []
         for data in self.clipboard:
@@ -467,21 +471,26 @@ class Simulation:
             particle.mouse = True
         self.selection = temp_particles
 
-    def cut(self):
+    def cut(self) -> None:
         self.copy_selected()
         temp = self.selection.copy()
         for p in temp:
             self.remove_particle(p)
 
-    def link_selection(self, fit_link=False):
+    def link_selection(self, fit_link: bool = False) -> None:
         self.link(self.selection, fit_link=fit_link)
         self.selection = []
 
-    def unlink_selection(self):
+    def unlink_selection(self) -> None:
         self.unlink(self.selection)
         self.selection = []
 
-    def link(self, particles, fit_link=False, distance=None):
+    def link(
+        self,
+        particles: List[Particle],
+        fit_link: bool = False,
+        distance: Optional[float] = None,
+    ) -> None:
         for p in particles:
             if fit_link:
                 position = np.array([p.x, p.y])
@@ -499,7 +508,7 @@ class Simulation:
             p.linked.remove(p)
             del p.link_lengths[p]
 
-    def unlink(self, particles):
+    def unlink(self, particles: Collection[Particle]) -> None:
         for p in particles:
             p.linked = [link for link in p.linked if link not in particles]
             p.link_lengths = {
@@ -508,19 +517,19 @@ class Simulation:
                 if link not in particles
             }
 
-    def change_link_lengths(self, particles, amount):
+    def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
         for p in particles:
             for link, value in p.link_lengths.items():
                 if value != "repel":
                     self.link([p, link], fit_link=True, distance=value + amount)
 
-    def execute(self, code):
+    def execute(self, code: str) -> None:
         try:
             exec(code)
         except Exception as error:
-            self.error = ["Code-Error:", error]
+            self.error = Error("Code-Error", error)
 
-    def _update_vars(self):
+    def _update_vars(self) -> None:
         for var, entry in [
             ("g", "gravity_entry"),
             ("air_res", "air_res_entry"),
@@ -580,7 +589,7 @@ class Simulation:
                 self.focus = False
 
             if self.error is not None:
-                messagebox.showerror(*self.error)
+                messagebox.showerror(self.error.name, str(self.error.exception))
                 self.error = None
 
             if self.start_save:

@@ -4,8 +4,13 @@ import threading
 import time
 import tkinter as tk
 from tkinter import ttk, colorchooser, messagebox
+from typing import Literal
 
+from .error import Error
 import numpy as np
+
+
+Mode = Literal["SELECT", "MOVE", "ADD"]
 
 
 class GUI:
@@ -863,7 +868,7 @@ class ExtraWindow:
                 self.sim.selection, float(self.delta_length_entry.get()) * sign
             )
         except Exception as e:
-            self.sim.error = ["Input-Error", e]
+            self.sim.error = Error("Input-Error", e)
 
     def toggle_link_change_plus(self, state):
         self.changing_length_plus = time.time() if state else False

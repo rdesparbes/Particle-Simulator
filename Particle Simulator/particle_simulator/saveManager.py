@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 
 from .particle import Particle
+from .error import Error
 
 
 class SaveManager:
@@ -100,7 +101,7 @@ class SaveManager:
 
                 self.file_location, self.filename = os.path.split(filename)
             except Exception as error:
-                self.sim.error = ("Saving-Error", error)
+                self.sim.error = Error("Saving-Error", error)
 
     def load(self):
         if not self.sim.paused:
@@ -157,4 +158,4 @@ class SaveManager:
 
                 self.file_location, self.filename = os.path.split(filename)
             except Exception as error:
-                self.sim.error = ("Loading-Error", error)
+                self.sim.error = Error("Loading-Error", error)

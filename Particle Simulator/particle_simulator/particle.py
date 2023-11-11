@@ -1,4 +1,4 @@
-from typing import Self, Any, Optional, Tuple
+from typing import Self, Any, Optional, Tuple, NamedTuple
 
 import numpy as np
 import numpy.typing as npt
@@ -50,7 +50,11 @@ class Particle(ParticleData):
                 else:
                     percentage = 1.0 if max_force == 0.0 else 0.0
 
-                self.sim.link_colors.append([self, part, min(percentage, 1)])
+                self.sim.link_colors.append(
+                    Link(
+                        particle_a=self, particle_b=part, percentage=min(percentage, 1)
+                    )
+                )
 
             if 0 <= max_force <= abs(magnitude):
                 self.sim.unlink([self, part])
@@ -103,8 +107,10 @@ class Particle(ParticleData):
 
                     # Attract / repel
                     repel_r: Optional[float] = None
-                    if is_linked and self.link_lengths[p] != "repel":
-                        repel_r = self.link_lengths[p]
+                    if is_linked:
+                        repel_radius = self.link_lengths[p]
+                        if repel_radius != "repel":
+                            repel_r = repel_radius
 
                     direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
                     distance: float = np.linalg.norm(direction)
@@ -246,10 +252,16 @@ class Particle(ParticleData):
                     distance,
                     direction,
                     repel_r_,
-                    (p.attr + self.attr),
-                    (p.repel + self.repel),
+                    p.attr + self.attr,
+                    p.repel + self.repel,
                     is_in_group,
                     is_linked,
                     self.gravity_mode or p.gravity_mode,
                 )
         return force
+
+
+class Link(NamedTuple):
+    particle_a: Particle
+    particle_b: Particle
+    percentage: float
