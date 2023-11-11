@@ -1,4 +1,3 @@
-import tkinter as tk
 from typing import Self, Any, Optional, Tuple
 
 import numpy as np
@@ -14,22 +13,6 @@ class Particle(ParticleData):
     def __init__(self, sim: _Simulation, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.sim = sim
-
-    def mouse_p(self, event: tk.Event) -> bool:
-        if np.sqrt((event.x - self.x) ** 2 + (event.y - self.y) ** 2) <= max(
-            int(self.sim.mr), self.r
-        ):
-            if self.sim.mouse_mode == "SELECT":
-                self.sim.select_particle(self)
-                return True
-
-            self.mouse = True
-            if self in self.sim.selection:
-                return True
-        return False
-
-    def mouse_r(self, event: tk.Event) -> None:
-        self.mouse = False
 
     def _calc_attraction_force(
         self,

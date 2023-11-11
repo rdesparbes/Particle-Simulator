@@ -98,15 +98,25 @@ class Simulation:
         self.pasting = False
         self.groups = {"group1": []}
 
+    def _mouse_p(self, particle: Particle, event: tk.Event) -> bool:
+        if np.sqrt((event.x - particle.x) ** 2 + (event.y - particle.y) ** 2) <= max(
+            int(self.mr), particle.r
+        ):
+            if self.mouse_mode == "SELECT":
+                self.select_particle(particle)
+                return True
+
+            particle.mouse = True
+            if particle in self.selection:
+                return True
+        return False
+
     def mouse_p(self, event):
         self.gui.canvas.focus_set()
         self.mouse_down_start = time.time()
         self.mouse_down = True
         if self.mouse_mode == "SELECT" or self.mouse_mode == "MOVE":
-            selected = False
-            for p in self.particles:
-                if p.mouse_p(event):
-                    selected = True
+            selected = any(self._mouse_p(p, event) for p in self.particles)
             if not selected:
                 self.selection = []
             elif self.mouse_mode == "MOVE":
@@ -121,7 +131,7 @@ class Simulation:
     def mouse_m(self, event):
         if self.mouse_mode == "SELECT":
             for p in self.particles:
-                p.mouse_p(event)
+                self._mouse_p(p, event)
         elif (
             self.mouse_mode == "ADD"
             and time.time() - self.last_mouse_time >= self.min_spawn_delay
@@ -132,8 +142,7 @@ class Simulation:
         self.mouse_down = False
         if self.mouse_mode == "MOVE" or self.pasting:
             for p in self.particles:
-                if p.mouse:
-                    p.mouse_r(event)
+                p.mouse = False
         self.pasting = False
 
     def right_mouse(self, event):
