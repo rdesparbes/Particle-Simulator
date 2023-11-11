@@ -1,9 +1,8 @@
-from typing import Self, List, Union, Literal, Dict, Any, Optional, Sequence
+from typing import Self, List, Union, Literal, Dict, Any, Optional, Sequence, Tuple
 
 import tkinter as tk
 import numpy as np
 import numpy.typing as npt
-
 
 _Simulation = Any
 _Grid = Any
@@ -17,7 +16,7 @@ class Particle:
         y: float,
         radius: int = 4,
         color: Union[List[int], Literal["random"]] = "random",
-        mass: int = 1,
+        mass: float = 1,
         velocity: npt.NDArray[np.float_] = np.zeros(2),
         bounciness: float = 0.7,
         locked: bool = False,
@@ -27,8 +26,8 @@ class Particle:
         attraction_strength: float = 0.5,
         repulsion_strength: float = 1,
         linked_group_particles: bool = True,
-        link_attr_breaking_force: int = -1,
-        link_repel_breaking_force: int = -1,
+        link_attr_breaking_force: float = -1,
+        link_repel_breaking_force: float = -1,
         group: str = "group1",
         separate_group: bool = False,
         gravity_mode: bool = False,
@@ -160,6 +159,7 @@ class Particle:
 
     def _calc_attraction_force(
         self,
+        part: Self,
         distance: float,
         direction: npt.NDArray[np.float_],
         repel_r: float,
@@ -168,31 +168,32 @@ class Particle:
         rest_distance: float,
         is_in_group: bool,
         is_linked: bool,
-        link_attr_breaking_force: int,
-        link_repel_breaking_force: int,
+        link_attr_breaking_force: float,
+        link_repel_breaking_force: float,
         gravity: bool,
-        part: Self,
     ) -> npt.NDArray[np.float_]:
-        magnitude = 0.0
-        attract = True
-        if distance < repel_r:
-            magnitude = -repel * rest_distance / 10
-            attract = False
-        elif is_in_group or is_linked:
-            if gravity:
-                magnitude = attr * self.m * part.m / distance**2 * 10
-            else:
-                magnitude = attr * rest_distance / 3000
+        magnitude = self._compute_magnitude(
+            part,
+            attr,
+            distance,
+            gravity,
+            is_in_group,
+            is_linked,
+            repel,
+            repel_r,
+            rest_distance,
+        )
 
         if is_linked:
+            attract = repel_r >= distance
             max_force = (
                 link_attr_breaking_force if attract else link_repel_breaking_force
             )
             if self.sim.stress_visualization:
-                if max_force > 0:
-                    percentage = round(abs(magnitude) / max_force, 2)
+                if max_force > 0.0:
+                    percentage: float = round(abs(magnitude) / max_force, 2)
                 else:
-                    percentage = 1 if max_force == 0 else 0
+                    percentage = 1.0 if max_force == 0.0 else 0.0
 
                 self.sim.link_colors.append([self, part, min(percentage, 1)])
 
@@ -200,6 +201,27 @@ class Particle:
                 self.sim.unlink([self, part])
 
         return direction * magnitude
+
+    def _compute_magnitude(
+        self,
+        part: Self,
+        attr: float,
+        distance: float,
+        gravity: bool,
+        is_in_group: bool,
+        is_linked: bool,
+        repel: float,
+        repel_r: float,
+        rest_distance: float,
+    ) -> float:
+        if distance < repel_r:
+            return -repel * rest_distance / 10
+        elif is_in_group or is_linked:
+            if gravity:
+                return attr * self.m * part.m / distance**2 * 10
+            else:
+                return attr * rest_distance / 3000
+        return 0.0
 
     def _return_particles(self, grid: _Grid) -> list[Self]:
         if self.return_none:
@@ -246,7 +268,7 @@ class Particle:
                         continue
 
                     # Attract / repel
-                    repel_r = None
+                    repel_r: Optional[float] = None
                     if is_linked and self.link_lengths[p] != "repel":
                         repel_r = self.link_lengths[p]
 
@@ -254,77 +276,24 @@ class Particle:
                     distance: float = np.linalg.norm(direction)
                     if distance != 0:
                         direction = direction / distance
-                    conditions = [
+                    conditions: Tuple[bool, bool] = (
                         (p.attr != 0 or p.repel != 0)
                         and (p.attr_r < 0 or p.attr_r < 0 or distance < p.attr_r),
                         (self.attr != 0 or self.repel != 0)
                         and (
                             self.attr_r < 0 or self.attr_r < 0 or distance < self.attr_r
                         ),
-                    ]
+                    )
                     if conditions[0] or conditions[1]:
-                        if distance == 0:
-                            if self.gravity_mode or p.gravity_mode:
-                                force = np.zeros(2)
-                            else:
-                                force = np.random.uniform(-10, 10, 2)
-                                force = force / np.linalg.norm(force) * -self.repel
-                        else:
-                            if self.sim.calculate_radii_diff:
-                                force = np.zeros(2)
-                                inputs = []
-
-                                for i, particle in enumerate([p, self]):
-                                    if conditions[i]:
-                                        repel_r_: float = (
-                                            particle.repel_r
-                                            if repel_r is None
-                                            else repel_r
-                                        )
-
-                                        rest_distance = abs(distance - repel_r_)
-                                        new_inputs = [
-                                            distance,
-                                            direction,
-                                            repel_r_,
-                                            particle.attr,
-                                            particle.repel,
-                                            rest_distance,
-                                            is_in_group,
-                                            is_linked,
-                                            particle.link_attr_breaking_force,
-                                            particle.link_repel_breaking_force,
-                                            particle.gravity_mode,
-                                        ]
-
-                                        if i == 1 and new_inputs == inputs:
-                                            force *= 2
-                                        else:
-                                            force += self._calc_attraction_force(
-                                                *new_inputs, particle
-                                            )
-                                            inputs = new_inputs.copy()
-                            else:
-                                repel_r_ = (
-                                    max(self.repel_r, p.repel_r)
-                                    if repel_r is None
-                                    else repel_r
-                                )
-
-                                force = self._calc_attraction_force(
-                                    distance,
-                                    direction,
-                                    repel_r_,
-                                    (p.attr + self.attr),
-                                    (p.repel + self.repel),
-                                    abs(distance - repel_r_),
-                                    is_in_group,
-                                    is_linked,
-                                    p.link_attr_breaking_force,
-                                    p.link_repel_breaking_force,
-                                    self.gravity_mode or p.gravity_mode,
-                                    p,
-                                )
+                        force = self._compute_force(
+                            p,
+                            conditions,
+                            direction,
+                            distance,
+                            is_in_group,
+                            is_linked,
+                            repel_r,
+                        )
 
                         self._apply_force(force)
                         p.forces.append(-force)
@@ -411,3 +380,69 @@ class Particle:
 
         self.collisions = []
         self.forces = []
+
+    def _compute_force(
+        self,
+        p: Self,
+        conditions: Tuple[bool, bool],
+        direction: npt.NDArray[np.float_],
+        distance: float,
+        is_in_group: bool,
+        is_linked: bool,
+        repel_r: float,
+    ) -> npt.NDArray[np.float_]:
+        if distance == 0:
+            if self.gravity_mode or p.gravity_mode:
+                force = np.zeros(2)
+            else:
+                force = np.random.uniform(-10, 10, 2)
+                force = force / np.linalg.norm(force) * -self.repel
+        else:
+            if self.sim.calculate_radii_diff:
+                force = np.zeros(2)
+                inputs = []
+
+                for i, particle in enumerate([p, self]):
+                    if conditions[i]:
+                        repel_r_: float = (
+                            particle.repel_r if repel_r is None else repel_r
+                        )
+
+                        rest_distance = abs(distance - repel_r_)
+                        new_inputs = [
+                            distance,
+                            direction,
+                            repel_r_,
+                            particle.attr,
+                            particle.repel,
+                            rest_distance,
+                            is_in_group,
+                            is_linked,
+                            particle.link_attr_breaking_force,
+                            particle.link_repel_breaking_force,
+                            particle.gravity_mode,
+                        ]
+
+                        if i == 1 and new_inputs == inputs:
+                            force *= 2
+                        else:
+                            force += self._calc_attraction_force(particle, *new_inputs)
+                            inputs = new_inputs.copy()
+            else:
+                repel_r_ = max(self.repel_r, p.repel_r) if repel_r is None else repel_r
+
+                force = self._calc_attraction_force(
+                    p,
+                    distance,
+                    direction,
+                    repel_r_,
+                    (p.attr + self.attr),
+                    (p.repel + self.repel),
+                    abs(distance - repel_r_),
+                    is_in_group,
+                    is_linked,
+                    p.link_attr_breaking_force,
+                    p.link_repel_breaking_force,
+                    self.gravity_mode or p.gravity_mode,
+                )
+        return force
