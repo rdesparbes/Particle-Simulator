@@ -203,55 +203,53 @@ class Particle(ParticleData):
     ) -> npt.NDArray[np.float_]:
         if distance == 0.0:
             if self.gravity_mode or p.gravity_mode:
-                force = np.zeros(2)
-            else:
-                force = np.random.uniform(-10, 10, 2)
-                force = force / np.linalg.norm(force) * -self.repel
-        else:
-            repel_r: Optional[float] = None
-            if is_linked:
-                repel_radius = self.link_lengths[p]
-                if repel_radius != "repel":
-                    repel_r = repel_radius
+                return np.zeros(2)
+            force = np.random.uniform(-10, 10, 2)
+            return force / np.linalg.norm(force) * -self.repel
 
-            if self.sim.calculate_radii_diff:
-                force = np.zeros(2)
-                particles: Tuple[Particle, Particle] = p, self
-                for i, particle in enumerate(particles):
-                    if conditions[i]:
-                        repel_r_: float = (
-                            particle.repel_r if repel_r is None else repel_r
+        repel_r: Optional[float] = None
+        if is_linked:
+            repel_radius = self.link_lengths[p]
+            if repel_radius != "repel":
+                repel_r = repel_radius
+
+        if self.sim.calculate_radii_diff:
+            force = np.zeros(2)
+            particles: Tuple[Particle, Particle] = p, self
+            for i, particle in enumerate(particles):
+                if conditions[i]:
+                    repel_r_: float = particle.repel_r if repel_r is None else repel_r
+
+                    if i == 1 and self._are_interaction_attributes_equal(p):
+                        force *= (
+                            2  # Optimization to avoid having to compute the same force
                         )
+                    else:
+                        magnitude = self._calc_magnitude(
+                            part=particle,
+                            distance=distance,
+                            repel_r=repel_r_,
+                            attr=particle.attr,
+                            repel=particle.repel,
+                            is_in_group=is_in_group,
+                            is_linked=is_linked,
+                            gravity=particle.gravity_mode,
+                        )
+                        force += magnitude * direction
+            return force
 
-                        if i == 1 and self._are_interaction_attributes_equal(p):
-                            force *= 2  # Optimization to avoid having to compute the same force
-                        else:
-                            magnitude = self._calc_magnitude(
-                                part=particle,
-                                distance=distance,
-                                repel_r=repel_r_,
-                                attr=particle.attr,
-                                repel=particle.repel,
-                                is_in_group=is_in_group,
-                                is_linked=is_linked,
-                                gravity=particle.gravity_mode,
-                            )
-                            force += magnitude * direction
-            else:
-                repel_r_ = max(self.repel_r, p.repel_r) if repel_r is None else repel_r
-
-                magnitude = self._calc_magnitude(
-                    part=p,
-                    distance=distance,
-                    repel_r=repel_r_,
-                    attr=p.attr + self.attr,
-                    repel=p.repel + self.repel,
-                    is_in_group=is_in_group,
-                    is_linked=is_linked,
-                    gravity=self.gravity_mode or p.gravity_mode,
-                )
-                force = magnitude * direction
-        return force
+        repel_r_ = max(self.repel_r, p.repel_r) if repel_r is None else repel_r
+        magnitude = self._calc_magnitude(
+            part=p,
+            distance=distance,
+            repel_r=repel_r_,
+            attr=p.attr + self.attr,
+            repel=p.repel + self.repel,
+            is_in_group=is_in_group,
+            is_linked=is_linked,
+            gravity=self.gravity_mode or p.gravity_mode,
+        )
+        return magnitude * direction
 
 
 class Link(NamedTuple):
