@@ -2,7 +2,15 @@ import math
 import time
 import tkinter as tk
 from tkinter import messagebox
-from typing import List, Collection, Iterable, Optional, Any, Dict, Tuple
+from typing import (
+    List,
+    Collection,
+    Iterable,
+    Optional,
+    Any,
+    Dict,
+    Tuple,
+)
 
 import cv2
 import numpy as np
@@ -35,9 +43,9 @@ class Simulation:
 
         self.temperature = temperature
         self.g = g  # gravity
-        self.g_dir: npt.NDArray[np.float_] = np.array([0, 1])
-        self.g_vector: npt.NDArray[np.float_] = np.array([0, -g])
-        self.wind_force: npt.NDArray[np.float_] = np.array([0, 0])
+        self.g_dir: npt.NDArray[np.float_] = np.array([0.0, 1.0])
+        self.g_vector: npt.NDArray[np.float_] = np.array([0.0, -g])
+        self.wind_force: npt.NDArray[np.float_] = np.array([0.0, 0.0])
         self.air_res = air_res
         self.air_res_calc = 1.0 - self.air_res
         self.ground_friction = ground_friction
@@ -47,7 +55,7 @@ class Simulation:
         self.fps_update_delay = fps_update_delay
         self.mx, self.my = 0, 0
         self.prev_mx, self.prev_my = 0, 0
-        self.mouse_mode: Mode = "MOVE"  # 'SELECT', 'MOVE', 'ADD'
+        self.mouse_mode: Mode = "MOVE"
         self.rotate_mode = False
         self.min_spawn_delay = 0.05
         self.min_hold_delay = 1
@@ -115,7 +123,7 @@ class Simulation:
                 return True
         return False
 
-    def mouse_p(self, event):
+    def mouse_p(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
         self.mouse_down_start = time.time()
         self.mouse_down = True
@@ -132,7 +140,7 @@ class Simulation:
 
             self.add_particle(event.x, event.y)
 
-    def mouse_m(self, event):
+    def mouse_m(self, event: tk.Event) -> None:
         if self.mouse_mode == "SELECT":
             for p in self.particles:
                 self._mouse_p(p, event)
@@ -142,14 +150,14 @@ class Simulation:
         ):
             self.add_particle(event.x, event.y)
 
-    def mouse_r(self, event):
+    def mouse_r(self, _event: tk.Event) -> None:
         self.mouse_down = False
         if self.mouse_mode == "MOVE" or self.pasting:
             for p in self.particles:
                 p.mouse = False
         self.pasting = False
 
-    def right_mouse(self, event):
+    def right_mouse(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
         temp = self.particles.copy()
         for p in temp:
@@ -158,7 +166,9 @@ class Simulation:
             ):
                 self.remove_particle(p)
 
-    def rotate_2d(self, x, y, cx, cy, angle):
+    def rotate_2d(
+        self, x: float, y: float, cx: float, cy: float, angle: float
+    ) -> Tuple[float, float]:
         angle_rad = -np.radians(angle)
         dist_x = x - cx
         dist_y = y - cy
@@ -170,7 +180,7 @@ class Simulation:
 
         return x, y
 
-    def on_scroll(self, event):
+    def on_scroll(self, event: tk.Event) -> None:
         if self.rotate_mode:
             for p in self.selection:
                 p.x, p.y = self.rotate_2d(
@@ -179,7 +189,7 @@ class Simulation:
         else:
             self.mr = max(self.mr * 2 ** (event.delta / 500), 1)
 
-    def on_press(self, key):
+    def on_press(self, key: Key) -> None:
         if self.focus:
             # SPACE to pause
             if key == Key.space:
@@ -192,46 +202,46 @@ class Simulation:
             elif key == Key.shift_l or key == Key.shift_r:
                 self.shift = True
             # CTRL + A to select all
-            elif KeyCode.from_char(key).char == r"'\x01'":
+            elif KeyCode.from_char(str(key)).char == r"'\x01'":
                 for p in self.particles:
                     self.select_particle(p)
             # CTRL + C to copy
-            elif KeyCode.from_char(key).char == r"'\x03'":
+            elif KeyCode.from_char(str(key)).char == r"'\x03'":
                 self.copy_selected()
             # CTRL + V to copy
-            elif KeyCode.from_char(key).char == r"'\x16'":
+            elif KeyCode.from_char(str(key)).char == r"'\x16'":
                 self.paste()
             # CTRL + X to cut
-            elif KeyCode.from_char(key).char == r"'\x18'":
+            elif KeyCode.from_char(str(key)).char == r"'\x18'":
                 self.cut()
             # CTRL + L and CTRL + SHIFT + L to lock and 'unlock'
-            elif KeyCode.from_char(key).char == r"'\x0c'" and not self.shift:
+            elif KeyCode.from_char(str(key)).char == r"'\x0c'" and not self.shift:
                 for p in self.selection:
                     p.locked = True
-            elif KeyCode.from_char(key).char == r"'\x0c'" and self.shift:
+            elif KeyCode.from_char(str(key)).char == r"'\x0c'" and self.shift:
                 for p in self.selection:
                     p.locked = False
             # L to link, SHIFT + L to unlink and ALT GR + L to fit-link
-            elif KeyCode.from_char(key).char == "'l'":
+            elif KeyCode.from_char(str(key)).char == "'l'":
                 self.link_selection()
-            elif KeyCode.from_char(key).char == "<76>":
+            elif KeyCode.from_char(str(key)).char == "<76>":
                 self.link_selection(fit_link=True)
-            elif KeyCode.from_char(key).char == "'L'":
+            elif KeyCode.from_char(str(key)).char == "'L'":
                 self.unlink_selection()
             # R to enter rotate-mode
-            elif KeyCode.from_char(key).char == "'r'":
+            elif KeyCode.from_char(str(key)).char == "'r'":
                 self.rotate_mode = True
             # CTRL + S to save
-            elif KeyCode.from_char(key).char == r"'\x13'":
+            elif KeyCode.from_char(str(key)).char == r"'\x13'":
                 self.start_save = True  # Threading-issues
             # CTRL + O to load / open
-            elif KeyCode.from_char(key).char == r"'\x0f'":
+            elif KeyCode.from_char(str(key)).char == r"'\x0f'":
                 self.start_load = True
 
-    def on_release(self, key) -> None:
+    def on_release(self, key: Key) -> None:
         if key == Key.shift_l or key == Key.shift_r:
             self.shift = False
-        elif KeyCode.from_char(key).char == "'r'":
+        elif KeyCode.from_char(str(key)).char == "'r'":
             self.rotate_mode = False
 
     def update_grid(self, *event) -> None:
@@ -331,6 +341,7 @@ class Simulation:
             return kwargs
         except Exception as error:
             self.error = Error("Input-Error", error)
+        return None
 
     def select_particle(self, particle: Particle) -> None:
         if particle in self.selection:
@@ -348,32 +359,30 @@ class Simulation:
             ]
         self.particles.append(particle)
 
+    def _replace_particle(self, p: Particle, kwargs: Dict[str, Any]) -> Particle:
+        temp_link_lengths = p.link_lengths.copy()
+        px, py = p.x, p.y
+        self.remove_particle(p)
+        p = Particle(self, px, py, **kwargs)
+        self.register_particle(p)
+        for link, length in temp_link_lengths.items():
+            self.link([link, p], fit_link=length != "repel", distance=length)
+        return p
+
     def set_selected(self) -> None:
         kwargs = self.inputs2dict()
         if kwargs is not None:
             temp = self.selection.copy()
             for p in temp:
-                temp_link_lengths = p.link_lengths.copy()
-                px, py = p.x, p.y
-                self.remove_particle(p)
-                p = Particle(self, px, py, **kwargs)
-                self.register_particle(p)
+                p = self._replace_particle(p, kwargs)
                 self.selection.append(p)
-                for link, length in temp_link_lengths.items():
-                    self.link([link, p], fit_link=length != "repel", distance=length)
 
     def set_all(self) -> None:
         temp = self.particles.copy()
         for p in temp:
             kwargs = self.inputs2dict()  # Update for each particle in case of 'random'
             if kwargs is not None:
-                temp_link_lengths = p.link_lengths.copy()
-                px, py = p.x, p.y
-                self.remove_particle(p)
-                p = Particle(self, px, py, **kwargs)
-                self.register_particle(p)
-                for link, length in temp_link_lengths.items():
-                    self.link([link, p], fit_link=length != "repel", distance=length)
+                self._replace_particle(p, kwargs)
 
     def copy_from_selected(self) -> None:
         variable_names = {
@@ -492,17 +501,18 @@ class Simulation:
         distance: Optional[float] = None,
     ) -> None:
         for p in particles:
-            if fit_link:
-                position = np.array([p.x, p.y])
-
+            position: Optional[npt.NDArray[np.float_]] = (
+                np.array([p.x, p.y]) if fit_link else None
+            )
             for particle in particles:
-                if fit_link:
-                    length = (
+                if position is not None:
+                    p.link_lengths[particle] = (
                         np.linalg.norm(position - np.array([particle.x, particle.y]))
                         if distance is None
                         else distance
                     )
-                p.link_lengths[particle] = length if fit_link else "repel"
+                else:
+                    p.link_lengths[particle] = "repel"
 
             p.linked = list(set(p.linked + particles.copy()))
             p.linked.remove(p)
