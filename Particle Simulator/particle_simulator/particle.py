@@ -14,18 +14,17 @@ class Particle(ParticleData):
         super().__init__(*args, **kwargs)
         self.sim = sim
 
-    def _calc_attraction_force(
+    def _calc_magnitude(
         self,
         part: Self,
         distance: float,
-        direction: npt.NDArray[np.float_],
         repel_r: float,
         attr: float,
         repel: float,
         is_in_group: bool,
         is_linked: bool,
         gravity: bool,
-    ) -> npt.NDArray[np.float_]:
+    ) -> float:
         magnitude = self._compute_magnitude(
             part,
             attr,
@@ -59,7 +58,7 @@ class Particle(ParticleData):
             if 0 <= max_force <= abs(magnitude):
                 self.sim.unlink([self, part])
 
-        return direction * magnitude
+        return magnitude
 
     def _return_particles(self, grid: _Grid) -> list[Self]:
         if self.return_none:
@@ -89,67 +88,8 @@ class Particle(ParticleData):
                 near_particles = self.sim.particles
 
             if not self.locked:
-                for p in near_particles:
-                    is_in_group = (
-                        not self.separate_group and p in self.sim.groups[self.group]
-                    )
-                    is_linked = p in self.linked
-                    if (
-                        p == self
-                        or (
-                            not self.linked_group_particles
-                            and not is_linked
-                            and is_in_group
-                        )
-                        or p in self.collisions
-                    ):
-                        continue
-
-                    # Attract / repel
-                    repel_r: Optional[float] = None
-                    if is_linked:
-                        repel_radius = self.link_lengths[p]
-                        if repel_radius != "repel":
-                            repel_r = repel_radius
-
-                    direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
-                    distance: float = np.linalg.norm(direction)
-                    if distance != 0:
-                        direction = direction / distance
-                    conditions: Tuple[bool, bool] = (
-                        p._interacts(distance),
-                        self._interacts(distance),
-                    )
-                    if any(conditions):
-                        force = self._compute_force(
-                            p,
-                            conditions,
-                            direction,
-                            distance,
-                            is_in_group,
-                            is_linked,
-                            repel_r,
-                        )
-
-                        self._apply_force(force)
-                        p.forces.append(-force)
-                        p.collisions.append(self)
-
-                    if self.collision_bool and distance < self.r + p.r:
-                        new_speed = self._compute_collision_speed(p)
-                        p.v = p._compute_collision_speed(self)
-                        self.v = new_speed
-
-                        # Visual overlap fix
-                        translate_vector = (
-                            -direction * (self.r + p.r) - -direction * distance
-                        )
-                        if not self.mouse:
-                            self.x += translate_vector[0] * (self.m / (self.m + p.m))
-                            self.y += translate_vector[1] * (self.m / (self.m + p.m))
-                        if not p.mouse and not p.locked:
-                            p.x -= translate_vector[0] * (p.m / (self.m + p.m))
-                            p.y -= translate_vector[1] * (p.m / (self.m + p.m))
+                for near_particle in near_particles:
+                    self._compute_interactions(near_particle)
 
             if not self.mouse and not self.locked:
                 self.v += np.clip(self.a, -2, 2) * self.sim.speed
@@ -204,6 +144,60 @@ class Particle(ParticleData):
         self.collisions = []
         self.forces = []
 
+    def _compute_interactions(self, p: Self) -> None:
+        is_in_group = not self.separate_group and p in self.sim.groups[self.group]
+        is_linked = p in self.linked
+        if (
+            p == self
+            or (not self.linked_group_particles and not is_linked and is_in_group)
+            or p in self.collisions
+        ):
+            return
+
+        # Attract / repel
+        repel_r: Optional[float] = None
+        if is_linked:
+            repel_radius = self.link_lengths[p]
+            if repel_radius != "repel":
+                repel_r = repel_radius
+
+        direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
+        distance: float = np.linalg.norm(direction)
+        if distance != 0:
+            direction = direction / distance
+        conditions: Tuple[bool, bool] = (
+            p._interacts(distance),
+            self._interacts(distance),
+        )
+        if any(conditions):
+            force = self._compute_force(
+                p,
+                conditions,
+                direction,
+                distance,
+                is_in_group,
+                is_linked,
+                repel_r,
+            )
+
+            self._apply_force(force)
+            p.forces.append(-force)
+            p.collisions.append(self)
+
+        if self.collision_bool and distance < self.r + p.r:
+            new_speed = self._compute_collision_speed(p)
+            p.v = p._compute_collision_speed(self)
+            self.v = new_speed
+
+            # Visual overlap fix
+            translate_vector = -direction * (self.r + p.r) - -direction * distance
+            if not self.mouse:
+                self.x += translate_vector[0] * (self.m / (self.m + p.m))
+                self.y += translate_vector[1] * (self.m / (self.m + p.m))
+            if not p.mouse and not p.locked:
+                p.x -= translate_vector[0] * (p.m / (self.m + p.m))
+                p.y -= translate_vector[1] * (p.m / (self.m + p.m))
+
     def _compute_force(
         self,
         p: Self,
@@ -233,10 +227,9 @@ class Particle(ParticleData):
                         if i == 1 and self._are_interaction_attributes_equal(p):
                             force *= 2  # Optimization to avoid having to compute the same force
                         else:
-                            force += self._calc_attraction_force(
+                            magnitude = self._calc_magnitude(
                                 part=particle,
                                 distance=distance,
-                                direction=direction,
                                 repel_r=repel_r_,
                                 attr=particle.attr,
                                 repel=particle.repel,
@@ -244,20 +237,21 @@ class Particle(ParticleData):
                                 is_linked=is_linked,
                                 gravity=particle.gravity_mode,
                             )
+                            force += magnitude * direction
             else:
                 repel_r_ = max(self.repel_r, p.repel_r) if repel_r is None else repel_r
 
-                force = self._calc_attraction_force(
-                    p,
-                    distance,
-                    direction,
-                    repel_r_,
-                    p.attr + self.attr,
-                    p.repel + self.repel,
-                    is_in_group,
-                    is_linked,
-                    self.gravity_mode or p.gravity_mode,
+                magnitude = self._calc_magnitude(
+                    part=p,
+                    distance=distance,
+                    repel_r=repel_r_,
+                    attr=p.attr + self.attr,
+                    repel=p.repel + self.repel,
+                    is_in_group=is_in_group,
+                    is_linked=is_linked,
+                    gravity=self.gravity_mode or p.gravity_mode,
                 )
+                force = magnitude * direction
         return force
 
 
