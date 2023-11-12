@@ -155,11 +155,6 @@ class Particle(ParticleData):
             return
 
         # Attract / repel
-        repel_r: Optional[float] = None
-        if is_linked:
-            repel_radius = self.link_lengths[p]
-            if repel_radius != "repel":
-                repel_r = repel_radius
 
         direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
         distance: float = np.linalg.norm(direction)
@@ -177,7 +172,6 @@ class Particle(ParticleData):
                 distance,
                 is_in_group,
                 is_linked,
-                repel_r,
             )
 
             self._apply_force(force)
@@ -206,7 +200,6 @@ class Particle(ParticleData):
         distance: float,
         is_in_group: bool,
         is_linked: bool,
-        repel_r: Optional[float],
     ) -> npt.NDArray[np.float_]:
         if distance == 0.0:
             if self.gravity_mode or p.gravity_mode:
@@ -215,6 +208,12 @@ class Particle(ParticleData):
                 force = np.random.uniform(-10, 10, 2)
                 force = force / np.linalg.norm(force) * -self.repel
         else:
+            repel_r: Optional[float] = None
+            if is_linked:
+                repel_radius = self.link_lengths[p]
+                if repel_radius != "repel":
+                    repel_r = repel_radius
+
             if self.sim.calculate_radii_diff:
                 force = np.zeros(2)
                 particles: Tuple[Particle, Particle] = p, self
