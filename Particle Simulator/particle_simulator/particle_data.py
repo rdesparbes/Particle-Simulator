@@ -107,8 +107,8 @@ class ParticleData:
         return 0.0
 
     def _interacts(self, distance: float) -> bool:
-        return (self.attr != 0 or self.repel != 0) and (
-            self.attr_r < 0 or self.attr_r < 0 or distance < self.attr_r
+        return (self.attr != 0.0 or self.repel != 0.0) and (
+            self.attr_r < 0 or distance < self.attr_r
         )
 
     def _compute_collision_speed(self, other: Self) -> npt.NDArray[np.float_]:

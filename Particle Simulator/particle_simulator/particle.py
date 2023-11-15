@@ -119,35 +119,24 @@ class Particle(ParticleData):
                     self.y += self.v[1] * self.sim.speed
 
         if self.mouse:
-            self.x += self.sim.mx - self.sim.prev_mx
-            self.y += self.sim.my - self.sim.prev_my
+            delta_mx = self.sim.mx - self.sim.prev_mx
+            delta_my = self.sim.my - self.sim.prev_my
+            self.x += delta_mx
+            self.y += delta_my
             if not self.sim.paused:
-                self.v = (
-                    np.array(
-                        [
-                            self.sim.mx - self.sim.prev_mx,
-                            self.sim.my - self.sim.prev_my,
-                        ],
-                        dtype=np.float64,
-                    )
-                    / self.sim.speed
-                )
+                self.v = np.divide([delta_mx, delta_my], self.sim.speed)
 
         if self.sim.right and self.x + self.r >= self.sim.width:
-            self.v[0] *= -self.bounciness
-            self.v[1] *= 1 - self.sim.ground_friction
+            self.v *= [-self.bounciness, 1 - self.sim.ground_friction]
             self.x = self.sim.width - self.r
         if self.sim.left and self.x - self.r <= 0:
-            self.v[0] *= -self.bounciness
-            self.v[1] *= 1 - self.sim.ground_friction
+            self.v *= [-self.bounciness, 1 - self.sim.ground_friction]
             self.x = self.r
         if self.sim.bottom and self.y + self.r >= self.sim.height:
-            self.v[1] *= -self.bounciness
-            self.v[0] *= 1 - self.sim.ground_friction
+            self.v *= [1 - self.sim.ground_friction, -self.bounciness]
             self.y = self.sim.height - self.r
         if self.sim.top and self.y - self.r <= 0:
-            self.v[1] *= -self.bounciness
-            self.v[0] *= 1 - self.sim.ground_friction
+            self.v *= [1 - self.sim.ground_friction, -self.bounciness]
             self.y = self.r
 
         if self.sim.void_edges and (
@@ -203,13 +192,15 @@ class Particle(ParticleData):
             self.v = new_speed
 
             # Visual overlap fix
-            translate_vector = -direction * (self.r + p.r) - -direction * distance
+            translate_vector = direction * (distance - (self.r + p.r))
             if not self.mouse:
-                self.x += translate_vector[0] * (self.m / (self.m + p.m))
-                self.y += translate_vector[1] * (self.m / (self.m + p.m))
+                delta_pos = translate_vector * (self.m / (self.m + p.m))
+                self.x += delta_pos[0]
+                self.y += delta_pos[1]
             if not p.mouse and not p.locked:
-                p.x -= translate_vector[0] * (p.m / (self.m + p.m))
-                p.y -= translate_vector[1] * (p.m / (self.m + p.m))
+                delta_pos = translate_vector * (p.m / (self.m + p.m))
+                p.x -= delta_pos[0]
+                p.y -= delta_pos[1]
 
     def _compute_force(
         self,
@@ -240,9 +231,8 @@ class Particle(ParticleData):
                     repel_r_: float = particle.repel_r if repel_r is None else repel_r
 
                     if i == 1 and self._are_interaction_attributes_equal(p):
-                        force *= (
-                            2  # Optimization to avoid having to compute the same force
-                        )
+                        # Optimization to avoid having to compute the same force twice:
+                        force *= 2
                     else:
                         magnitude = self._calc_magnitude(
                             part=particle,
