@@ -22,7 +22,7 @@ from .error import Error
 from .grid import Grid
 from .gui import GUI, Mode
 from .particle import Particle, Link
-from .saveManager import SaveManager
+from .save_manager import SaveManager
 
 
 class Simulation:
