@@ -9,6 +9,7 @@ from typing import (
     Dict,
     Union,
     Literal,
+    Iterable,
 )
 
 import numpy as np
@@ -17,7 +18,6 @@ import numpy.typing as npt
 from .particle_data import ParticleData
 
 _Simulation = Any
-_Grid = Any
 
 
 class Particle(ParticleData):
@@ -94,20 +94,7 @@ class Particle(ParticleData):
 
         return magnitude
 
-    def _return_particles(self, grid: _Grid) -> list[Self]:
-        if self.return_none:
-            return []
-        if self.return_all:
-            return self.sim.particles
-
-        if self.attr == 0 and self.repel == 0 and not self.collision_bool:
-            return []
-        if self.attr_r < 0 and self.attr != 0:
-            return self.sim.particles
-
-        return grid.return_particles(self)
-
-    def update(self, grid: _Grid) -> None:
+    def update(self, near_particles: Iterable[Self]) -> None:
         if not self.sim.paused:
             self.a = self.sim.g_vector * np.sign(self.m)  # Gravity
 
@@ -116,23 +103,20 @@ class Particle(ParticleData):
             for force in self.forces:
                 self._apply_force(force)
 
-            if self.sim.use_grid:
-                near_particles = self._return_particles(grid)
-            else:
-                near_particles = self.sim.particles
-
             if not self.locked:
                 for near_particle in near_particles:
                     self._compute_interactions(near_particle)
 
-            if not self.mouse and not self.locked:
-                self.v += np.clip(self.a, -2, 2) * self.sim.speed
-                self.v += (
-                    np.random.uniform(-1, 1, 2) * self.sim.temperature * self.sim.speed
-                )
-                self.v *= self.sim.air_res_calc
-                self.x += self.v[0] * self.sim.speed
-                self.y += self.v[1] * self.sim.speed
+                if not self.mouse:
+                    self.v += np.clip(self.a, -2, 2) * self.sim.speed
+                    self.v += (
+                        np.random.uniform(-1, 1, 2)
+                        * self.sim.temperature
+                        * self.sim.speed
+                    )
+                    self.v *= self.sim.air_res_calc
+                    self.x += self.v[0] * self.sim.speed
+                    self.y += self.v[1] * self.sim.speed
 
         if self.mouse:
             self.x += self.sim.mx - self.sim.prev_mx
@@ -185,9 +169,8 @@ class Particle(ParticleData):
         is_linked = p in self.linked
 
         if (
-            (not self.linked_group_particles and not is_linked and is_in_group)
-            or p in self.collisions
-        ):
+            not self.linked_group_particles and not is_linked and is_in_group
+        ) or p in self.collisions:
             return
 
         # Attract / repel

@@ -611,7 +611,15 @@ class Simulation:
                 self.start_load = False
 
             for particle in self.particles:
-                particle.update(self.grid)
+                if particle.return_none:
+                    near_particles = []
+                elif particle.return_all:
+                    near_particles = self.particles
+                elif self.use_grid:
+                    near_particles = self.grid.return_particles(particle)
+                else:
+                    near_particles = self.particles
+                particle.update(near_particles)
 
             if self.gui.show_links.get():
                 if self.stress_visualization and not self.paused:

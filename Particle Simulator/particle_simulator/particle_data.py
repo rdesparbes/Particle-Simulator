@@ -48,8 +48,6 @@ class ParticleData:
         self.repel = repulsion_strength
         self.gravity_mode = gravity_mode
 
-        self.return_all: bool = self._return_all
-        self.return_none: bool = self._return_none
         self.range_: int = self._range
 
         self.linked_group_particles = linked_group_particles
@@ -62,11 +60,11 @@ class ParticleData:
         self.mouse = False
 
     @property
-    def _return_all(self) -> bool:
+    def return_all(self) -> bool:
         return self.attr_r < 0 and self.attr != 0.0
 
     @property
-    def _return_none(self) -> bool:
+    def return_none(self) -> bool:
         return self.attr == 0.0 and self.repel == 0.0 and not self.collision_bool
 
     @property
@@ -82,8 +80,6 @@ class ParticleData:
         return self.r
 
     def init_constants(self) -> None:
-        self.return_all = self._return_all
-        self.return_none = self._return_none
         self.range_ = self._range
 
     def _apply_force(self, force: npt.NDArray[np.float_]) -> None:
