@@ -4,6 +4,7 @@ import threading
 import time
 import tkinter as tk
 from tkinter import ttk, colorchooser, messagebox
+from tkinter import font as tkfont
 from typing import Literal
 
 from .error import Error
@@ -927,7 +928,7 @@ class CodeWindow:
         self.scrollbar.grid(row=0, column=1, sticky="nsew")
         self.code_box["yscrollcommand"] = self.scrollbar.set
 
-        font = tk.tkfont.Font(font=self.code_box["font"])
+        font = tkfont.Font(font=self.code_box["font"])
         tab = font.measure(" " * 4)
         self.code_box.config(tabs=tab)
 
