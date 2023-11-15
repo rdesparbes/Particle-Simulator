@@ -1,4 +1,15 @@
-from typing import Self, Any, Optional, Tuple, NamedTuple
+from typing import (
+    Self,
+    Any,
+    Optional,
+    Tuple,
+    NamedTuple,
+    List,
+    Sequence,
+    Dict,
+    Union,
+    Literal,
+)
 
 import numpy as np
 import numpy.typing as npt
@@ -12,7 +23,30 @@ _Grid = Any
 class Particle(ParticleData):
     def __init__(self, sim: _Simulation, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+
+        self.collisions: List[ParticleData] = []
+        self.forces: List[npt.NDArray[np.float_]] = []
+        self.linked: List[ParticleData] = []
+        self.link_lengths: Dict[ParticleData, Union[Literal["repel"], float]] = {}
         self.sim = sim
+
+    def return_dict(self, index_source: Sequence[Self]) -> Dict[str, Any]:
+        dictionary: Dict[str, Any] = super().__dict__.copy()
+        del dictionary["sim"]
+        del dictionary["collisions"]
+        del dictionary["forces"]
+
+        dictionary["linked"] = [
+            index_source.index(particle)
+            for particle in self.linked
+            if particle in index_source
+        ]
+        dictionary["link_lengths"] = {
+            index_source.index(particle): value
+            for particle, value in self.link_lengths.items()
+            if particle in index_source
+        }
+        return dictionary
 
     def _calc_magnitude(
         self,

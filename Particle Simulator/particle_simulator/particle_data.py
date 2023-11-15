@@ -1,4 +1,4 @@
-from typing import Self, List, Union, Literal, Dict, Any, Optional, Sequence
+from typing import Self, List, Union, Literal, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -53,17 +53,12 @@ class ParticleData:
         self.range_: Optional[int] = None
         self.init_constants()
 
-        self.linked: List[ParticleData] = []
-        self.link_lengths: Dict[ParticleData, Union[Literal["repel"], float]] = {}
         self.linked_group_particles = linked_group_particles
         self.link_attr_breaking_force = link_attr_breaking_force
         self.link_repel_breaking_force = link_repel_breaking_force
         self.separate_group = separate_group
 
         self.group = group
-
-        self.collisions: List[ParticleData] = []
-        self.forces: List[npt.NDArray[np.float_]] = []
 
         self.mouse = False
 
@@ -82,25 +77,6 @@ class ParticleData:
             self.range_ = self.repel_r
         else:
             self.range_ = self.r
-
-    def return_dict(self, index_source: Sequence[Self]) -> Dict[str, Any]:
-        dictionary = self.__dict__.copy()
-        dictionary.pop("sim", None)
-        del dictionary["collisions"]
-        del dictionary["forces"]
-
-        dictionary["linked"] = [
-            index_source.index(particle)
-            for particle in dictionary["linked"]
-            if particle in index_source
-        ]
-        dictionary["link_lengths"] = {
-            index_source.index(particle): value
-            for particle, value in dictionary["link_lengths"].items()
-            if particle in index_source
-        }
-
-        return dictionary
 
     def _apply_force(self, force: npt.NDArray[np.float_]) -> None:
         self.a = self.a + force / abs(self.m)
