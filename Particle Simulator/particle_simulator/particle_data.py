@@ -1,4 +1,4 @@
-from typing import Self, List, Union, Literal, Optional
+from typing import Self, List, Union, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -48,10 +48,9 @@ class ParticleData:
         self.repel = repulsion_strength
         self.gravity_mode = gravity_mode
 
-        self.return_all: Optional[bool] = None
-        self.return_none: Optional[bool] = None
-        self.range_: Optional[int] = None
-        self.init_constants()
+        self.return_all: bool = self._return_all
+        self.return_none: bool = self._return_none
+        self.range_: int = self._range
 
         self.linked_group_particles = linked_group_particles
         self.link_attr_breaking_force = link_attr_breaking_force
@@ -62,21 +61,30 @@ class ParticleData:
 
         self.mouse = False
 
-    def init_constants(self) -> None:
-        self.return_all = self.attr_r < 0 and self.attr != 0
-        self.return_none = (
-            self.attr == 0 and self.repel == 0 and not self.collision_bool
-        )
-        if self.attr != 0 and not (self.collision_bool and self.r > self.attr_r):
-            self.range_ = self.attr_r
-        elif (
-            self.attr == 0
-            and self.repel != 0
+    @property
+    def _return_all(self) -> bool:
+        return self.attr_r < 0 and self.attr != 0.0
+
+    @property
+    def _return_none(self) -> bool:
+        return self.attr == 0.0 and self.repel == 0.0 and not self.collision_bool
+
+    @property
+    def _range(self) -> int:
+        if self.attr != 0.0 and not (self.collision_bool and self.r > self.attr_r):
+            return self.attr_r
+        if (
+            self.attr == 0.0
+            and self.repel != 0.0
             and not (self.collision_bool and self.r > self.repel_r)
         ):
-            self.range_ = self.repel_r
-        else:
-            self.range_ = self.r
+            return self.repel_r
+        return self.r
+
+    def init_constants(self) -> None:
+        self.return_all = self._return_all
+        self.return_none = self._return_none
+        self.range_ = self._range
 
     def _apply_force(self, force: npt.NDArray[np.float_]) -> None:
         self.a = self.a + force / abs(self.m)

@@ -24,10 +24,10 @@ class Particle(ParticleData):
     def __init__(self, sim: _Simulation, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.collisions: List[ParticleData] = []
+        self.collisions: List[Particle] = []
         self.forces: List[npt.NDArray[np.float_]] = []
-        self.linked: List[ParticleData] = []
-        self.link_lengths: Dict[ParticleData, Union[Literal["repel"], float]] = {}
+        self.linked: List[Particle] = []
+        self.link_lengths: Dict[Particle, Union[Literal["repel"], float]] = {}
         self.sim = sim
 
     def return_dict(self, index_source: Sequence[Self]) -> Dict[str, Any]:
@@ -179,11 +179,13 @@ class Particle(ParticleData):
         self.forces = []
 
     def _compute_interactions(self, p: Self) -> None:
+        if p == self:
+            return
         is_in_group = not self.separate_group and p in self.sim.groups[self.group]
         is_linked = p in self.linked
+
         if (
-            p == self
-            or (not self.linked_group_particles and not is_linked and is_in_group)
+            (not self.linked_group_particles and not is_linked and is_in_group)
             or p in self.collisions
         ):
             return
