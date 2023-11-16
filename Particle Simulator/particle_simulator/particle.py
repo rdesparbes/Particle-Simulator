@@ -24,8 +24,7 @@ class Particle(ParticleData):
     def __init__(self, sim: _Simulation, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.collisions: List[Particle] = []
-        self.forces: List[npt.NDArray[np.float_]] = []
+        self._collisions: Dict[Particle, npt.NDArray[np.float_]] = {}
         self.linked: List[Particle] = []
         self.link_lengths: Dict[Particle, Union[Literal["repel"], float]] = {}
         self.sim = sim
@@ -33,8 +32,7 @@ class Particle(ParticleData):
     def return_dict(self, index_source: Sequence[Self]) -> Dict[str, Any]:
         dictionary: Dict[str, Any] = super().__dict__.copy()
         del dictionary["sim"]
-        del dictionary["collisions"]
-        del dictionary["forces"]
+        del dictionary["_collisions"]
 
         dictionary["linked"] = [
             index_source.index(particle)
@@ -100,7 +98,7 @@ class Particle(ParticleData):
 
             self._apply_force(self.sim.wind_force * self.r)
 
-            for force in self.forces:
+            for force in self._collisions.values():
                 self._apply_force(force)
 
             if not self.locked:
@@ -148,8 +146,7 @@ class Particle(ParticleData):
             self.sim.remove_particle(self)
             return
 
-        self.collisions = []
-        self.forces = []
+        self._collisions = {}
 
     def _compute_interactions(self, p: Self) -> None:
         if p == self:
@@ -159,7 +156,7 @@ class Particle(ParticleData):
 
         if (
             not self.linked_group_particles and not is_linked and is_in_group
-        ) or p in self.collisions:
+        ) or p in self._collisions:
             return
 
         # Attract / repel
@@ -183,8 +180,7 @@ class Particle(ParticleData):
             )
 
             self._apply_force(force)
-            p.forces.append(-force)
-            p.collisions.append(self)
+            p._collisions[self] = -force
 
         if self.collision_bool and distance < self.r + p.r:
             new_speed = self._compute_collision_speed(p)
