@@ -24,14 +24,15 @@ class Particle(ParticleData):
     def __init__(self, sim: _Simulation, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self._collisions: Dict[Particle, npt.NDArray[np.float_]] = {}
         self.linked: List[Particle] = []
         self.link_lengths: Dict[Particle, Union[Literal["repel"], float]] = {}
-        self.sim = sim
+
+        self._sim = sim
+        self._collisions: Dict[Particle, npt.NDArray[np.float_]] = {}
 
     def return_dict(self, index_source: Sequence[Self]) -> Dict[str, Any]:
         dictionary: Dict[str, Any] = super().__dict__.copy()
-        del dictionary["sim"]
+        del dictionary["_sim"]
         del dictionary["_collisions"]
 
         dictionary["linked"] = [
@@ -75,28 +76,28 @@ class Particle(ParticleData):
                 if attract
                 else part.link_repel_breaking_force
             )
-            if self.sim.stress_visualization:
+            if self._sim.stress_visualization:
                 if max_force > 0.0:
                     percentage: float = round(abs(magnitude) / max_force, 2)
                 else:
                     percentage = 1.0 if max_force == 0.0 else 0.0
 
-                self.sim.link_colors.append(
+                self._sim.link_colors.append(
                     Link(
                         particle_a=self, particle_b=part, percentage=min(percentage, 1)
                     )
                 )
 
             if 0 <= max_force <= abs(magnitude):
-                self.sim.unlink([self, part])
+                self._sim.unlink([self, part])
 
         return magnitude
 
     def update(self, near_particles: Iterable[Self]) -> None:
-        if not self.sim.paused:
-            self.a = self.sim.g_vector * np.sign(self.m)  # Gravity
+        if not self._sim.paused:
+            self.a = self._sim.g_vector * np.sign(self.m)  # Gravity
 
-            self._apply_force(self.sim.wind_force * self.r)
+            self._apply_force(self._sim.wind_force * self.r)
 
             for force in self._collisions.values():
                 self._apply_force(force)
@@ -106,44 +107,44 @@ class Particle(ParticleData):
                     self._compute_interactions(near_particle)
 
                 if not self.mouse:
-                    self.v += np.clip(self.a, -2, 2) * self.sim.speed
+                    self.v += np.clip(self.a, -2, 2) * self._sim.speed
                     self.v += (
                         np.random.uniform(-1, 1, 2)
-                        * self.sim.temperature
-                        * self.sim.speed
+                        * self._sim.temperature
+                        * self._sim.speed
                     )
-                    self.v *= self.sim.air_res_calc
-                    self.x += self.v[0] * self.sim.speed
-                    self.y += self.v[1] * self.sim.speed
+                    self.v *= self._sim.air_res_calc
+                    self.x += self.v[0] * self._sim.speed
+                    self.y += self.v[1] * self._sim.speed
 
         if self.mouse:
-            delta_mx = self.sim.mx - self.sim.prev_mx
-            delta_my = self.sim.my - self.sim.prev_my
+            delta_mx = self._sim.mx - self._sim.prev_mx
+            delta_my = self._sim.my - self._sim.prev_my
             self.x += delta_mx
             self.y += delta_my
-            if not self.sim.paused:
-                self.v = np.divide([delta_mx, delta_my], self.sim.speed)
+            if not self._sim.paused:
+                self.v = np.divide([delta_mx, delta_my], self._sim.speed)
 
-        if self.sim.right and self.x + self.r >= self.sim.width:
-            self.v *= [-self.bounciness, 1 - self.sim.ground_friction]
-            self.x = self.sim.width - self.r
-        if self.sim.left and self.x - self.r <= 0:
-            self.v *= [-self.bounciness, 1 - self.sim.ground_friction]
+        if self._sim.right and self.x + self.r >= self._sim.width:
+            self.v *= [-self.bounciness, 1 - self._sim.ground_friction]
+            self.x = self._sim.width - self.r
+        if self._sim.left and self.x - self.r <= 0:
+            self.v *= [-self.bounciness, 1 - self._sim.ground_friction]
             self.x = self.r
-        if self.sim.bottom and self.y + self.r >= self.sim.height:
-            self.v *= [1 - self.sim.ground_friction, -self.bounciness]
-            self.y = self.sim.height - self.r
-        if self.sim.top and self.y - self.r <= 0:
-            self.v *= [1 - self.sim.ground_friction, -self.bounciness]
+        if self._sim.bottom and self.y + self.r >= self._sim.height:
+            self.v *= [1 - self._sim.ground_friction, -self.bounciness]
+            self.y = self._sim.height - self.r
+        if self._sim.top and self.y - self.r <= 0:
+            self.v *= [1 - self._sim.ground_friction, -self.bounciness]
             self.y = self.r
 
-        if self.sim.void_edges and (
-            self.x - self.r >= self.sim.width
+        if self._sim.void_edges and (
+            self.x - self.r >= self._sim.width
             or self.x + self.r <= 0
-            or self.y - self.r >= self.sim.height
+            or self.y - self.r >= self._sim.height
             or self.y + self.r <= 0
         ):
-            self.sim.remove_particle(self)
+            self._sim.remove_particle(self)
             return
 
         self._collisions = {}
@@ -151,7 +152,7 @@ class Particle(ParticleData):
     def _compute_interactions(self, p: Self) -> None:
         if p == self:
             return
-        is_in_group = not self.separate_group and p in self.sim.groups[self.group]
+        is_in_group = not self.separate_group and p in self._sim.groups[self.group]
         is_linked = p in self.linked
 
         if (
@@ -219,7 +220,7 @@ class Particle(ParticleData):
             if repel_radius != "repel":
                 repel_r = repel_radius
 
-        if self.sim.calculate_radii_diff:
+        if self._sim.calculate_radii_diff:
             force = np.zeros(2)
             particles: Tuple[Particle, Particle] = p, self
             for i, particle in enumerate(particles):

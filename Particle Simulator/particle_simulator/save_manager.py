@@ -145,7 +145,6 @@ class SaveManager:
 
                     for key, value in d.items():
                         vars(particle)[key] = value
-                    particle.sim = self.sim
                     particle.init_constants()
 
                     particle.linked = [
