@@ -96,8 +96,8 @@ class Particle(ParticleData):
 
     def update(self, near_particles: Iterable[Self]) -> None:
         if not self._sim.paused:
-            self.a = self._sim.g_vector * np.sign(self.m)  # Gravity
-
+            self.a = np.zeros(2)
+            self._apply_force(self._sim.g_vector * self.m)  # Gravity
             self._apply_force(self._sim.wind_force * self.r)
 
             for force in self._collisions.values():
@@ -209,14 +209,13 @@ class Particle(ParticleData):
                 return np.zeros(2)
             force = np.random.uniform(-10, 10, 2)
             return force / np.linalg.norm(force) * -self.repel
-        magnitude = self._compute_magn(
+        return direction * self._compute_magn(
             p,
             conditions,
             distance,
             is_in_group,
             is_linked,
         )
-        return direction * magnitude
 
     def _calculate_magnitude(
         self,

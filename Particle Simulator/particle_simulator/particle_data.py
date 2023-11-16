@@ -83,7 +83,7 @@ class ParticleData:
         self.range_ = self._range
 
     def _apply_force(self, force: npt.NDArray[np.float_]) -> None:
-        self.a = self.a + force / abs(self.m)
+        self.a += force / abs(self.m)
 
     def _compute_magnitude(
         self,
