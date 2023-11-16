@@ -172,21 +172,9 @@ class Particle(ParticleData):
             self._interacts(distance),
         )
         if any(conditions):
-            if distance == 0.0:
-                if self.gravity_mode or p.gravity_mode:
-                    force = np.zeros(2)
-                else:
-                    force = np.random.uniform(-10, 10, 2)
-                    force /= np.linalg.norm(force) * -self.repel
-            else:
-                magnitude = self._compute_magn(
-                    p,
-                    conditions,
-                    distance,
-                    is_in_group,
-                    is_linked,
-                )
-                force = direction * magnitude
+            force = self._compute_force(
+                p, direction, distance, conditions, is_linked, is_in_group
+            )
 
             self._apply_force(force)
             p._collisions[self] = -force
@@ -206,6 +194,29 @@ class Particle(ParticleData):
                 delta_pos = translate_vector * (p.m / (self.m + p.m))
                 p.x -= delta_pos[0]
                 p.y -= delta_pos[1]
+
+    def _compute_force(
+        self,
+        p: Self,
+        direction: npt.NDArray[np.float_],
+        distance: float,
+        conditions: Tuple[bool, bool],
+        is_linked: bool,
+        is_in_group: bool,
+    ) -> npt.NDArray[np.float_]:
+        if distance == 0.0:
+            if self.gravity_mode or p.gravity_mode:
+                return np.zeros(2)
+            force = np.random.uniform(-10, 10, 2)
+            return force / np.linalg.norm(force) * -self.repel
+        magnitude = self._compute_magn(
+            p,
+            conditions,
+            distance,
+            is_in_group,
+            is_linked,
+        )
+        return direction * magnitude
 
     def _calculate_magnitude(
         self,
