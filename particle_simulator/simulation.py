@@ -150,38 +150,19 @@ class SimulationState:
         self.unlink(self.selection)
         self.selection = []
 
+    @staticmethod
     def link(
-        self,
         particles: List[Particle],
         fit_link: bool = False,
         distance: Optional[float] = None,
     ) -> None:
         for p in particles:
-            position: Optional[npt.NDArray[np.float_]] = (
-                np.array([p.x, p.y]) if fit_link else None
-            )
-            for particle in particles:
-                if position is not None:
-                    p.link_lengths[particle] = (
-                        np.linalg.norm(position - np.array([particle.x, particle.y]))
-                        if distance is None
-                        else distance
-                    )
-                else:
-                    p.link_lengths[particle] = "repel"
+            p.link(particles, fit_link=fit_link, distance=distance)
 
-            p.linked = list(set(p.linked + particles.copy()))
-            p.linked.remove(p)
-            del p.link_lengths[p]
-
-    def unlink(self, particles: Collection[Particle]) -> None:
+    @staticmethod
+    def unlink(particles: Collection[Particle]) -> None:
         for p in particles:
-            p.linked = [link for link in p.linked if link not in particles]
-            p.link_lengths = {
-                link: length
-                for link, length in p.link_lengths.items()
-                if link not in particles
-            }
+            p.unlink(particles)
 
     def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
         for p in particles:

@@ -10,6 +10,7 @@ from typing import (
     Union,
     Literal,
     Iterable,
+    Collection,
 )
 
 import numpy as np
@@ -93,6 +94,37 @@ class Particle(ParticleData):
                 self._sim.unlink([self, part])
 
         return magnitude
+
+    def link(
+        self,
+        particles: List[Self],
+        fit_link: bool = False,
+        distance: Optional[float] = None,
+    ) -> None:
+        position: Optional[npt.NDArray[np.float_]] = (
+            np.array([self.x, self.y]) if fit_link else None
+        )
+        for particle in particles:
+            if position is not None:
+                self.link_lengths[particle] = (
+                    np.linalg.norm(position - np.array([particle.x, particle.y]))
+                    if distance is None
+                    else distance
+                )
+            else:
+                self.link_lengths[particle] = "repel"
+
+        self.linked = list(set(self.linked + particles.copy()))
+        self.linked.remove(self)
+        del self.link_lengths[self]
+
+    def unlink(self, particles: Collection[Self]) -> None:
+        self.linked = [other for other in self.linked if other not in particles]
+        self.link_lengths = {
+            other: length
+            for other, length in self.link_lengths.items()
+            if other not in particles
+        }
 
     def update(self, near_particles: Iterable[Self]) -> None:
         if not self._sim.paused:
