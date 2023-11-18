@@ -79,16 +79,18 @@ class Particle(ParticleData):
 
                 self._sim.link_colors.append(
                     Link(
-                        particle_a=self, particle_b=part, percentage=min(percentage, 1)
+                        particle_a=self,
+                        particle_b=part,
+                        percentage=min(percentage, 1.0),
                     )
                 )
 
             if 0 <= max_force <= abs(magnitude):
-                self._sim.unlink([self, part])
+                Particle.unlink([self, part])
 
         return magnitude
 
-    def link(
+    def _link(
         self,
         particles: List[Self],
         fit_link: bool = False,
@@ -109,12 +111,26 @@ class Particle(ParticleData):
 
         del self.link_lengths[self]
 
-    def unlink(self, particles: Collection[Self]) -> None:
+    def _unlink(self, particles: Collection[Self]) -> None:
         self.link_lengths = {
             other: length
             for other, length in self.link_lengths.items()
             if other not in particles
         }
+
+    @staticmethod
+    def link(
+        particles: List["Particle"],
+        fit_link: bool = False,
+        distance: Optional[float] = None,
+    ) -> None:
+        for p in particles:
+            p._link(particles, fit_link=fit_link, distance=distance)
+
+    @staticmethod
+    def unlink(particles: Collection["Particle"]) -> None:
+        for p in particles:
+            p._unlink(particles)
 
     def update(self, near_particles: Iterable[Self]) -> None:
         if not self._sim.paused:

@@ -155,13 +155,11 @@ class SimulationState:
         fit_link: bool = False,
         distance: Optional[float] = None,
     ) -> None:
-        for p in particles:
-            p.link(particles, fit_link=fit_link, distance=distance)
+        Particle.link(particles, fit_link, distance)
 
     @staticmethod
     def unlink(particles: Collection[Particle]) -> None:
-        for p in particles:
-            p.unlink(particles)
+        Particle.unlink(particles)
 
     def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
         for p in particles:
