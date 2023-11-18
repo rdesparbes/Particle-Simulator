@@ -1,4 +1,3 @@
-import math
 import os
 import time
 import tkinter as tk
@@ -28,7 +27,7 @@ class ExtraWindow:
             x=25, y=30, anchor="nw"
         )
         self.gravity_dir = tk.IntVar(
-            self.tk, value=np.degrees(math.atan2(*self.sim.g_dir))
+            self.tk, value=np.degrees(np.arctan2(*self.sim.g_dir))
         )
         self.gravity_dir_entry = tk.Spinbox(
             self.tk,
@@ -48,7 +47,7 @@ class ExtraWindow:
             x=25, y=60, anchor="nw"
         )
         self.wind_dir = tk.IntVar(
-            self.tk, value=np.degrees(math.atan2(*self.sim.wind_force))
+            self.tk, value=np.degrees(np.arctan2(*self.sim.wind_force))
         )
         self.wind_dir_entry = tk.Spinbox(
             self.tk,
@@ -187,7 +186,7 @@ class ExtraWindow:
     def update_gravity(self, *event):
         try:
             rads = np.radians(self.gravity_dir.get())
-            self.sim.g_dir = np.array(np.array([math.sin(rads), math.cos(rads)]))
+            self.sim.g_dir = np.array([np.sin(rads), np.cos(rads)])
             self.gui_canvas.delete(self.g_dir_line)
             self.g_dir_line = self.gui_canvas.create_line(
                 200, 40, *(self.sim.g_dir * 15 + np.array([200, 40]))
@@ -199,9 +198,7 @@ class ExtraWindow:
         try:
             rads = np.radians(self.wind_dir.get())
             self.sim.wind_force = (
-                np.array(np.array([math.sin(rads), math.cos(rads)]))
-                * self.wind_strength.get()
-                / 10
+                np.array([np.sin(rads), np.cos(rads)]) * self.wind_strength.get() / 10
             )
             self.gui_canvas.delete(self.wind_line)
             self.wind_line = self.gui_canvas.create_line(
