@@ -683,7 +683,6 @@ class ExtraWindow:
         self.tk = tk.Tk()
         self.tk.title("Extra Options")
         self.tk.resizable(width=False, height=False)
-        self.tk.protocol("WM_DELETE_WINDOW", self.destroy)
 
         self.gui_canvas = tk.Canvas(self.tk, width=300, height=300)
         self.gui_canvas.pack()
@@ -922,11 +921,6 @@ class ExtraWindow:
         ):
             self.change_length(-1)
 
-    def destroy(self):
-        self.sim.gui.extra_window = None
-        self.tk.destroy()
-        del self
-
 
 class CodeWindow:
     def __init__(self, sim):
@@ -981,7 +975,5 @@ class CodeWindow:
             self.sim.execute(code)
 
     def destroy(self):
-        self.sim.gui.code_window = None
         self.sim.code = self.code_box.get("1.0", tk.END)
         self.tk.destroy()
-        del self
