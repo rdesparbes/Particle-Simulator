@@ -454,10 +454,7 @@ class Simulation(SimulationState):
             self.groups[particle.group].append(particle)
         except KeyError:
             self.groups[particle.group] = [particle]
-            self.gui.group_indices.append(int(particle.group.replace("group", "")))
-            self.gui.groups_entry["values"] = [
-                f"group{i}" for i in sorted(self.gui.group_indices)
-            ]
+            self.gui.create_group(particle.group)
         self.particles.append(particle)
 
     def _replace_particle(self, p: Particle, kwargs: Dict[str, Any]) -> Particle:

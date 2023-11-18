@@ -620,6 +620,10 @@ class GUI:
         )
         self.set_all_btn.place(x=95, y=self.sim.height - 30)
 
+    def create_group(self, name: str) -> None:
+        self.group_indices.append(int(name.replace("group", "")))
+        self.groups_entry["values"] = [f"group{i}" for i in sorted(self.group_indices)]
+
     def ask_color_entry(self, *event):
         color = colorchooser.askcolor(title="Choose color")
         if color[0] is not None:
