@@ -85,21 +85,7 @@ class Simulation:
         self.link_colors: List[Link] = []
 
         self.code: str = 'print("Hello World")'
-
-        self.gui = GUI(self, title, gridres)
         self.grid = Grid(*gridres, height=height, width=width)
-        self.save_manager = SaveManager(self)
-
-        # Keyboard- and mouse-controls
-        self.gui.canvas.bind("<B1-Motion>", self.mouse_m)
-        self.gui.canvas.bind("<Button-1>", self.mouse_p)
-        self.gui.canvas.bind("<ButtonRelease-1>", self.mouse_r)
-        self.gui.canvas.bind("<B3-Motion>", self.right_mouse)
-        self.gui.canvas.bind("<Button-3>", self.right_mouse)
-        self.gui.canvas.bind("<MouseWheel>", self.on_scroll)
-
-        self.listener = Listener(on_press=self.on_press, on_release=self.on_release)
-        self.listener.start()
 
         self.start_time = time.time()
         self.prev_time = self.start_time
@@ -110,12 +96,26 @@ class Simulation:
         self.pasting = False
         self.groups: Dict[str, List[Particle]] = {"group1": []}
 
-    def _mouse_p(self, particle: Particle, event: tk.Event) -> bool:
+        self.gui = GUI(self, title, gridres)
+        self.save_manager = SaveManager(self)
+
+        # Keyboard- and mouse-controls
+        self.gui.canvas.bind("<B1-Motion>", self._mouse_m)
+        self.gui.canvas.bind("<Button-1>", self._mouse_p)
+        self.gui.canvas.bind("<ButtonRelease-1>", self._mouse_r)
+        self.gui.canvas.bind("<B3-Motion>", self._right_mouse)
+        self.gui.canvas.bind("<Button-3>", self._right_mouse)
+        self.gui.canvas.bind("<MouseWheel>", self._on_scroll)
+
+        self.listener = Listener(on_press=self._on_press, on_release=self._on_release)
+        self.listener.start()
+
+    def _mouse_p_part(self, particle: Particle, event: tk.Event) -> bool:
         if np.sqrt((event.x - particle.x) ** 2 + (event.y - particle.y) ** 2) <= max(
             int(self.mr), particle.r
         ):
             if self.mouse_mode == "SELECT":
-                self.select_particle(particle)
+                self._select_particle(particle)
                 return True
 
             particle.mouse = True
@@ -123,12 +123,12 @@ class Simulation:
                 return True
         return False
 
-    def mouse_p(self, event: tk.Event) -> None:
+    def _mouse_p(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
         self.mouse_down_start = time.time()
         self.mouse_down = True
         if self.mouse_mode == "SELECT" or self.mouse_mode == "MOVE":
-            selected = any(self._mouse_p(p, event) for p in self.particles)
+            selected = any(self._mouse_p_part(p, event) for p in self.particles)
             if not selected:
                 self.selection = []
             elif self.mouse_mode == "MOVE":
@@ -140,24 +140,24 @@ class Simulation:
 
             self.add_particle(event.x, event.y)
 
-    def mouse_m(self, event: tk.Event) -> None:
+    def _mouse_m(self, event: tk.Event) -> None:
         if self.mouse_mode == "SELECT":
             for p in self.particles:
-                self._mouse_p(p, event)
+                self._mouse_p_part(p, event)
         elif (
             self.mouse_mode == "ADD"
             and time.time() - self.last_mouse_time >= self.min_spawn_delay
         ):
             self.add_particle(event.x, event.y)
 
-    def mouse_r(self, _event: tk.Event) -> None:
+    def _mouse_r(self, _event: tk.Event) -> None:
         self.mouse_down = False
         if self.mouse_mode == "MOVE" or self.pasting:
             for p in self.particles:
                 p.mouse = False
         self.pasting = False
 
-    def right_mouse(self, event: tk.Event) -> None:
+    def _right_mouse(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
         temp = self.particles.copy()
         for p in temp:
@@ -166,7 +166,7 @@ class Simulation:
             ):
                 self.remove_particle(p)
 
-    def rotate_2d(
+    def _rotate_2d(
         self, x: float, y: float, cx: float, cy: float, angle: float
     ) -> Tuple[float, float]:
         angle_rad = -np.radians(angle)
@@ -180,16 +180,16 @@ class Simulation:
 
         return x, y
 
-    def on_scroll(self, event: tk.Event) -> None:
+    def _on_scroll(self, event: tk.Event) -> None:
         if self.rotate_mode:
             for p in self.selection:
-                p.x, p.y = self.rotate_2d(
+                p.x, p.y = self._rotate_2d(
                     p.x, p.y, event.x, event.y, event.delta / 500 * self.mr
                 )
         else:
             self.mr = max(self.mr * 2 ** (event.delta / 500), 1)
 
-    def on_press(self, key: Key) -> None:
+    def _on_press(self, key: Key) -> None:
         if self.focus:
             # SPACE to pause
             if key == Key.space:
@@ -204,16 +204,16 @@ class Simulation:
             # CTRL + A to select all
             elif KeyCode.from_char(str(key)).char == r"'\x01'":
                 for p in self.particles:
-                    self.select_particle(p)
+                    self._select_particle(p)
             # CTRL + C to copy
             elif KeyCode.from_char(str(key)).char == r"'\x03'":
-                self.copy_selected()
+                self._copy_selected()
             # CTRL + V to copy
             elif KeyCode.from_char(str(key)).char == r"'\x16'":
-                self.paste()
+                self._paste()
             # CTRL + X to cut
             elif KeyCode.from_char(str(key)).char == r"'\x18'":
-                self.cut()
+                self._cut()
             # CTRL + L and CTRL + SHIFT + L to lock and 'unlock'
             elif KeyCode.from_char(str(key)).char == r"'\x0c'" and not self.shift:
                 for p in self.selection:
@@ -238,7 +238,7 @@ class Simulation:
             elif KeyCode.from_char(str(key)).char == r"'\x0f'":
                 self.start_load = True
 
-    def on_release(self, key: Key) -> None:
+    def _on_release(self, key: Key) -> None:
         if key == Key.shift_l or key == Key.shift_r:
             self.shift = False
         elif KeyCode.from_char(str(key)).char == "'r'":
@@ -288,7 +288,7 @@ class Simulation:
     def select_group(self) -> None:
         self.selection = list(self.groups[self.gui.groups_entry.get()])
 
-    def inputs2dict(self) -> Optional[Dict[str, Any]]:
+    def _inputs2dict(self) -> Optional[Dict[str, Any]]:
         try:
             radius = (
                 int(self.mr)
@@ -343,7 +343,7 @@ class Simulation:
             self.error = Error("Input-Error", error)
         return None
 
-    def select_particle(self, particle: Particle) -> None:
+    def _select_particle(self, particle: Particle) -> None:
         if particle in self.selection:
             return
         self.selection.append(particle)
@@ -370,7 +370,7 @@ class Simulation:
         return p
 
     def set_selected(self) -> None:
-        kwargs = self.inputs2dict()
+        kwargs = self._inputs2dict()
         if kwargs is not None:
             temp = self.selection.copy()
             for p in temp:
@@ -380,7 +380,7 @@ class Simulation:
     def set_all(self) -> None:
         temp = self.particles.copy()
         for p in temp:
-            kwargs = self.inputs2dict()  # Update for each particle in case of 'random'
+            kwargs = self._inputs2dict()  # Update for each particle in case of 'random'
             if kwargs is not None:
                 self._replace_particle(p, kwargs)
 
@@ -428,7 +428,7 @@ class Simulation:
                         vars(self.gui)[key].delete(0, tk.END)
 
     def add_particle(self, x: float, y: float) -> None:
-        kwargs = self.inputs2dict()
+        kwargs = self._inputs2dict()
         if kwargs is not None:
             p = Particle(self, x, y, **kwargs)
             self.register_particle(p)
@@ -444,7 +444,7 @@ class Simulation:
         self.groups[particle.group].remove(particle)
         del particle
 
-    def copy_selected(self) -> None:
+    def _copy_selected(self) -> None:
         self.clipboard = []
         for p in self.selection:
             dictionary = p.return_dict(index_source=self.selection)
@@ -452,7 +452,7 @@ class Simulation:
             dictionary["y"] -= self.my
             self.clipboard.append(dictionary)
 
-    def paste(self) -> None:
+    def _paste(self) -> None:
         self.pasting = True
         temp_particles = []
         for data in self.clipboard:
@@ -480,8 +480,8 @@ class Simulation:
             particle.mouse = True
         self.selection = temp_particles
 
-    def cut(self) -> None:
-        self.copy_selected()
+    def _cut(self) -> None:
+        self._copy_selected()
         temp = self.selection.copy()
         for p in temp:
             self.remove_particle(p)
@@ -590,7 +590,7 @@ class Simulation:
             ):
                 event = tk.Event()
                 event.x, event.y = self.mx, self.my
-                self.mouse_m(event)
+                self._mouse_m(event)
 
             try:
                 self.focus = type(self.gui.tk.focus_displayof()) in [tk.Canvas, tk.Tk]
