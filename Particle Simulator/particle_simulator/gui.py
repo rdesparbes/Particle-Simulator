@@ -173,7 +173,7 @@ class GUI:
             relief=tk.FLAT,
             bg="#1f3333",
             activebackground="#1f3333",
-            command=lambda: CodeWindow(self.sim),
+            command=self._create_code_window,
         )
         self.code_btn.place(x=self.sim.width - 25, y=16, anchor="center")
 
@@ -389,7 +389,7 @@ class GUI:
             bg="#F0F0F0",
             activebackground="#F0F0F0",
             relief="flat",
-            command=lambda: ExtraWindow(self.sim),
+            command=self._create_extra_window,
         )
         self.extra_btn.place(x=7, y=580)
 
@@ -625,6 +625,12 @@ class GUI:
         )
         self.set_all_btn.place(x=95, y=self.sim.height - 30)
 
+    def _create_extra_window(self) -> None:
+        self.extra_window = ExtraWindow(self.sim, str(self.path))
+
+    def _create_code_window(self) -> None:
+        self.code_window = CodeWindow(self.sim)
+
     @staticmethod
     def _extract_group_index(name: str) -> int:
         return int(name.replace("group", ""))
@@ -671,10 +677,9 @@ class GUI:
 
 
 class ExtraWindow:
-    def __init__(self, sim):
+    def __init__(self, sim, path: str) -> None:
         self.sim = sim
-        self.path = self.sim.gui.path
-        self.sim.gui.extra_window = self
+        self.path = path
         self.tk = tk.Tk()
         self.tk.title("Extra Options")
         self.tk.resizable(width=False, height=False)
@@ -926,7 +931,6 @@ class ExtraWindow:
 class CodeWindow:
     def __init__(self, sim):
         self.sim = sim
-        self.sim.gui.code_window = self
         self.tk = tk.Tk()
         self.tk.title("Code-Window")
         self.tk.geometry("500x500")
