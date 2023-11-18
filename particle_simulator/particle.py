@@ -25,7 +25,6 @@ class Particle(ParticleData):
     def __init__(self, sim: _Simulation, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.linked: List[Particle] = []
         self.link_lengths: Dict[Particle, Union[Literal["repel"], float]] = {}
 
         self._sim = sim
@@ -35,12 +34,6 @@ class Particle(ParticleData):
         dictionary: Dict[str, Any] = super().__dict__.copy()
         del dictionary["_sim"]
         del dictionary["_collisions"]
-
-        dictionary["linked"] = [
-            index_source.index(particle)
-            for particle in self.linked
-            if particle in index_source
-        ]
         dictionary["link_lengths"] = {
             index_source.index(particle): value
             for particle, value in self.link_lengths.items()
@@ -114,12 +107,9 @@ class Particle(ParticleData):
             else:
                 self.link_lengths[particle] = "repel"
 
-        self.linked = list(set(self.linked + particles.copy()))
-        self.linked.remove(self)
         del self.link_lengths[self]
 
     def unlink(self, particles: Collection[Self]) -> None:
-        self.linked = [other for other in self.linked if other not in particles]
         self.link_lengths = {
             other: length
             for other, length in self.link_lengths.items()
@@ -186,7 +176,7 @@ class Particle(ParticleData):
         if p == self:
             return
         is_in_group = not self.separate_group and p in self._sim.groups[self.group]
-        is_linked = p in self.linked
+        is_linked = p in self.link_lengths
 
         if (
             not self.linked_group_particles and not is_linked and is_in_group

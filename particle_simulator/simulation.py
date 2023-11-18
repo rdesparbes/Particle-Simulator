@@ -122,9 +122,8 @@ class SimulationState:
         self.particles.remove(particle)
         if particle in self.selection:
             self.selection.remove(particle)
-        for p in particle.linked:
+        for p in particle.link_lengths:
             del p.link_lengths[particle]
-            p.linked.remove(particle)
         self.groups[particle.group].remove(particle)
         del particle
 
@@ -532,7 +531,6 @@ class Simulation(SimulationState):
                     vars(particle)[key] = value
 
             particle.init_constants()
-            particle.linked = [temp_particles[index] for index in particle.linked]
             particle.link_lengths = {
                 temp_particles[index]: value
                 for index, value in particle.link_lengths.items()
@@ -637,7 +635,7 @@ class Simulation(SimulationState):
                         )
                 else:
                     for p1 in self.particles:
-                        for p2 in p1.linked:
+                        for p2 in p1.link_lengths:
                             cv2.line(
                                 image,
                                 (int(p1.x), int(p1.y)),

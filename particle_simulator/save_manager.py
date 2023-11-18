@@ -147,9 +147,6 @@ class SaveManager:
                         vars(particle)[key] = value
                     particle.init_constants()
 
-                    particle.linked = [
-                        self.sim.particles[index] for index in particle.linked
-                    ]
                     particle.link_lengths = {
                         self.sim.particles[index]: value
                         for index, value in particle.link_lengths.items()
