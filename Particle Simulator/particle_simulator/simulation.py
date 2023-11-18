@@ -611,9 +611,9 @@ class Simulation:
                 self.start_load = False
 
             for particle in self.particles:
-                if particle.return_none:
+                if not particle.interacts:
                     near_particles = []
-                elif particle.return_all:
+                elif particle.interacts_will_all:
                     near_particles = self.particles
                 elif self.use_grid:
                     near_particles = self.grid.return_particles(particle)

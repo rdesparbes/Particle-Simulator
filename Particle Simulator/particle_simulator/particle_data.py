@@ -60,12 +60,12 @@ class ParticleData:
         self.mouse = False
 
     @property
-    def return_all(self) -> bool:
-        return self.attr_r < 0 and self.attr != 0.0
+    def interacts_will_all(self) -> bool:
+        return self.attr != 0.0 and self.attr_r < 0
 
     @property
-    def return_none(self) -> bool:
-        return self.attr == 0.0 and self.repel == 0.0 and not self.collision_bool
+    def interacts(self) -> bool:
+        return self.attr != 0.0 or self.repel != 0.0 or self.collision_bool
 
     @property
     def _range(self) -> int:
