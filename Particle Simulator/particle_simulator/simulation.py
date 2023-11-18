@@ -25,12 +25,11 @@ from .particle import Particle, Link
 from .save_manager import SaveManager
 
 
-class Simulation:
+class SimulationState:
     def __init__(
         self,
         width: int = 650,
         height: int = 600,
-        title: str = "Simulation",
         gridres: Tuple[int, int] = (50, 50),
         temperature: float = 0,
         g: float = 0.1,
@@ -96,6 +95,130 @@ class Simulation:
         self.pasting = False
         self.groups: Dict[str, List[Particle]] = {"group1": []}
 
+    @staticmethod
+    def _rotate_2d(
+        x: float, y: float, cx: float, cy: float, angle: float
+    ) -> Tuple[float, float]:
+        angle_rad = -np.radians(angle)
+        dist_x = x - cx
+        dist_y = y - cy
+        current_angle = math.atan2(dist_y, dist_x)
+        angle_rad += current_angle
+        radius = np.sqrt(dist_x**2 + dist_y**2)
+        x = cx + radius * np.cos(angle_rad)
+        y = cy + radius * np.sin(angle_rad)
+
+        return x, y
+
+    def toggle_paused(self) -> None:
+        self.toggle_pause = True
+
+    def _select_particle(self, particle: Particle) -> None:
+        if particle in self.selection:
+            return
+        self.selection.append(particle)
+
+    def remove_particle(self, particle: Particle) -> None:
+        self.particles.remove(particle)
+        if particle in self.selection:
+            self.selection.remove(particle)
+        for p in particle.linked:
+            del p.link_lengths[particle]
+            p.linked.remove(particle)
+        self.groups[particle.group].remove(particle)
+        del particle
+
+    def _copy_selected(self) -> None:
+        self.clipboard = []
+        for p in self.selection:
+            dictionary = p.return_dict(index_source=self.selection)
+            dictionary["x"] -= self.mx
+            dictionary["y"] -= self.my
+            self.clipboard.append(dictionary)
+
+    def _cut(self) -> None:
+        self._copy_selected()
+        temp = self.selection.copy()
+        for p in temp:
+            self.remove_particle(p)
+
+    def link_selection(self, fit_link: bool = False) -> None:
+        self.link(self.selection, fit_link=fit_link)
+        self.selection = []
+
+    def unlink_selection(self) -> None:
+        self.unlink(self.selection)
+        self.selection = []
+
+    def link(
+        self,
+        particles: List[Particle],
+        fit_link: bool = False,
+        distance: Optional[float] = None,
+    ) -> None:
+        for p in particles:
+            position: Optional[npt.NDArray[np.float_]] = (
+                np.array([p.x, p.y]) if fit_link else None
+            )
+            for particle in particles:
+                if position is not None:
+                    p.link_lengths[particle] = (
+                        np.linalg.norm(position - np.array([particle.x, particle.y]))
+                        if distance is None
+                        else distance
+                    )
+                else:
+                    p.link_lengths[particle] = "repel"
+
+            p.linked = list(set(p.linked + particles.copy()))
+            p.linked.remove(p)
+            del p.link_lengths[p]
+
+    def unlink(self, particles: Collection[Particle]) -> None:
+        for p in particles:
+            p.linked = [link for link in p.linked if link not in particles]
+            p.link_lengths = {
+                link: length
+                for link, length in p.link_lengths.items()
+                if link not in particles
+            }
+
+    def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
+        for p in particles:
+            for link, value in p.link_lengths.items():
+                if value != "repel":
+                    self.link([p, link], fit_link=True, distance=value + amount)
+
+    def execute(self, code: str) -> None:
+        try:
+            exec(code)
+        except Exception as error:
+            self.error = Error("Code-Error", error)
+
+
+class Simulation(SimulationState):
+    def __init__(
+        self,
+        width: int = 650,
+        height: int = 600,
+        title: str = "Simulation",
+        gridres: Tuple[int, int] = (50, 50),
+        temperature: float = 0,
+        g: float = 0.1,
+        air_res: float = 0.05,
+        ground_friction: float = 0,
+        fps_update_delay: float = 0.5,
+    ):
+        super().__init__(
+            width=width,
+            height=height,
+            gridres=gridres,
+            temperature=temperature,
+            g=g,
+            air_res=air_res,
+            ground_friction=ground_friction,
+            fps_update_delay=fps_update_delay,
+        )
         self.gui = GUI(self, title, gridres)
         self.save_manager = SaveManager(self)
 
@@ -165,20 +288,6 @@ class Simulation:
                 int(self.mr), p.r
             ):
                 self.remove_particle(p)
-
-    def _rotate_2d(
-        self, x: float, y: float, cx: float, cy: float, angle: float
-    ) -> Tuple[float, float]:
-        angle_rad = -np.radians(angle)
-        dist_x = x - cx
-        dist_y = y - cy
-        current_angle = math.atan2(dist_y, dist_x)
-        angle_rad += current_angle
-        radius = np.sqrt(dist_x**2 + dist_y**2)
-        x = cx + radius * np.cos(angle_rad)
-        y = cy + radius * np.sin(angle_rad)
-
-        return x, y
 
     def _on_scroll(self, event: tk.Event) -> None:
         if self.rotate_mode:
@@ -254,9 +363,6 @@ class Simulation:
             )
         except:
             pass
-
-    def toggle_paused(self) -> None:
-        self.toggle_pause = True
 
     def change_mode(self, mode: Mode) -> None:
         self.mouse_mode = mode
@@ -342,11 +448,6 @@ class Simulation:
         except Exception as error:
             self.error = Error("Input-Error", error)
         return None
-
-    def _select_particle(self, particle: Particle) -> None:
-        if particle in self.selection:
-            return
-        self.selection.append(particle)
 
     def register_particle(self, particle: Particle) -> None:
         try:
@@ -434,24 +535,6 @@ class Simulation:
             self.register_particle(p)
             self.last_mouse_time = time.time()
 
-    def remove_particle(self, particle: Particle) -> None:
-        self.particles.remove(particle)
-        if particle in self.selection:
-            self.selection.remove(particle)
-        for p in particle.linked:
-            del p.link_lengths[particle]
-            p.linked.remove(particle)
-        self.groups[particle.group].remove(particle)
-        del particle
-
-    def _copy_selected(self) -> None:
-        self.clipboard = []
-        for p in self.selection:
-            dictionary = p.return_dict(index_source=self.selection)
-            dictionary["x"] -= self.mx
-            dictionary["y"] -= self.my
-            self.clipboard.append(dictionary)
-
     def _paste(self) -> None:
         self.pasting = True
         temp_particles = []
@@ -479,65 +562,6 @@ class Simulation:
             }
             particle.mouse = True
         self.selection = temp_particles
-
-    def _cut(self) -> None:
-        self._copy_selected()
-        temp = self.selection.copy()
-        for p in temp:
-            self.remove_particle(p)
-
-    def link_selection(self, fit_link: bool = False) -> None:
-        self.link(self.selection, fit_link=fit_link)
-        self.selection = []
-
-    def unlink_selection(self) -> None:
-        self.unlink(self.selection)
-        self.selection = []
-
-    def link(
-        self,
-        particles: List[Particle],
-        fit_link: bool = False,
-        distance: Optional[float] = None,
-    ) -> None:
-        for p in particles:
-            position: Optional[npt.NDArray[np.float_]] = (
-                np.array([p.x, p.y]) if fit_link else None
-            )
-            for particle in particles:
-                if position is not None:
-                    p.link_lengths[particle] = (
-                        np.linalg.norm(position - np.array([particle.x, particle.y]))
-                        if distance is None
-                        else distance
-                    )
-                else:
-                    p.link_lengths[particle] = "repel"
-
-            p.linked = list(set(p.linked + particles.copy()))
-            p.linked.remove(p)
-            del p.link_lengths[p]
-
-    def unlink(self, particles: Collection[Particle]) -> None:
-        for p in particles:
-            p.linked = [link for link in p.linked if link not in particles]
-            p.link_lengths = {
-                link: length
-                for link, length in p.link_lengths.items()
-                if link not in particles
-            }
-
-    def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
-        for p in particles:
-            for link, value in p.link_lengths.items():
-                if value != "repel":
-                    self.link([p, link], fit_link=True, distance=value + amount)
-
-    def execute(self, code: str) -> None:
-        try:
-            exec(code)
-        except Exception as error:
-            self.error = Error("Code-Error", error)
 
     def _update_vars(self) -> None:
         for var, entry in [
