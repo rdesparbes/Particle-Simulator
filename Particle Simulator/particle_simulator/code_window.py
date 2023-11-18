@@ -2,11 +2,11 @@ import threading
 import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import ttk
+from typing import Callable, Optional
 
 
 class CodeWindow:
-    def __init__(self, sim):
-        self.sim = sim
+    def __init__(self) -> None:
         self.tk = tk.Tk()
         self.tk.title("Code-Window")
         self.tk.geometry("500x500")
@@ -25,7 +25,6 @@ class CodeWindow:
 
         self.code_box = tk.Text(self.scroll_frame, undo=True)
         self.code_box.grid(row=0, column=0, sticky="nsew")
-        self.code_box.insert(tk.INSERT, self.sim.code)
         self.scrollbar = ttk.Scrollbar(self.scroll_frame, command=self.code_box.yview)
         self.scrollbar.grid(row=0, column=1, sticky="nsew")
         self.code_box["yscrollcommand"] = self.scrollbar.set
@@ -47,15 +46,31 @@ class CodeWindow:
             variable=self.use_threading,
         )
         self.threading_chk.place(x=460, y=435, anchor="ne")
+        self.save_callback: Optional[Callable[[str], None]] = None
+        self.exec_callback: Optional[Callable[[str], None]] = None
+
+    def set_code(self, code: str) -> None:
+        self.code_box.insert(tk.INSERT, code)
+
+    def set_save_callback(self, callback: Callable[[str], None]) -> None:
+        self.save_callback = callback
+
+    def set_exec_callback(self, callback: Callable[[str], None]) -> None:
+        self.exec_callback = callback
 
     def execute(self):
+        if self.exec_callback is None:
+            return
         code = self.code_box.get("1.0", tk.END)
-        self.sim.code = code
+        if self.save_callback is not None:
+            self.save_callback(code)
+
         if self.use_threading.get():
-            threading.Thread(target=self.sim.execute, args=[code]).start()
+            threading.Thread(target=self.exec_callback, args=[code]).start()
         else:
-            self.sim.execute(code)
+            self.exec_callback(code)
 
     def destroy(self):
-        self.sim.code = self.code_box.get("1.0", tk.END)
+        if self.save_callback is not None:
+            self.save_callback(self.code_box.get("1.0", tk.END))
         self.tk.destroy()

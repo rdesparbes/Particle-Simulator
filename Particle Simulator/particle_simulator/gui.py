@@ -3,8 +3,8 @@ import tkinter as tk
 from tkinter import ttk, colorchooser, messagebox
 from typing import Literal
 
-from .extra_window import ExtraWindow
 from .code_window import CodeWindow
+from .extra_window import ExtraWindow
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
 
@@ -624,7 +624,10 @@ class GUI:
         self.extra_window = ExtraWindow(self.sim, str(self.path))
 
     def _create_code_window(self) -> None:
-        self.code_window = CodeWindow(self.sim)
+        self.code_window = CodeWindow()
+        self.code_window.set_code(self.sim.code)
+        self.code_window.set_exec_callback(self.sim.execute)
+        self.code_window.set_save_callback(self.sim.set_code)
 
     @staticmethod
     def _extract_group_index(name: str) -> int:

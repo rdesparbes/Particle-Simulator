@@ -189,6 +189,9 @@ class SimulationState:
                 if value != "repel":
                     self.link([p, link], fit_link=True, distance=value + amount)
 
+    def set_code(self, code) -> None:
+        self.code = code
+
     def execute(self, code: str) -> None:
         try:
             exec(code)
