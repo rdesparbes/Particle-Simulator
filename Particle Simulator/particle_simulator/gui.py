@@ -67,7 +67,8 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             command=lambda: self.sim.change_mode("SELECT"),
-        ).place(x=x, y=16, anchor="center")
+        )
+        self.select_btn.place(x=x, y=16, anchor="center")
         self.select_rect = self.gui_canvas.create_rectangle(
             x - 12, 3, x + 12, 27, outline="blue", state="hidden"
         )
@@ -84,7 +85,8 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             command=lambda: self.sim.change_mode("MOVE"),
-        ).place(x=x, y=16, anchor="center")
+        )
+        self.move_btn.place(x=x, y=16, anchor="center")
         self.move_rect = self.gui_canvas.create_rectangle(
             x - 12, 3, x + 12, 27, outline="blue"
         )
@@ -259,7 +261,7 @@ class GUI:
 
         self.show_fps = tk.BooleanVar(self.tk, True)
         self.fps_chk = tk.Checkbutton(
-            self.tab1, text="Display FPS", font=("helvetica", 8), var=self.show_fps
+            self.tab1, text="Display FPS", font=("helvetica", 8), variable=self.show_fps
         )
         self.fps_chk.place(x=10, y=260, anchor="nw")
 
@@ -268,13 +270,16 @@ class GUI:
             self.tab1,
             text="Display # Particles",
             font=("helvetica", 8),
-            var=self.show_num,
+            variable=self.show_num,
         )
         self.num_chk.place(x=10, y=280, anchor="nw")
 
         self.show_links = tk.BooleanVar(self.tk, True)
         self.links_chk = tk.Checkbutton(
-            self.tab1, text="Display links", font=("helvetica", 8), var=self.show_links
+            self.tab1,
+            text="Display links",
+            font=("helvetica", 8),
+            variable=self.show_links,
         )
         self.links_chk.place(x=10, y=300, anchor="nw")
 
@@ -285,25 +290,25 @@ class GUI:
 
         self.top_bool = tk.BooleanVar(self.tk, True)
         self.top_chk = tk.Checkbutton(
-            self.tab1, text="top", font=("helvetica", 8), var=self.top_bool
+            self.tab1, text="top", font=("helvetica", 8), variable=self.top_bool
         )
         self.top_chk.place(x=30, y=350, anchor="nw")
 
         self.bottom_bool = tk.BooleanVar(self.tk, True)
         self.bottom_chk = tk.Checkbutton(
-            self.tab1, text="bottom", font=("helvetica", 8), var=self.bottom_bool
+            self.tab1, text="bottom", font=("helvetica", 8), variable=self.bottom_bool
         )
         self.bottom_chk.place(x=110, y=350, anchor="nw")
 
         self.left_bool = tk.BooleanVar(self.tk, True)
         self.left_chk = tk.Checkbutton(
-            self.tab1, text="left", font=("helvetica", 8), var=self.left_bool
+            self.tab1, text="left", font=("helvetica", 8), variable=self.left_bool
         )
         self.left_chk.place(x=30, y=370, anchor="nw")
 
         self.right_bool = tk.BooleanVar(self.tk, True)
         self.right_chk = tk.Checkbutton(
-            self.tab1, text="right", font=("helvetica", 8), var=self.right_bool
+            self.tab1, text="right", font=("helvetica", 8), variable=self.right_bool
         )
         self.right_chk.place(x=110, y=370, anchor="nw")
 
@@ -314,7 +319,7 @@ class GUI:
 
         self.grid_bool = tk.BooleanVar(self.tk, True)
         self.grid_chk = tk.Checkbutton(
-            self.tab1, text="Use Grid", font=("helvetica", 8), var=self.grid_bool
+            self.tab1, text="Use Grid", font=("helvetica", 8), variable=self.grid_bool
         )
         self.grid_chk.place(x=10, y=425, anchor="nw")
 
@@ -370,7 +375,7 @@ class GUI:
             self.tab1,
             text="Better Radii-Calculation",
             font=("helvetica", 8),
-            var=self.calculate_radii_diff_bool,
+            variable=self.calculate_radii_diff_bool,
         )
         self.calculate_radii_diff_chk.place(x=7, y=553, anchor="nw")
 
@@ -426,7 +431,7 @@ class GUI:
             self.tab2, width=7, from_=0.1, to=100, increment=0.1
         )
         self.mass_entry.delete(0, tk.END)
-        self.mass_entry.insert(0, 1)
+        self.mass_entry.insert(0, "1")
         self.mass_entry.place(x=100, y=80)
 
         tk.Label(self.tab2, text="Bounciness:", font=("helvetica", 8)).place(
@@ -436,7 +441,7 @@ class GUI:
             self.tab2, width=7, from_=0, to=1, increment=0.1
         )
         self.bounciness_entry.delete(0, tk.END)
-        self.bounciness_entry.insert(0, 0.7)
+        self.bounciness_entry.insert(0, "0.7")
         self.bounciness_entry.place(x=100, y=110)
 
         tk.Label(self.tab2, text="Velocity:", font=("helvetica", 8)).place(
@@ -449,7 +454,7 @@ class GUI:
             self.tab2, width=7, from_=0, to=1, increment=0.1
         )
         self.velocity_x_entry.delete(0, tk.END)
-        self.velocity_x_entry.insert(0, 0)
+        self.velocity_x_entry.insert(0, "0")
         self.velocity_x_entry.place(x=100, y=140)
         tk.Label(self.tab2, text="Y:", font=("helvetica", 8)).place(
             x=60, y=162, anchor="nw"
@@ -458,12 +463,12 @@ class GUI:
             self.tab2, width=7, from_=-5, to=5, increment=0.1
         )
         self.velocity_y_entry.delete(0, tk.END)
-        self.velocity_y_entry.insert(0, 0)
+        self.velocity_y_entry.insert(0, "0")
         self.velocity_y_entry.place(x=100, y=162)
 
         self.locked_bool = tk.BooleanVar(self.tk, False)
         self.locked_chk = tk.Checkbutton(
-            self.tab2, text="Locked", font=("helvetica", 8), var=self.locked_bool
+            self.tab2, text="Locked", font=("helvetica", 8), variable=self.locked_bool
         )
         self.locked_chk.place(x=7, y=190, anchor="nw")
 
@@ -472,7 +477,7 @@ class GUI:
             self.tab2,
             text="Check Collisions",
             font=("helvetica", 8),
-            var=self.do_collision_bool,
+            variable=self.do_collision_bool,
         )
         self.do_collision_chk.place(x=7, y=210, anchor="nw")
 
@@ -483,7 +488,7 @@ class GUI:
             self.tab2, width=7, from_=-1, to=500, increment=1
         )
         self.attr_r_entry.delete(0, tk.END)
-        self.attr_r_entry.insert(0, -1)
+        self.attr_r_entry.insert(0, "-1")
         self.attr_r_entry.place(x=100, y=250)
 
         tk.Label(self.tab2, text="Attr-strength:", font=("helvetica", 8)).place(
@@ -493,7 +498,7 @@ class GUI:
             self.tab2, width=7, from_=0, to=50, increment=0.1
         )
         self.attr_strength_entry.delete(0, tk.END)
-        self.attr_strength_entry.insert(0, 0.5)
+        self.attr_strength_entry.insert(0, "0.5")
         self.attr_strength_entry.place(x=100, y=273)
 
         self.gravity_mode_bool = tk.BooleanVar(self.tk, False)
@@ -501,7 +506,7 @@ class GUI:
             self.tab2,
             text="Gravity-Mode",
             font=("helvetica", 7),
-            var=self.gravity_mode_bool,
+            variable=self.gravity_mode_bool,
         )
         self.gravity_mode_chk.place(x=7, y=290, anchor="nw")
 
@@ -512,7 +517,7 @@ class GUI:
             self.tab2, width=7, from_=0, to=500, increment=1
         )
         self.repel_r_entry.delete(0, tk.END)
-        self.repel_r_entry.insert(0, 10)
+        self.repel_r_entry.insert(0, "10")
         self.repel_r_entry.place(x=100, y=323)
 
         tk.Label(self.tab2, text="Repel-strength:", font=("helvetica", 8)).place(
@@ -522,7 +527,7 @@ class GUI:
             self.tab2, width=7, from_=0, to=50, increment=0.1
         )
         self.repel_strength_entry.delete(0, tk.END)
-        self.repel_strength_entry.insert(0, 1)
+        self.repel_strength_entry.insert(0, "1")
         self.repel_strength_entry.place(x=100, y=346)
 
         self.linked_group_bool = tk.BooleanVar(self.tk, True)
@@ -530,7 +535,7 @@ class GUI:
             self.tab2,
             text="Linked to group-particles",
             font=("helvetica", 8),
-            var=self.linked_group_bool,
+            variable=self.linked_group_bool,
         )
         self.linked_group_chk.place(x=7, y=376, anchor="nw")
 
@@ -544,7 +549,7 @@ class GUI:
             self.tab2, width=5, from_=0, to=5000, increment=0.1
         )
         self.link_attr_break_entry.delete(0, tk.END)
-        self.link_attr_break_entry.insert(0, -1)
+        self.link_attr_break_entry.insert(0, "-1")
         self.link_attr_break_entry.place(x=40, y=420)
         tk.Label(self.tab2, text="Repel:", font=("helvetica", 8)).place(
             x=100, y=420, anchor="nw"
@@ -553,7 +558,7 @@ class GUI:
             self.tab2, width=5, from_=0, to=5000, increment=0.1
         )
         self.link_repel_break_entry.delete(0, tk.END)
-        self.link_repel_break_entry.insert(0, -1)
+        self.link_repel_break_entry.insert(0, "-1")
         self.link_repel_break_entry.place(x=140, y=420)
 
         tk.Label(self.tab2, text="Particle-group:", font=("helvetica", 8)).place(
@@ -597,7 +602,7 @@ class GUI:
             self.tab2,
             text="Separate Group",
             font=("helvetica", 8),
-            var=self.separate_group_bool,
+            variable=self.separate_group_bool,
         )
         self.separate_group_chk.place(x=10, y=495, anchor="nw")
 
@@ -634,12 +639,12 @@ class GUI:
         self.group_indices.sort()
         self.groups_entry["values"] = [f"group{i}" for i in self.group_indices]
 
-    def ask_color_entry(self, *event):
-        color = colorchooser.askcolor(title="Choose color")
-        if color[0] is not None:
+    def ask_color_entry(self, *_event):
+        color, color_exa = colorchooser.askcolor(title="Choose color")
+        if color is not None:
             self.color_entry.delete(0, tk.END)
-            self.color_entry.insert(0, str([math.floor(x) for x in color[0]]))
-            self.tab2_canvas.itemconfig(self.part_color_rect, fill=color[1])
+            self.color_entry.insert(0, str(list(color)))
+            self.tab2_canvas.itemconfig(self.part_color_rect, fill=color_exa)
 
     def change_color_entry(self, *event):
         try:
@@ -672,7 +677,7 @@ class ExtraWindow:
         self.sim.gui.extra_window = self
         self.tk = tk.Tk()
         self.tk.title("Extra Options")
-        self.tk.resizable(0, 0)
+        self.tk.resizable(width=False, height=False)
         self.tk.protocol("WM_DELETE_WINDOW", self.destroy)
 
         self.gui_canvas = tk.Canvas(self.tk, width=300, height=300)
@@ -755,7 +760,10 @@ class ExtraWindow:
 
         self.void_edges_bool = tk.BooleanVar(self.tk, self.sim.void_edges)
         self.void_edges_chk = tk.Checkbutton(
-            self.tk, text="Void edges", font=("helvetica", 8), var=self.void_edges_bool
+            self.tk,
+            text="Void edges",
+            font=("helvetica", 8),
+            variable=self.void_edges_bool,
         )
         self.void_edges_chk.place(x=25, y=135)
         self.void_edges_bool.trace("w", self.void_edges_toggle)
@@ -781,7 +789,7 @@ class ExtraWindow:
             self.tk,
             text="Stress Visualization",
             font=("helvetica", 8),
-            var=self.stress_visualization_bool,
+            variable=self.stress_visualization_bool,
         )
         self.stress_visualization_chk.place(x=25, y=220, anchor="nw")
         self.stress_visualization_bool.trace("w", self.update_stress)
@@ -922,7 +930,7 @@ class CodeWindow:
         self.tk = tk.Tk()
         self.tk.title("Code-Window")
         self.tk.geometry("500x500")
-        self.tk.resizable(0, 0)
+        self.tk.resizable(width=False, height=False)
         self.tk.protocol("WM_DELETE_WINDOW", self.destroy)
 
         tk.Label(self.tk, text="Code:", font=("Helvetica", 10, "bold")).place(
@@ -953,7 +961,10 @@ class CodeWindow:
 
         self.use_threading = tk.BooleanVar(self.tk, True)
         self.threading_chk = tk.Checkbutton(
-            self.tk, text="Use Threading", font=("helvetica", 8), var=self.use_threading
+            self.tk,
+            text="Use Threading",
+            font=("helvetica", 8),
+            variable=self.use_threading,
         )
         self.threading_chk.place(x=460, y=435, anchor="ne")
 
