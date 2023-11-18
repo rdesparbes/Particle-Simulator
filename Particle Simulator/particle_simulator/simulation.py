@@ -379,17 +379,13 @@ class Simulation(SimulationState):
             self.gui.gui_canvas.itemconfig(self.gui.move_rect, state="hidden")
             self.gui.gui_canvas.itemconfig(self.gui.add_rect, state="normal")
 
-    def add_group(self) -> None:
-        for i in range(1, max(self.gui.group_indices) + 2):
-            if i not in self.gui.group_indices:
-                name = f"group{i}"
-                self.gui.group_indices.append(i)
-                self.gui.groups_entry["values"] = [
-                    f"group{index}" for index in sorted(self.gui.group_indices)
-                ]
-                self.gui.groups_entry.current(i - 1)
+    def add_group(self) -> str:
+        for i in range(1, len(self.groups) + 2):
+            name = f"group{i}"
+            if name not in self.groups:
                 self.groups[name] = []
-                break
+                return name
+        assert False  # Unreachable (pigeonhole principle)
 
     def select_group(self) -> None:
         self.selection = list(self.groups[self.gui.groups_entry.get()])

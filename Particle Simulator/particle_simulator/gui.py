@@ -574,7 +574,7 @@ class GUI:
             activebackground="#F0F0F0",
             relief="flat",
             width=1,
-            command=self.sim.add_group,
+            command=self.add_group,
         )
         self.group_add_btn.place(x=105, y=480, anchor="center")
 
@@ -620,9 +620,19 @@ class GUI:
         )
         self.set_all_btn.place(x=95, y=self.sim.height - 30)
 
+    @staticmethod
+    def _extract_group_index(name: str) -> int:
+        return int(name.replace("group", ""))
+
+    def add_group(self) -> None:
+        name = self.sim.add_group()
+        self.create_group(name)
+        self.groups_entry.current(self._extract_group_index(name) - 1)
+
     def create_group(self, name: str) -> None:
-        self.group_indices.append(int(name.replace("group", "")))
-        self.groups_entry["values"] = [f"group{i}" for i in sorted(self.group_indices)]
+        self.group_indices.append(self._extract_group_index(name))
+        self.group_indices.sort()
+        self.groups_entry["values"] = [f"group{i}" for i in self.group_indices]
 
     def ask_color_entry(self, *event):
         color = colorchooser.askcolor(title="Choose color")
