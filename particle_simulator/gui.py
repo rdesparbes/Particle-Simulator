@@ -641,7 +641,7 @@ class GUI:
             bg="#F0F0F0",
             activebackground="#F0F0F0",
             relief="flat",
-            command=self.sim.select_group,
+            command=lambda: self.sim.select_group(self.groups_entry.get()),
         )
         self.group_select_btn.place(x=123, y=480, anchor="center")
 

@@ -10,6 +10,7 @@ from typing import (
     Any,
     Dict,
     Tuple,
+    Union,
 )
 
 import cv2
@@ -350,27 +351,20 @@ class Simulation(SimulationState):
                 return name
         assert False  # Unreachable (pigeonhole principle)
 
-    def select_group(self) -> None:
-        self.selection = list(self.groups[self.gui.groups_entry.get()])
+    def select_group(self, name: str) -> None:
+        self.selection = list(self.groups[name])
 
     def _inputs2dict(self) -> Optional[Dict[str, Any]]:
         try:
             radius = (
                 int(self.mr)
                 if self.gui.radius_entry.get() == "scroll"
-                else eval(self.gui.radius_entry.get())
+                else int(self.gui.radius_entry.get())
             )
 
-            try:
-                color = (
-                    self.gui.color_entry.get()
-                    .replace("[", "")
-                    .replace("]", "")
-                    .split(",")
-                )
-                color = list(map(lambda x: int(x), color))
-            except ValueError:
-                color = self.gui.color_entry.get()
+            color: Union[List[int], str] = self.gui.color_entry.get()
+            if color != "random":
+                color = list(map(int, eval(color)))
 
             kwargs = {
                 "mass": self.gui.mass_entry.get(),
@@ -597,7 +591,7 @@ class Simulation(SimulationState):
             self.link_colors = []
             self.g_vector = self.g_dir * self.g
             self.air_res_calc = (1 - self.air_res) ** self.speed
-            if self.gui.grid_bool.get():
+            if self.use_grid:
                 self.grid.init_grid(self.particles)
             if self.toggle_pause:
                 self.paused = not self.paused
