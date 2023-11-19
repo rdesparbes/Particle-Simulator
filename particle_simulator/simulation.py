@@ -521,23 +521,17 @@ class Simulation(SimulationState):
             particle.mouse = True
         self.selection = temp_particles
 
-    def _update_vars(self) -> None:
-        for var, entry in [
-            ("g", "gravity_entry"),
-            ("air_res", "air_res_entry"),
-            ("ground_friction", "friction_entry"),
-            ("use_grid", "grid_bool"),
-            ("min_spawn_delay", "delay_entry"),
-            ("calculate_radii_diff", "calculate_radii_diff_bool"),
-        ]:
-            try:
-                vars(self)[var] = float(eval(vars(self.gui)[entry].get()))
-            except:
-                pass
+    def _update_attributes(self) -> None:
+        self.g = float(self.gui.gravity_entry.get())
+        self.air_res = float(self.gui.air_res_entry.get())
+        self.ground_friction = float(self.gui.friction_entry.get())
+        self.min_spawn_delay = float(self.gui.delay_entry.get())
 
         self.temperature = self.gui.temp_sc.get()
         self.speed = self.gui.speed_sc.get()
 
+        self.use_grid = self.gui.grid_bool.get()
+        self.calculate_radii_diff = self.gui.calculate_radii_diff_bool.get()
         self.top = self.gui.top_bool.get()
         self.bottom = self.gui.bottom_bool.get()
         self.left = self.gui.left_bool.get()
@@ -592,7 +586,7 @@ class Simulation(SimulationState):
             self.gui.canvas.delete("all")
             self.link_colors = []
 
-            self._update_vars()
+            self._update_attributes()
             self.g_vector = self.g_dir * self.g
             self.air_res_calc = (1 - self.air_res) ** self.speed
             if self.gui.grid_bool.get():
@@ -652,6 +646,10 @@ class Simulation(SimulationState):
                 self.start_time = time.time()
             self.prev_time = time.time()
 
+            self.prev_mx, self.prev_my = self.mx, self.my
+            self.mx = self.gui.tk.winfo_pointerx() - self.gui.tk.winfo_rootx()
+            self.my = self.gui.tk.winfo_pointery() - self.gui.tk.winfo_rooty() - 30
+
             image = self._draw_image()
             photo = ImageTk.PhotoImage(
                 image=Image.fromarray(image.astype(np.uint8)), master=self.gui.tk
@@ -673,9 +671,5 @@ class Simulation(SimulationState):
                     anchor="nw",
                     font=("Helvetica", 9, "bold"),
                 )
-
-            self.prev_mx, self.prev_my = self.mx, self.my
-            self.mx = self.gui.tk.winfo_pointerx() - self.gui.tk.winfo_rootx()
-            self.my = self.gui.tk.winfo_pointery() - self.gui.tk.winfo_rooty() - 30
 
             self.gui.update()
