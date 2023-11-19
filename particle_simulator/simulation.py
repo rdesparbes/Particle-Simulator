@@ -581,9 +581,38 @@ class Simulation(SimulationState):
         cv2.circle(image, (self.mx, self.my), int(self.mr), [127] * 3)
         return image
 
+    def _update_gui(self, image: npt.NDArray[np.uint8]) -> None:
+        if self.error is not None:
+            messagebox.showerror(self.error.name, str(self.error.exception))
+            self.error = None
+        photo = ImageTk.PhotoImage(
+            image=Image.fromarray(image.astype(np.uint8)), master=self.gui.tk
+        )
+        self.gui.canvas.delete("all")
+        self.gui.pause_button.config(
+            image=self.gui.play_photo if self.paused else self.gui.pause_photo
+        )
+        self.gui.canvas.create_image(0, 0, image=photo, anchor=tk.NW)
+        if self.gui.show_fps.get():
+            self.gui.canvas.create_text(
+                10,
+                10,
+                text=f"FPS: {round(self.fps, 2)}",
+                anchor="nw",
+                font=("Helvetica", 9, "bold"),
+            )
+        if self.gui.show_num.get():
+            self.gui.canvas.create_text(
+                10,
+                25,
+                text=f"Particles: {len(self.particles)}",
+                anchor="nw",
+                font=("Helvetica", 9, "bold"),
+            )
+        self.gui.update()
+
     def simulate(self):
         while self.running:
-            self.gui.canvas.delete("all")
             self.link_colors = []
 
             self._update_attributes()
@@ -593,9 +622,6 @@ class Simulation(SimulationState):
                 self.grid.init_grid(self.particles)
             if self.toggle_pause:
                 self.paused = not self.paused
-                self.gui.pause_button.config(
-                    image=self.gui.play_photo if self.paused else self.gui.pause_photo
-                )
 
                 if not self.paused:
                     self.selection = []
@@ -610,14 +636,12 @@ class Simulation(SimulationState):
                 self._mouse_m(event)
 
             try:
-                self.focus = type(self.gui.tk.focus_displayof()) in [tk.Canvas, tk.Tk]
+                self.focus = isinstance(
+                    self.gui.tk.focus_displayof(), (tk.Canvas, tk.Tk)
+                )
             except KeyError:
                 # Combobox
                 self.focus = False
-
-            if self.error is not None:
-                messagebox.showerror(self.error.name, str(self.error.exception))
-                self.error = None
 
             if self.start_save:
                 self.save_manager.save()
@@ -651,25 +675,5 @@ class Simulation(SimulationState):
             self.my = self.gui.tk.winfo_pointery() - self.gui.tk.winfo_rooty() - 30
 
             image = self._draw_image()
-            photo = ImageTk.PhotoImage(
-                image=Image.fromarray(image.astype(np.uint8)), master=self.gui.tk
-            )
-            self.gui.canvas.create_image(0, 0, image=photo, anchor=tk.NW)
-            if self.gui.show_fps.get():
-                self.gui.canvas.create_text(
-                    10,
-                    10,
-                    text=f"FPS: {round(self.fps, 2)}",
-                    anchor="nw",
-                    font=("Helvetica", 9, "bold"),
-                )
-            if self.gui.show_num.get():
-                self.gui.canvas.create_text(
-                    10,
-                    25,
-                    text=f"Particles: {len(self.particles)}",
-                    anchor="nw",
-                    font=("Helvetica", 9, "bold"),
-                )
 
-            self.gui.update()
+            self._update_gui(image)
