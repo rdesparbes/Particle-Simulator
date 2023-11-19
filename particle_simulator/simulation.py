@@ -54,7 +54,6 @@ class SimulationState:
         self.fps_update_delay = fps_update_delay
         self.mx, self.my = 0, 0
         self.prev_mx, self.prev_my = 0, 0
-        self.mouse_mode: Mode = "MOVE"
         self.rotate_mode = False
         self.min_spawn_delay = 0.05
         self.min_hold_delay = 1
@@ -202,6 +201,7 @@ class Simulation(SimulationState):
         )
         self.gui = GUI(self, title, gridres)
         self.save_manager = SaveManager(self)
+        self.mouse_mode: Mode = "MOVE"
 
         # Keyboard- and mouse-controls
         self.gui.canvas.bind("<B1-Motion>", self._mouse_m)
@@ -545,10 +545,51 @@ class Simulation(SimulationState):
         self.use_grid = self.gui.grid_bool.get()
         self.calculate_radii_diff = self.gui.calculate_radii_diff_bool.get()
 
+    def _draw_image(self) -> npt.NDArray[np.uint8]:
+        image = np.full((self.height, self.width, 3), self.bg_color[0], dtype=np.uint8)
+        if self.gui.show_links.get():
+            if self.stress_visualization and not self.paused:
+                for p1, p2, percentage in self.link_colors:
+                    color = [max(255 * percentage, 235)] + [235 * (1 - percentage)] * 2
+                    cv2.line(
+                        image,
+                        (int(p1.x), int(p1.y)),
+                        (int(p2.x), int(p2.y)),
+                        color,
+                        1,
+                    )
+            else:
+                for p1 in self.particles:
+                    for p2 in p1.link_lengths:
+                        cv2.line(
+                            image,
+                            (int(p1.x), int(p1.y)),
+                            (int(p2.x), int(p2.y)),
+                            [235] * 3,
+                            1,
+                        )
+        for particle in self.particles:
+            cv2.circle(
+                image,
+                (int(particle.x), int(particle.y)),
+                particle.r,
+                particle.color,
+                -1,
+            )
+        for particle in self.selection:
+            cv2.circle(
+                image,
+                (int(particle.x), int(particle.y)),
+                particle.r,
+                [0, 0, 255],
+                2,
+            )
+        cv2.circle(image, (self.mx, self.my), int(self.mr), [127] * 3)
+        return image
+
     def simulate(self):
         while self.running:
             self.gui.canvas.delete("all")
-            image = np.full((self.height, self.width, 3), self.bg_color[0])
             self.link_colors = []
 
             self._update_vars()
@@ -603,50 +644,6 @@ class Simulation(SimulationState):
                     near_particles = self.particles
                 particle.update(near_particles)
 
-            if self.gui.show_links.get():
-                if self.stress_visualization and not self.paused:
-                    for p1, p2, percentage in self.link_colors:
-                        color = [max(255 * percentage, 235)] + [
-                            235 * (1 - percentage)
-                        ] * 2
-                        cv2.line(
-                            image,
-                            (int(p1.x), int(p1.y)),
-                            (int(p2.x), int(p2.y)),
-                            color,
-                            1,
-                        )
-                else:
-                    for p1 in self.particles:
-                        for p2 in p1.link_lengths:
-                            cv2.line(
-                                image,
-                                (int(p1.x), int(p1.y)),
-                                (int(p2.x), int(p2.y)),
-                                [235] * 3,
-                                1,
-                            )
-
-            for particle in self.particles:
-                cv2.circle(
-                    image,
-                    (int(particle.x), int(particle.y)),
-                    particle.r,
-                    particle.color,
-                    -1,
-                )
-
-            for particle in self.selection:
-                cv2.circle(
-                    image,
-                    (int(particle.x), int(particle.y)),
-                    particle.r,
-                    [0, 0, 255],
-                    2,
-                )
-
-            cv2.circle(image, (self.mx, self.my), int(self.mr), [127] * 3)
-
             if time.time() - self.start_time >= self.fps_update_delay:
                 try:
                     self.fps = 1 / (time.time() - self.prev_time)
@@ -655,6 +652,7 @@ class Simulation(SimulationState):
                 self.start_time = time.time()
             self.prev_time = time.time()
 
+            image = self._draw_image()
             photo = ImageTk.PhotoImage(
                 image=Image.fromarray(image.astype(np.uint8)), master=self.gui.tk
             )
