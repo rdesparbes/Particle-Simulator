@@ -190,7 +190,12 @@ class GUI:
             x=7, y=20, anchor="nw"
         )
         self.gravity_entry = tk.Spinbox(
-            self.tab1, width=7, from_=0, to=1, increment=0.1
+            self.tab1,
+            width=7,
+            from_=0,
+            to=1,
+            increment=0.1,
+            command=lambda: setattr(self.sim, "g", float(self.gravity_entry.get())),
         )
         self.gravity_entry.delete(0, tk.END)
         self.gravity_entry.insert(0, self.sim.g)
@@ -200,7 +205,14 @@ class GUI:
             x=7, y=50, anchor="nw"
         )
         self.air_res_entry = tk.Spinbox(
-            self.tab1, width=7, from_=0, to=1, increment=0.01
+            self.tab1,
+            width=7,
+            from_=0,
+            to=1,
+            increment=0.01,
+            command=lambda: setattr(
+                self.sim, "air_res", float(self.air_res_entry.get())
+            ),
         )
         self.air_res_entry.delete(0, tk.END)
         self.air_res_entry.insert(0, self.sim.air_res)
@@ -210,7 +222,14 @@ class GUI:
             x=7, y=80, anchor="nw"
         )
         self.friction_entry = tk.Spinbox(
-            self.tab1, width=7, from_=0, to=1, increment=0.01
+            self.tab1,
+            width=7,
+            from_=0,
+            to=1,
+            increment=0.01,
+            command=lambda: setattr(
+                self.sim, "ground_friction", float(self.friction_entry.get())
+            ),
         )
         self.friction_entry.delete(0, tk.END)
         self.friction_entry.insert(0, self.sim.ground_friction)
@@ -228,6 +247,7 @@ class GUI:
             fg="gray65",
             activebackground="midnight blue",
             cursor="hand2",
+            command=lambda new_temp: setattr(self.sim, "temperature", float(new_temp)),
         )
         self.temp_sc.set(self.sim.temperature)
         self.temp_sc.place(x=100, y=153, anchor="center")
@@ -247,8 +267,9 @@ class GUI:
             fg="gray65",
             activebackground="midnight blue",
             cursor="hand2",
+            command=lambda new_speed: setattr(self.sim, "speed", float(new_speed)),
         )
-        self.speed_sc.set(1)
+        self.speed_sc.set(self.sim.speed)
         self.speed_sc.place(x=100, y=233, anchor="center")
         tk.Label(self.tab1, text="Simulation Speed:", font=("helvetica", 8)).place(
             x=7, y=190, anchor="nw"
@@ -283,27 +304,43 @@ class GUI:
         )
         self.tab1_canvas.create_line(10, 345, 190, 345, fill="grey50")
 
-        self.top_bool = tk.BooleanVar(self.tk, True)
+        self.top_bool = tk.BooleanVar(self.tk, self.sim.top)
         self.top_chk = tk.Checkbutton(
-            self.tab1, text="top", font=("helvetica", 8), variable=self.top_bool
+            self.tab1,
+            text="top",
+            font=("helvetica", 8),
+            variable=self.top_bool,
+            command=lambda: setattr(self.sim, "top", self.top_bool.get()),
         )
         self.top_chk.place(x=30, y=350, anchor="nw")
 
-        self.bottom_bool = tk.BooleanVar(self.tk, True)
+        self.bottom_bool = tk.BooleanVar(self.tk, self.sim.bottom)
         self.bottom_chk = tk.Checkbutton(
-            self.tab1, text="bottom", font=("helvetica", 8), variable=self.bottom_bool
+            self.tab1,
+            text="bottom",
+            font=("helvetica", 8),
+            variable=self.bottom_bool,
+            command=lambda: setattr(self.sim, "bottom", self.bottom_bool.get()),
         )
         self.bottom_chk.place(x=110, y=350, anchor="nw")
 
-        self.left_bool = tk.BooleanVar(self.tk, True)
+        self.left_bool = tk.BooleanVar(self.tk, self.sim.left)
         self.left_chk = tk.Checkbutton(
-            self.tab1, text="left", font=("helvetica", 8), variable=self.left_bool
+            self.tab1,
+            text="left",
+            font=("helvetica", 8),
+            variable=self.left_bool,
+            command=lambda: setattr(self.sim, "left", self.left_bool.get()),
         )
         self.left_chk.place(x=30, y=370, anchor="nw")
 
-        self.right_bool = tk.BooleanVar(self.tk, True)
+        self.right_bool = tk.BooleanVar(self.tk, self.sim.right)
         self.right_chk = tk.Checkbutton(
-            self.tab1, text="right", font=("helvetica", 8), variable=self.right_bool
+            self.tab1,
+            text="right",
+            font=("helvetica", 8),
+            variable=self.right_bool,
+            command=lambda: setattr(self.sim, "right", self.right_bool.get()),
         )
         self.right_chk.place(x=110, y=370, anchor="nw")
 
@@ -314,7 +351,11 @@ class GUI:
 
         self.grid_bool = tk.BooleanVar(self.tk, True)
         self.grid_chk = tk.Checkbutton(
-            self.tab1, text="Use Grid", font=("helvetica", 8), variable=self.grid_bool
+            self.tab1,
+            text="Use Grid",
+            font=("helvetica", 8),
+            variable=self.grid_bool,
+            command=lambda: setattr(self.sim, "use_grid", self.grid_bool.get()),
         )
         self.grid_chk.place(x=10, y=425, anchor="nw")
 
@@ -360,7 +401,16 @@ class GUI:
         tk.Label(self.tab1, text="Min Spawn-Delay:", font=("helvetica", 8)).place(
             x=7, y=533, anchor="nw"
         )
-        self.delay_entry = tk.Spinbox(self.tab1, width=7, from_=0, to=1, increment=0.01)
+        self.delay_entry = tk.Spinbox(
+            self.tab1,
+            width=7,
+            from_=0,
+            to=1,
+            increment=0.01,
+            command=lambda: setattr(
+                self.sim, "min_spawn_delay", float(self.delay_entry.get())
+            ),
+        )
         self.delay_entry.delete(0, tk.END)
         self.delay_entry.insert(0, self.sim.min_spawn_delay)
         self.delay_entry.place(x=100, y=533)
@@ -371,6 +421,9 @@ class GUI:
             text="Better Radii-Calculation",
             font=("helvetica", 8),
             variable=self.calculate_radii_diff_bool,
+            command=lambda: setattr(
+                self.sim, "calculate_radii_diff", self.calculate_radii_diff_bool.get()
+            ),
         )
         self.calculate_radii_diff_chk.place(x=7, y=553, anchor="nw")
 
