@@ -429,15 +429,15 @@ class Simulation(SimulationState):
                 same = particle_settings[key] == val
                 if value[1] == "set":
                     if same:
-                        vars(self.gui)[key].set(val)
+                        getattr(self.gui, key).set(val)
                     else:
-                        vars(self.gui)[key].set(False)
+                        getattr(self.gui, key).set(False)
                 else:
                     if same:
-                        vars(self.gui)[key].delete(0, tk.END)
-                        vars(self.gui)[key].insert(0, str(val))
+                        getattr(self.gui, key).delete(0, tk.END)
+                        getattr(self.gui, key).insert(0, str(val))
                     else:
-                        vars(self.gui)[key].delete(0, tk.END)
+                        getattr(self.gui, key).delete(0, tk.END)
 
     def add_particle(self, x: float, y: float) -> None:
         kwargs = self._inputs2dict()
