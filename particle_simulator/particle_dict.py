@@ -2,7 +2,7 @@ from typing import TypedDict, Tuple, Literal, Union, NotRequired
 
 
 class ParticleDict(TypedDict):
-    radius: NotRequired[int]
+    radius: NotRequired[float]
     color: NotRequired[Union[Tuple[int, int, int], Literal["random"]]]
     mass: NotRequired[float]
     velocity: NotRequired[Tuple[float, float]]

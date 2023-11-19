@@ -356,7 +356,7 @@ class Simulation(SimulationState):
     def _inputs2dict(self) -> Optional[Dict[str, Any]]:
         try:
             kwargs = self.gui.inputs2dict()
-            if kwargs["radius"] is None:
+            if "radius" not in kwargs:
                 kwargs["radius"] = self.mr
             return kwargs
         except Exception as error:
@@ -383,11 +383,12 @@ class Simulation(SimulationState):
 
     def set_selected(self) -> None:
         kwargs = self._inputs2dict()
-        if kwargs is not None:
-            temp = self.selection.copy()
-            for p in temp:
-                p = self._replace_particle(p, kwargs)
-                self.selection.append(p)
+        if kwargs is None:
+            return
+        temp = self.selection.copy()
+        for p in temp:
+            p = self._replace_particle(p, kwargs)
+            self.selection.append(p)
 
     def set_all(self) -> None:
         temp = self.particles.copy()
