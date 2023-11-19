@@ -123,12 +123,12 @@ class SaveManager:
                 data["sim-settings"].items()
             ):
                 if value[1] == "set":
-                    vars(self.sim.gui)[key].set(value[0])
+                    getattr(self.sim.gui, key).set(value[0])
                 elif value[1] == "var":
-                    vars(self.sim)[key] = value[0]
+                    setattr(self.sim, key, value[0])
                 else:
-                    vars(self.sim.gui)[key].delete(0, tk.END)
-                    vars(self.sim.gui)[key].insert(0, value[0])
+                    getattr(self.sim.gui, key).delete(0, tk.END)
+                    getattr(self.sim.gui, key).insert(0, value[0])
 
             temp = self.sim.particles.copy()
             for p in temp:
@@ -145,7 +145,7 @@ class SaveManager:
                 particle = self.sim.particles[i]
 
                 for key, value in d.items():
-                    vars(particle)[key] = value
+                    setattr(particle, key, value)
                 particle.init_constants()
 
                 particle.link_lengths = {
