@@ -1,7 +1,7 @@
 import os
 import tkinter as tk
 from tkinter import ttk, colorchooser, messagebox
-from typing import Literal
+from typing import Literal, Any, Dict, Union, List
 
 from .code_window import CodeWindow
 from .extra_window import ExtraWindow
@@ -725,6 +725,52 @@ class GUI:
             self.color_entry.delete(0, tk.END)
             self.color_entry.insert(0, str(list(color)))
             self.tab2_canvas.itemconfig(self.part_color_rect, fill=color_exa)
+
+    def inputs2dict(self) -> Dict[str, Any]:
+        radius = (
+            None
+            if self.radius_entry.get() == "scroll"
+            else int(self.radius_entry.get())
+        )
+
+        color_str: str = self.color_entry.get()
+        if color_str == "random":
+            color: Union[List[int], Literal["random"]] = color_str
+        else:
+            color = list(map(int, eval(color_str)))
+
+        kwargs = {
+            "mass": self.mass_entry.get(),
+            "velocity": [
+                self.velocity_x_entry.get(),
+                self.velocity_y_entry.get(),
+            ],
+            "bounciness": self.bounciness_entry.get(),
+            "attract_r": self.attr_r_entry.get(),
+            "repel_r": self.repel_r_entry.get(),
+            "attraction_strength": self.attr_strength_entry.get(),
+            "repulsion_strength": self.repel_strength_entry.get(),
+            "link_attr_breaking_force": self.link_attr_break_entry.get(),
+            "link_repel_breaking_force": self.link_repel_break_entry.get(),
+        }
+
+        for key, value in kwargs.items():
+            try:
+                kwargs[key] = eval(value)
+            except TypeError:
+                for i, element in enumerate(value):
+                    kwargs[key][i] = eval(element)
+
+        kwargs["radius"] = radius
+        kwargs["color"] = color
+        kwargs["collisions"] = self.do_collision_bool.get()
+        kwargs["locked"] = self.locked_bool.get()
+        kwargs["linked_group_particles"] = self.linked_group_bool.get()
+        kwargs["group"] = self.groups_entry.get()
+        kwargs["separate_group"] = self.separate_group_bool.get()
+        kwargs["gravity_mode"] = self.gravity_mode_bool.get()
+
+        return kwargs
 
     def change_color_entry(self, *event):
         try:

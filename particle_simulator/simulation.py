@@ -10,7 +10,6 @@ from typing import (
     Any,
     Dict,
     Tuple,
-    Union,
 )
 
 import cv2
@@ -356,47 +355,9 @@ class Simulation(SimulationState):
 
     def _inputs2dict(self) -> Optional[Dict[str, Any]]:
         try:
-            radius = (
-                int(self.mr)
-                if self.gui.radius_entry.get() == "scroll"
-                else int(self.gui.radius_entry.get())
-            )
-
-            color: Union[List[int], str] = self.gui.color_entry.get()
-            if color != "random":
-                color = list(map(int, eval(color)))
-
-            kwargs = {
-                "mass": self.gui.mass_entry.get(),
-                "velocity": [
-                    self.gui.velocity_x_entry.get(),
-                    self.gui.velocity_y_entry.get(),
-                ],
-                "bounciness": self.gui.bounciness_entry.get(),
-                "attract_r": self.gui.attr_r_entry.get(),
-                "repel_r": self.gui.repel_r_entry.get(),
-                "attraction_strength": self.gui.attr_strength_entry.get(),
-                "repulsion_strength": self.gui.repel_strength_entry.get(),
-                "link_attr_breaking_force": self.gui.link_attr_break_entry.get(),
-                "link_repel_breaking_force": self.gui.link_repel_break_entry.get(),
-            }
-
-            for key, value in kwargs.items():
-                try:
-                    kwargs[key] = eval(value)
-                except TypeError:
-                    for i, element in enumerate(value):
-                        kwargs[key][i] = eval(element)
-
-            kwargs["radius"] = radius
-            kwargs["color"] = color
-            kwargs["collisions"] = self.gui.do_collision_bool.get()
-            kwargs["locked"] = self.gui.locked_bool.get()
-            kwargs["linked_group_particles"] = self.gui.linked_group_bool.get()
-            kwargs["group"] = self.gui.groups_entry.get()
-            kwargs["separate_group"] = self.gui.separate_group_bool.get()
-            kwargs["gravity_mode"] = self.gui.gravity_mode_bool.get()
-
+            kwargs = self.gui.inputs2dict()
+            if kwargs["radius"] is None:
+                kwargs["radius"] = self.mr
             return kwargs
         except Exception as error:
             self.error = Error("Input-Error", error)
