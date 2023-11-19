@@ -474,6 +474,25 @@ class Simulation(SimulationState):
             particle.mouse = True
         self.selection = temp_particles
 
+    def _update_attributes(self) -> None:
+        # Should be handled on the GUI side with callbacks
+        self.g = float(self.gui.gravity_entry.get())
+        self.air_res = float(self.gui.air_res_entry.get())
+        self.ground_friction = float(self.gui.friction_entry.get())
+        self.min_spawn_delay = float(self.gui.delay_entry.get())
+
+        self.temperature = self.gui.temp_sc.get()
+        self.speed = self.gui.speed_sc.get()
+
+        self.use_grid = self.gui.grid_bool.get()
+        self.calculate_radii_diff = self.gui.calculate_radii_diff_bool.get()
+        self.top = self.gui.top_bool.get()
+        self.bottom = self.gui.bottom_bool.get()
+        self.left = self.gui.left_bool.get()
+        self.right = self.gui.right_bool.get()
+        self.use_grid = self.gui.grid_bool.get()
+        self.calculate_radii_diff = self.gui.calculate_radii_diff_bool.get()
+
     def _draw_image(self) -> npt.NDArray[np.uint8]:
         image = np.full((self.height, self.width, 3), self.bg_color[0], dtype=np.uint8)
         if self.gui.show_links.get():
@@ -550,6 +569,7 @@ class Simulation(SimulationState):
 
     def simulate(self):
         while self.running:
+            self._update_attributes()
             self.link_colors = []
             self.g_vector = self.g_dir * self.g
             self.air_res_calc = (1 - self.air_res) ** self.speed
