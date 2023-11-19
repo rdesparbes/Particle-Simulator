@@ -114,44 +114,45 @@ class SaveManager:
             filetypes=[("Simulation files", "*.sim"), ("All Files", "*.*")],
         )
 
-        if filename != "":
-            try:
-                data = pickle.load(open(filename, "rb"))
+        if filename == "":
+            return
+        try:
+            data = pickle.load(open(filename, "rb"))
 
-                for key, value in list(data["particle-settings"].items()) + list(
-                    data["sim-settings"].items()
-                ):
-                    if value[1] == "set":
-                        vars(self.sim.gui)[key].set(value[0])
-                    elif value[1] == "var":
-                        vars(self.sim)[key] = value[0]
-                    else:
-                        vars(self.sim.gui)[key].delete(0, tk.END)
-                        vars(self.sim.gui)[key].insert(0, value[0])
+            for key, value in list(data["particle-settings"].items()) + list(
+                data["sim-settings"].items()
+            ):
+                if value[1] == "set":
+                    vars(self.sim.gui)[key].set(value[0])
+                elif value[1] == "var":
+                    vars(self.sim)[key] = value[0]
+                else:
+                    vars(self.sim.gui)[key].delete(0, tk.END)
+                    vars(self.sim.gui)[key].insert(0, value[0])
 
-                temp = self.sim.particles.copy()
-                for p in temp:
-                    self.sim.remove_particle(p)
+            temp = self.sim.particles.copy()
+            for p in temp:
+                self.sim.remove_particle(p)
 
-                self.sim.groups = {}
-                self.sim.gui.group_indices = []
-                self.sim.gui.groups_entry["values"] = []
-                for i in range(len(data["particles"])):
-                    p = Particle(self.sim, 0, 0, group=data["particles"][i]["group"])
-                    self.sim.register_particle(p)
+            self.sim.groups = {}
+            self.sim.gui.group_indices = []
+            self.sim.gui.groups_entry["values"] = []
+            for i in range(len(data["particles"])):
+                p = Particle(self.sim, 0, 0, group=data["particles"][i]["group"])
+                self.sim.register_particle(p)
 
-                for i, d in enumerate(data["particles"]):
-                    particle = self.sim.particles[i]
+            for i, d in enumerate(data["particles"]):
+                particle = self.sim.particles[i]
 
-                    for key, value in d.items():
-                        vars(particle)[key] = value
-                    particle.init_constants()
+                for key, value in d.items():
+                    vars(particle)[key] = value
+                particle.init_constants()
 
-                    particle.link_lengths = {
-                        self.sim.particles[index]: value
-                        for index, value in particle.link_lengths.items()
-                    }
+                particle.link_lengths = {
+                    self.sim.particles[index]: value
+                    for index, value in particle.link_lengths.items()
+                }
 
-                self.file_location, self.filename = os.path.split(filename)
-            except Exception as error:
-                self.sim.error = Error("Loading-Error", error)
+            self.file_location, self.filename = os.path.split(filename)
+        except Exception as error:
+            self.sim.error = Error("Loading-Error", error)
