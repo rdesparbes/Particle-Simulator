@@ -345,21 +345,6 @@ class Simulation(SimulationState):
         except:
             pass
 
-    def change_mode(self, mode: Mode) -> None:
-        self.mouse_mode = mode
-        if mode == "SELECT":
-            self.gui.gui_canvas.itemconfig(self.gui.select_rect, state="normal")
-            self.gui.gui_canvas.itemconfig(self.gui.move_rect, state="hidden")
-            self.gui.gui_canvas.itemconfig(self.gui.add_rect, state="hidden")
-        elif mode == "MOVE":
-            self.gui.gui_canvas.itemconfig(self.gui.select_rect, state="hidden")
-            self.gui.gui_canvas.itemconfig(self.gui.move_rect, state="normal")
-            self.gui.gui_canvas.itemconfig(self.gui.add_rect, state="hidden")
-        elif mode == "ADD":
-            self.gui.gui_canvas.itemconfig(self.gui.select_rect, state="hidden")
-            self.gui.gui_canvas.itemconfig(self.gui.move_rect, state="hidden")
-            self.gui.gui_canvas.itemconfig(self.gui.add_rect, state="normal")
-
     def add_group(self) -> str:
         for i in range(1, len(self.groups) + 2):
             name = f"group{i}"
