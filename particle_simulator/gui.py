@@ -61,7 +61,7 @@ class GUI:
             relief=tk.FLAT,
             bg="#1f3333",
             activebackground="#1f3333",
-            command=lambda: self._change_mode("SELECT"),
+            command=self._set_select_mode,
         )
         self.select_btn.place(x=x, y=16, anchor="center")
         self.select_rect = self.gui_canvas.create_rectangle(
@@ -79,7 +79,7 @@ class GUI:
             relief=tk.FLAT,
             bg="#1f3333",
             activebackground="#1f3333",
-            command=lambda: self._change_mode("MOVE"),
+            command=self._set_move_mode,
         )
         self.move_btn.place(x=x, y=16, anchor="center")
         self.move_rect = self.gui_canvas.create_rectangle(
@@ -97,7 +97,7 @@ class GUI:
             relief=tk.FLAT,
             bg="#1f3333",
             activebackground="#1f3333",
-            command=lambda: self._change_mode("ADD"),
+            command=self._set_add_mode,
         )
         self.add_btn.place(x=x, y=15, anchor="center")
         self.add_rect = self.gui_canvas.create_rectangle(
@@ -620,20 +620,23 @@ class GUI:
         )
         self.set_all_btn.place(x=95, y=self.sim.height - 30)
 
-    def _change_mode(self, mode: Mode) -> None:
-        self.sim.mouse_mode = mode
-        if mode == "SELECT":
-            self.gui_canvas.itemconfig(self.select_rect, state="normal")
-            self.gui_canvas.itemconfig(self.move_rect, state="hidden")
-            self.gui_canvas.itemconfig(self.add_rect, state="hidden")
-        elif mode == "MOVE":
-            self.gui_canvas.itemconfig(self.select_rect, state="hidden")
-            self.gui_canvas.itemconfig(self.move_rect, state="normal")
-            self.gui_canvas.itemconfig(self.add_rect, state="hidden")
-        elif mode == "ADD":
-            self.gui_canvas.itemconfig(self.select_rect, state="hidden")
-            self.gui_canvas.itemconfig(self.move_rect, state="hidden")
-            self.gui_canvas.itemconfig(self.add_rect, state="normal")
+    def _set_select_mode(self) -> None:
+        self.sim.mouse_mode = "SELECT"
+        self.gui_canvas.itemconfig(self.select_rect, state="normal")
+        self.gui_canvas.itemconfig(self.move_rect, state="hidden")
+        self.gui_canvas.itemconfig(self.add_rect, state="hidden")
+
+    def _set_move_mode(self) -> None:
+        self.sim.mouse_mode = "MOVE"
+        self.gui_canvas.itemconfig(self.select_rect, state="hidden")
+        self.gui_canvas.itemconfig(self.move_rect, state="normal")
+        self.gui_canvas.itemconfig(self.add_rect, state="hidden")
+
+    def _set_add_mode(self) -> None:
+        self.sim.mouse_mode = "ADD"
+        self.gui_canvas.itemconfig(self.select_rect, state="hidden")
+        self.gui_canvas.itemconfig(self.move_rect, state="hidden")
+        self.gui_canvas.itemconfig(self.add_rect, state="normal")
 
     def _create_extra_window(self) -> None:
         self.extra_window = ExtraWindow(self.sim, str(self.path))
