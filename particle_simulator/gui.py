@@ -390,8 +390,8 @@ class GUI:
         )
         self.grid_res_y.place(x=80, y=480)
 
-        self.grid_res_x_value.trace("w", self.sim.update_grid)
-        self.grid_res_y_value.trace("w", self.sim.update_grid)
+        self.grid_res_x_value.trace("w", self._update_grid)
+        self.grid_res_y_value.trace("w", self._update_grid)
 
         self.tab1_canvas.create_text(
             100, 515, text="Extra", font=("helvetica", 9), anchor="center"
@@ -672,6 +672,11 @@ class GUI:
             self.tab2, text="Set All", bg="light blue", command=self.sim.set_all
         )
         self.set_all_btn.place(x=95, y=self.sim.height - 30)
+
+    def _update_grid(self, *_event) -> None:
+        row_count = self.grid_res_x_value.get()
+        col_count = self.grid_res_y_value.get()
+        self.sim.update_grid(row_count, col_count)
 
     def _set_select_mode(self) -> None:
         self.sim.mouse_mode = "SELECT"

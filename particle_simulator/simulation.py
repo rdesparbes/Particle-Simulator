@@ -334,16 +334,13 @@ class Simulation(SimulationState):
         elif KeyCode.from_char(str(key)).char == "'r'":
             self.rotate_mode = False
 
-    def update_grid(self, *event) -> None:
-        try:
-            self.grid = Grid(
-                self.gui.grid_res_x_value.get(),
-                self.gui.grid_res_y_value.get(),
-                height=self.height,
-                width=self.width,
-            )
-        except:
-            pass
+    def update_grid(self, row_count: int, col_count: int) -> None:
+        self.grid = Grid(
+            row_count,
+            col_count,
+            height=self.height,
+            width=self.width,
+        )
 
     def add_group(self) -> str:
         for i in range(1, len(self.groups) + 2):
@@ -570,10 +567,11 @@ class Simulation(SimulationState):
         photo = ImageTk.PhotoImage(
             image=Image.fromarray(image.astype(np.uint8)), master=self.gui.tk
         )
-        self.gui.canvas.delete("all")
         self.gui.pause_button.config(
             image=self.gui.play_photo if self.paused else self.gui.pause_photo
         )
+
+        self.gui.canvas.delete("all")
         self.gui.canvas.create_image(0, 0, image=photo, anchor=tk.NW)
         if self.gui.show_fps.get():
             self.gui.canvas.create_text(
@@ -591,6 +589,7 @@ class Simulation(SimulationState):
                 anchor="nw",
                 font=("Helvetica", 9, "bold"),
             )
+
         self.gui.update()
 
     def simulate(self):
