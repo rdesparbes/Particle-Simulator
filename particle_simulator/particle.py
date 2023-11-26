@@ -48,17 +48,16 @@ class Particle(ParticleData):
         repel_r: Optional[float],
         attr: float,
         repel: float,
-        is_in_group: bool,
-        is_linked: bool,
         gravity: bool,
     ) -> float:
         repel_r = part.repel_r if repel_r is None else repel_r
+        is_linked = self._is_linked_to(part)
         magnitude = self._compute_magnitude(
             part,
             attr,
             distance,
             gravity,
-            is_in_group,
+            self._is_in_same_group(part),
             is_linked,
             repel,
             repel_r,
@@ -188,14 +187,20 @@ class Particle(ParticleData):
 
         self._collisions = {}
 
+    def _is_linked_to(self, p: Self) -> bool:
+        return p in self.link_lengths
+
+    def _is_in_same_group(self, p: Self) -> bool:
+        return not self.separate_group and p.group == self.group
+
     def _compute_interactions(self, p: Self) -> None:
         if p == self:
             return
-        is_in_group = not self.separate_group and p in self._sim.groups[self.group]
-        is_linked = p in self.link_lengths
 
         if (
-            not self.linked_group_particles and not is_linked and is_in_group
+            not self.linked_group_particles
+            and not self._is_linked_to(p)
+            and self._is_in_same_group(p)
         ) or p in self._collisions:
             return
 
@@ -210,9 +215,7 @@ class Particle(ParticleData):
             self._interacts(distance),
         )
         if any(conditions):
-            force = self._compute_force(
-                p, direction, distance, conditions, is_linked, is_in_group
-            )
+            force = self._compute_force(p, direction, distance, conditions)
 
             self._apply_force(force)
             p._collisions[self] = -force
@@ -239,8 +242,6 @@ class Particle(ParticleData):
         direction: npt.NDArray[np.float_],
         distance: float,
         conditions: Tuple[bool, bool],
-        is_linked: bool,
-        is_in_group: bool,
     ) -> npt.NDArray[np.float_]:
         if distance == 0.0:
             if self.gravity_mode or p.gravity_mode:
@@ -251,8 +252,6 @@ class Particle(ParticleData):
             p,
             conditions,
             distance,
-            is_in_group,
-            is_linked,
         )
 
     def _calculate_magnitude(
@@ -260,8 +259,6 @@ class Particle(ParticleData):
         p: Self,
         distance: float,
         repel_r: Optional[float],
-        is_in_group: bool,
-        is_linked: bool,
     ) -> float:
         return self._calc_magnitude(
             part=p,
@@ -269,8 +266,6 @@ class Particle(ParticleData):
             repel_r=p.repel_r if repel_r is None else repel_r,
             attr=p.attr,
             repel=p.repel,
-            is_in_group=is_in_group,
-            is_linked=is_linked,
             gravity=p.gravity_mode,
         )
 
@@ -279,11 +274,9 @@ class Particle(ParticleData):
         p: Self,
         conditions: Tuple[bool, bool],
         distance: float,
-        is_in_group: bool,
-        is_linked: bool,
     ) -> float:
         repel_r: Optional[float] = None
-        if is_linked:
+        if self._is_linked_to(p):
             repel_radius = self.link_lengths[p]
             if repel_radius != "repel":
                 repel_r = repel_radius
@@ -295,8 +288,6 @@ class Particle(ParticleData):
                     p=p,
                     distance=distance,
                     repel_r=repel_r,
-                    is_in_group=is_in_group,
-                    is_linked=is_linked,
                 )
             magnitude = 0.0
             particles: List[Tuple[Particle, Particle]] = [(self, p), (p, self)]
@@ -306,8 +297,6 @@ class Particle(ParticleData):
                         p=particle_b,
                         distance=distance,
                         repel_r=repel_r,
-                        is_in_group=is_in_group,
-                        is_linked=is_linked,
                     )
             return magnitude
         repel_r_ = max(self.repel_r, p.repel_r) if repel_r is None else repel_r
@@ -317,8 +306,6 @@ class Particle(ParticleData):
             repel_r=repel_r_,
             attr=p.attr + self.attr,
             repel=p.repel + self.repel,
-            is_in_group=is_in_group,
-            is_linked=is_linked,
             gravity=self.gravity_mode or p.gravity_mode,
         )
         return magnitude
