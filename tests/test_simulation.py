@@ -49,8 +49,8 @@ def test_simulation_load_then_write_generates_identical_file(
         loaded_data = pickle.load(file_object)
 
     # Act
-    sim.save_manager.from_dict(loaded_data)
-    dumped_data = sim.save_manager.to_dict()
+    sim.from_dict(loaded_data)
+    dumped_data = sim.to_dict()
 
     # Assert
     assert is_subset(loaded_data, dumped_data)
