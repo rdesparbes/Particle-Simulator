@@ -3,8 +3,8 @@ import pickle
 import tkinter as tk
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 
-from .particle import Particle
 from .error import Error
+from .particle import Particle
 
 
 class SaveManager:
@@ -96,8 +96,8 @@ class SaveManager:
                     "particle-settings": particle_settings,
                     "sim-settings": sim_settings,
                 }
-
-                pickle.dump(data, open(filename, "wb"))
+                with open(filename, "wb") as file_object:
+                    pickle.dump(data, file_object)
 
                 self.file_location, self.filename = os.path.split(filename)
             except Exception as error:
@@ -117,7 +117,8 @@ class SaveManager:
         if filename == "":
             return
         try:
-            data = pickle.load(open(filename, "rb"))
+            with open(filename, "rb") as file_object:
+                data = pickle.load(file_object)
 
             for key, value in list(data["particle-settings"].items()) + list(
                 data["sim-settings"].items()
