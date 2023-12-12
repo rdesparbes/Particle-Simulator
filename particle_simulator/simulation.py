@@ -7,6 +7,8 @@ from typing import (
     Dict,
     Tuple,
     Literal,
+    TypedDict,
+    List,
 )
 
 import cv2
@@ -22,9 +24,21 @@ from .particle import Particle
 from .save_manager import SaveManager
 from .simulation_state import SimulationState
 
-
 _CANVAS_Y = 30  # The Y coordinates of the top-left corner of the canvas
 AttributeType = Literal["set", "entry", "var"]
+
+
+ParticlesPickle = List[Dict[str, Any]]
+ParticleSettings = Dict[str, Tuple[Any, AttributeType]]
+SimSettings = Dict[str, Tuple[Any, AttributeType]]
+SimPickle = TypedDict(
+    "SimPickle",
+    {
+        "particles": ParticlesPickle,
+        "particle-settings": ParticleSettings,
+        "sim-settings": SimSettings,
+    },
+)
 
 
 class Simulation(SimulationState):
@@ -291,8 +305,8 @@ class Simulation(SimulationState):
                     else:
                         getattr(self.gui, key).delete(0, tk.END)
 
-    def to_dict(self) -> Dict[str, Any]:
-        sim_settings = {
+    def to_dict(self) -> SimPickle:
+        sim_settings: SimSettings = {
             "gravity_entry": (self.gui.gravity_entry.get(), "entry"),
             "air_res_entry": (self.gui.air_res_entry.get(), "entry"),
             "friction_entry": (self.gui.friction_entry.get(), "entry"),
@@ -321,7 +335,7 @@ class Simulation(SimulationState):
             "code": (self.code, "var"),
         }
 
-        particle_settings = {
+        particle_settings: ParticleSettings = {
             "radius_entry": (self.gui.radius_entry.get(), "entry"),
             "color_entry": (self.gui.color_entry.get(), "entry"),
             "mass_entry": (self.gui.mass_entry.get(), "entry"),
@@ -366,10 +380,12 @@ class Simulation(SimulationState):
             "sim-settings": sim_settings,
         }
 
-    def from_dict(self, data: Dict[str, Any]) -> None:
-        for key, (attribute_name, attribute_type) in list(
-            data["particle-settings"].items()
-        ) + list(data["sim-settings"].items()):
+    def from_dict(self, data: SimPickle) -> None:
+        all_settings: Dict[str, Tuple[Any, AttributeType]] = {
+            **data["particle-settings"],
+            **data["sim-settings"],
+        }
+        for key, (attribute_name, attribute_type) in all_settings.items():
             if attribute_type == "set":
                 getattr(self.gui, key).set(attribute_name)
             elif attribute_type == "var":
