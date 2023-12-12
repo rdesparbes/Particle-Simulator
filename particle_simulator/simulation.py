@@ -291,24 +291,24 @@ class Simulation(SimulationState):
         particle_settings = variable_names.copy()
 
         for i, p in enumerate(self.selection):
-            for key, (attribute_name, attribute_type) in variable_names.items():
-                val = eval("p." + attribute_name)
+            for gui_attr, (part_attr, attribute_type) in variable_names.items():
+                part_val = eval("p." + part_attr)
 
                 if i == 0:
-                    particle_settings[key] = val
+                    particle_settings[gui_attr] = part_val
 
-                same = particle_settings[key] == val
+                same = particle_settings[gui_attr] == part_val
                 if attribute_type == "set":
+                    bool_var: tk.BooleanVar = getattr(self.gui, gui_attr)
                     if same:
-                        getattr(self.gui, key).set(val)
+                        bool_var.set(part_val)
                     else:
-                        getattr(self.gui, key).set(False)
+                        bool_var.set(False)
                 else:
+                    spin_box: tk.Entry = getattr(self.gui, gui_attr)
+                    spin_box.delete(0, tk.END)
                     if same:
-                        getattr(self.gui, key).delete(0, tk.END)
-                        getattr(self.gui, key).insert(0, str(val))
-                    else:
-                        getattr(self.gui, key).delete(0, tk.END)
+                        spin_box.insert(0, str(part_val))
 
     def to_dict(self) -> SimPickle:
         sim_settings: SimSettings = {
