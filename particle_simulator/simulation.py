@@ -6,6 +6,7 @@ from typing import (
     Any,
     Dict,
     Tuple,
+    Literal,
 )
 
 import cv2
@@ -23,6 +24,7 @@ from .simulation_state import SimulationState
 
 
 _CANVAS_Y = 30  # The Y coordinates of the top-left corner of the canvas
+AttributeType = Literal["set", "entry", "var"]
 
 
 class Simulation(SimulationState):
@@ -247,37 +249,37 @@ class Simulation(SimulationState):
                 self._replace_particle(p, kwargs)
 
     def copy_from_selected(self) -> None:
-        variable_names = {
-            "radius_entry": ["r", "entry"],
-            "color_entry": ["color", "entry"],
-            "mass_entry": ["m", "entry"],
-            "velocity_x_entry": ["v[0]", "entry"],
-            "velocity_y_entry": ["v[1]", "entry"],
-            "bounciness_entry": ["bounciness", "entry"],
-            "do_collision_bool": ["collision_bool", "set"],
-            "locked_bool": ["locked", "set"],
-            "linked_group_bool": ["linked_group_particles", "set"],
-            "attr_r_entry": ["attr_r", "entry"],
-            "repel_r_entry": ["repel_r", "entry"],
-            "attr_strength_entry": ["attr", "entry"],
-            "repel_strength_entry": ["repel", "entry"],
-            "link_attr_break_entry": ["link_attr_breaking_force", "entry"],
-            "link_repel_break_entry": ["link_repel_breaking_force", "entry"],
-            "groups_entry": ["group", "entry"],
-            "separate_group_bool": ["separate_group", "set"],
-            "gravity_mode_bool": ["gravity_mode", "set"],
+        variable_names: Dict[str, Tuple[str, AttributeType]] = {
+            "radius_entry": ("r", "entry"),
+            "color_entry": ("color", "entry"),
+            "mass_entry": ("m", "entry"),
+            "velocity_x_entry": ("v[0]", "entry"),
+            "velocity_y_entry": ("v[1]", "entry"),
+            "bounciness_entry": ("bounciness", "entry"),
+            "do_collision_bool": ("collision_bool", "set"),
+            "locked_bool": ("locked", "set"),
+            "linked_group_bool": ("linked_group_particles", "set"),
+            "attr_r_entry": ("attr_r", "entry"),
+            "repel_r_entry": ("repel_r", "entry"),
+            "attr_strength_entry": ("attr", "entry"),
+            "repel_strength_entry": ("repel", "entry"),
+            "link_attr_break_entry": ("link_attr_breaking_force", "entry"),
+            "link_repel_break_entry": ("link_repel_breaking_force", "entry"),
+            "groups_entry": ("group", "entry"),
+            "separate_group_bool": ("separate_group", "set"),
+            "gravity_mode_bool": ("gravity_mode", "set"),
         }
         particle_settings = variable_names.copy()
 
         for i, p in enumerate(self.selection):
-            for key, value in variable_names.items():
-                val = eval("p." + value[0])
+            for key, (attribute, attribute_type) in variable_names.items():
+                val = eval("p." + attribute)
 
                 if i == 0:
                     particle_settings[key] = val
 
                 same = particle_settings[key] == val
-                if value[1] == "set":
+                if attribute_type == "set":
                     if same:
                         getattr(self.gui, key).set(val)
                     else:
