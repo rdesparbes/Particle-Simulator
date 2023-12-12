@@ -93,7 +93,7 @@ class Particle(ParticleData):
         self,
         particles: List[Self],
         fit_link: bool = False,
-        distance: Optional[float] = None,
+        distance: Union[None, float, Literal["repel"]] = None,
     ) -> None:
         position: Optional[npt.NDArray[np.float_]] = (
             np.array([self.x, self.y]) if fit_link else None
@@ -121,7 +121,7 @@ class Particle(ParticleData):
     def link(
         particles: List["Particle"],
         fit_link: bool = False,
-        distance: Optional[float] = None,
+        distance: Union[None, float, Literal["repel"]] = None,
     ) -> None:
         for p in particles:
             p._link(particles, fit_link=fit_link, distance=distance)

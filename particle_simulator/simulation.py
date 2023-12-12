@@ -149,53 +149,54 @@ class Simulation(SimulationState):
             self.mr = max(self.mr * 2 ** (event.delta / 500), 1)
 
     def _on_press(self, key: Key) -> None:
-        if self.focus:
-            # SPACE to pause
-            if key == Key.space:
-                self.toggle_paused()
-            # DELETE to delete
-            elif key == Key.delete:
-                temp = self.selection.copy()
-                for p in temp:
-                    self.remove_particle(p)
-            elif key == Key.shift_l or key == Key.shift_r:
-                self.shift = True
-            # CTRL + A to select all
-            elif KeyCode.from_char(str(key)).char == r"'\x01'":
-                for p in self.particles:
-                    self._select_particle(p)
-            # CTRL + C to copy
-            elif KeyCode.from_char(str(key)).char == r"'\x03'":
-                self._copy_selected()
-            # CTRL + V to copy
-            elif KeyCode.from_char(str(key)).char == r"'\x16'":
-                self._paste()
-            # CTRL + X to cut
-            elif KeyCode.from_char(str(key)).char == r"'\x18'":
-                self._cut()
-            # CTRL + L and CTRL + SHIFT + L to lock and 'unlock'
-            elif KeyCode.from_char(str(key)).char == r"'\x0c'" and not self.shift:
-                for p in self.selection:
-                    p.locked = True
-            elif KeyCode.from_char(str(key)).char == r"'\x0c'" and self.shift:
-                for p in self.selection:
-                    p.locked = False
-            # L to link, SHIFT + L to unlink and ALT GR + L to fit-link
-            elif KeyCode.from_char(str(key)).char == "'l'":
-                self.link_selection()
-            elif KeyCode.from_char(str(key)).char == "<76>":
-                self.link_selection(fit_link=True)
-            elif KeyCode.from_char(str(key)).char == "'L'":
-                self.unlink_selection()
-            # R to enter rotate-mode
-            elif KeyCode.from_char(str(key)).char == "'r'":
-                self.rotate_mode = True
-            # CTRL + S to save
-            elif KeyCode.from_char(str(key)).char == r"'\x13'":
-                self.start_save = True  # Threading-issues
-            # CTRL + O to load / open
-            elif KeyCode.from_char(str(key)).char == r"'\x0f'":
-                self.start_load = True
+        if not self.focus:
+            return
+        # SPACE to pause
+        if key == Key.space:
+            self.toggle_paused()
+        # DELETE to delete
+        elif key == Key.delete:
+            temp = self.selection.copy()
+            for p in temp:
+                self.remove_particle(p)
+        elif key == Key.shift_l or key == Key.shift_r:
+            self.shift = True
+        # CTRL + A to select all
+        elif KeyCode.from_char(str(key)).char == r"'\x01'":
+            for p in self.particles:
+                self._select_particle(p)
+        # CTRL + C to copy
+        elif KeyCode.from_char(str(key)).char == r"'\x03'":
+            self._copy_selected()
+        # CTRL + V to copy
+        elif KeyCode.from_char(str(key)).char == r"'\x16'":
+            self._paste()
+        # CTRL + X to cut
+        elif KeyCode.from_char(str(key)).char == r"'\x18'":
+            self._cut()
+        # CTRL + L and CTRL + SHIFT + L to lock and 'unlock'
+        elif KeyCode.from_char(str(key)).char == r"'\x0c'" and not self.shift:
+            for p in self.selection:
+                p.locked = True
+        elif KeyCode.from_char(str(key)).char == r"'\x0c'" and self.shift:
+            for p in self.selection:
+                p.locked = False
+        # L to link, SHIFT + L to unlink and ALT GR + L to fit-link
+        elif KeyCode.from_char(str(key)).char == "'l'":
+            self.link_selection()
+        elif KeyCode.from_char(str(key)).char == "<76>":
+            self.link_selection(fit_link=True)
+        elif KeyCode.from_char(str(key)).char == "'L'":
+            self.unlink_selection()
+        # R to enter rotate-mode
+        elif KeyCode.from_char(str(key)).char == "'r'":
+            self.rotate_mode = True
+        # CTRL + S to save
+        elif KeyCode.from_char(str(key)).char == r"'\x13'":
+            self.start_save = True  # Threading-issues
+        # CTRL + O to load / open
+        elif KeyCode.from_char(str(key)).char == r"'\x0f'":
+            self.start_load = True
 
     def _on_release(self, key: Key) -> None:
         if key == Key.shift_l or key == Key.shift_r:
@@ -518,9 +519,7 @@ class Simulation(SimulationState):
         if self.error is not None:
             messagebox.showerror(self.error.name, str(self.error.exception))
             self.error = None
-        photo = ImageTk.PhotoImage(
-            image=Image.fromarray(image.astype(np.uint8)), master=self.gui.tk
-        )
+        photo = ImageTk.PhotoImage(image=Image.fromarray(image.astype(np.uint8)))
         self.gui.pause_button.config(
             image=self.gui.play_photo if self.paused else self.gui.pause_photo
         )

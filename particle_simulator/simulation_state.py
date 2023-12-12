@@ -1,6 +1,16 @@
 import math
 import time
-from typing import Tuple, Optional, List, Dict, Any, Collection, Iterable
+from typing import (
+    Tuple,
+    Optional,
+    List,
+    Dict,
+    Any,
+    Collection,
+    Iterable,
+    Literal,
+    Union,
+)
 
 import numpy as np
 from numpy import typing as npt
@@ -137,7 +147,7 @@ class SimulationState:
     def link(
         particles: List[Particle],
         fit_link: bool = False,
-        distance: Optional[float] = None,
+        distance: Union[None, float, Literal["repel"]] = None,
     ) -> None:
         Particle.link(particles, fit_link, distance)
 
