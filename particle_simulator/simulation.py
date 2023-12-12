@@ -272,8 +272,8 @@ class Simulation(SimulationState):
         particle_settings = variable_names.copy()
 
         for i, p in enumerate(self.selection):
-            for key, (attribute, attribute_type) in variable_names.items():
-                val = eval("p." + attribute)
+            for key, (attribute_name, attribute_type) in variable_names.items():
+                val = eval("p." + attribute_name)
 
                 if i == 0:
                     particle_settings[key] = val
@@ -293,68 +293,68 @@ class Simulation(SimulationState):
 
     def to_dict(self) -> Dict[str, Any]:
         sim_settings = {
-            "gravity_entry": [self.gui.gravity_entry.get(), "entry"],
-            "air_res_entry": [self.gui.air_res_entry.get(), "entry"],
-            "friction_entry": [self.gui.friction_entry.get(), "entry"],
-            "temp_sc": [self.gui.temp_sc.get(), "set"],
-            "speed_sc": [self.gui.speed_sc.get(), "set"],
-            "show_fps": [self.gui.show_fps.get(), "set"],
-            "show_num": [self.gui.show_num.get(), "set"],
-            "show_links": [self.gui.show_links.get(), "set"],
-            "top_bool": [self.gui.top_bool.get(), "set"],
-            "bottom_bool": [self.gui.bottom_bool.get(), "set"],
-            "left_bool": [self.gui.left_bool.get(), "set"],
-            "right_bool": [self.gui.right_bool.get(), "set"],
-            "grid_bool": [self.gui.grid_bool.get(), "set"],
-            "grid_res_x_value": [self.gui.grid_res_x_value.get(), "set"],
-            "grid_res_y_value": [self.gui.grid_res_y_value.get(), "set"],
-            "delay_entry": [self.gui.delay_entry.get(), "entry"],
-            "calculate_radii_diff_bool": [
+            "gravity_entry": (self.gui.gravity_entry.get(), "entry"),
+            "air_res_entry": (self.gui.air_res_entry.get(), "entry"),
+            "friction_entry": (self.gui.friction_entry.get(), "entry"),
+            "temp_sc": (self.gui.temp_sc.get(), "set"),
+            "speed_sc": (self.gui.speed_sc.get(), "set"),
+            "show_fps": (self.gui.show_fps.get(), "set"),
+            "show_num": (self.gui.show_num.get(), "set"),
+            "show_links": (self.gui.show_links.get(), "set"),
+            "top_bool": (self.gui.top_bool.get(), "set"),
+            "bottom_bool": (self.gui.bottom_bool.get(), "set"),
+            "left_bool": (self.gui.left_bool.get(), "set"),
+            "right_bool": (self.gui.right_bool.get(), "set"),
+            "grid_bool": (self.gui.grid_bool.get(), "set"),
+            "grid_res_x_value": (self.gui.grid_res_x_value.get(), "set"),
+            "grid_res_y_value": (self.gui.grid_res_y_value.get(), "set"),
+            "delay_entry": (self.gui.delay_entry.get(), "entry"),
+            "calculate_radii_diff_bool": (
                 self.gui.calculate_radii_diff_bool.get(),
                 "set",
-            ],
-            "g_dir": [self.g_dir, "var"],
-            "wind_force": [self.wind_force, "var"],
-            "stress_visualization": [self.stress_visualization, "var"],
-            "bg_color": [self.bg_color, "var"],
-            "void_edges": [self.void_edges, "var"],
-            "code": [self.code, "var"],
+            ),
+            "g_dir": (self.g_dir, "var"),
+            "wind_force": (self.wind_force, "var"),
+            "stress_visualization": (self.stress_visualization, "var"),
+            "bg_color": (self.bg_color, "var"),
+            "void_edges": (self.void_edges, "var"),
+            "code": (self.code, "var"),
         }
 
         particle_settings = {
-            "radius_entry": [self.gui.radius_entry.get(), "entry"],
-            "color_entry": [self.gui.color_entry.get(), "entry"],
-            "mass_entry": [self.gui.mass_entry.get(), "entry"],
-            "velocity_x_entry": [self.gui.velocity_x_entry.get(), "entry"],
-            "velocity_y_entry": [self.gui.velocity_y_entry.get(), "entry"],
-            "bounciness_entry": [self.gui.bounciness_entry.get(), "entry"],
-            "do_collision_bool": [self.gui.do_collision_bool.get(), "set"],
-            "locked_bool": [self.gui.locked_bool.get(), "set"],
-            "linked_group_bool": [self.gui.linked_group_bool.get(), "set"],
-            "attr_r_entry": [self.gui.attr_r_entry.get(), "entry"],
-            "repel_r_entry": [self.gui.repel_r_entry.get(), "entry"],
-            "attr_strength_entry": [
+            "radius_entry": (self.gui.radius_entry.get(), "entry"),
+            "color_entry": (self.gui.color_entry.get(), "entry"),
+            "mass_entry": (self.gui.mass_entry.get(), "entry"),
+            "velocity_x_entry": (self.gui.velocity_x_entry.get(), "entry"),
+            "velocity_y_entry": (self.gui.velocity_y_entry.get(), "entry"),
+            "bounciness_entry": (self.gui.bounciness_entry.get(), "entry"),
+            "do_collision_bool": (self.gui.do_collision_bool.get(), "set"),
+            "locked_bool": (self.gui.locked_bool.get(), "set"),
+            "linked_group_bool": (self.gui.linked_group_bool.get(), "set"),
+            "attr_r_entry": (self.gui.attr_r_entry.get(), "entry"),
+            "repel_r_entry": (self.gui.repel_r_entry.get(), "entry"),
+            "attr_strength_entry": (
                 self.gui.attr_strength_entry.get(),
                 "entry",
-            ],
-            "gravity_mode_bool": [self.gui.gravity_mode_bool.get(), "set"],
-            "repel_strength_entry": [
+            ),
+            "gravity_mode_bool": (self.gui.gravity_mode_bool.get(), "set"),
+            "repel_strength_entry": (
                 self.gui.repel_strength_entry.get(),
                 "entry",
-            ],
-            "link_attr_break_entry": [
+            ),
+            "link_attr_break_entry": (
                 self.gui.link_attr_break_entry.get(),
                 "entry",
-            ],
-            "link_repel_break_entry": [
+            ),
+            "link_repel_break_entry": (
                 self.gui.link_repel_break_entry.get(),
                 "entry",
-            ],
-            "groups_entry": [self.gui.groups_entry.get(), "entry"],
-            "separate_group_bool": [
+            ),
+            "groups_entry": (self.gui.groups_entry.get(), "entry"),
+            "separate_group_bool": (
                 self.gui.separate_group_bool.get(),
                 "set",
-            ],
+            ),
         }
 
         return {
@@ -367,16 +367,16 @@ class Simulation(SimulationState):
         }
 
     def from_dict(self, data: Dict[str, Any]) -> None:
-        for key, value in list(data["particle-settings"].items()) + list(
-            data["sim-settings"].items()
-        ):
-            if value[1] == "set":
-                getattr(self.gui, key).set(value[0])
-            elif value[1] == "var":
-                setattr(self, key, value[0])
+        for key, (attribute_name, attribute_type) in list(
+            data["particle-settings"].items()
+        ) + list(data["sim-settings"].items()):
+            if attribute_type == "set":
+                getattr(self.gui, key).set(attribute_name)
+            elif attribute_type == "var":
+                setattr(self, key, attribute_name)
             else:
                 getattr(self.gui, key).delete(0, tk.END)
-                getattr(self.gui, key).insert(0, value[0])
+                getattr(self.gui, key).insert(0, attribute_name)
 
         temp = self.particles.copy()
         for p in temp:

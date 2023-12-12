@@ -1,26 +1,24 @@
 import pickle
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
 from particle_simulator.simulation import Simulation
 
 
-def is_subset(obj: Any, reference: Any) -> bool:
-    if not isinstance(obj, type(reference)):
-        return False
-
-    if isinstance(obj, Dict):
+def assert_is_subset(obj: Any, reference: Any) -> None:
+    if isinstance(obj, (str, float)):
+        assert obj == reference
+    elif hasattr(obj, "items"):
         for key, value in obj.items():
-            try:
-                ref_value = reference[key]
-            except KeyError:
-                return False
-            if not is_subset(value, ref_value):
-                return False
-        return True
-    return obj == reference
+            ref_value = reference[key]
+            assert_is_subset(value, ref_value)
+    elif hasattr(obj, "__iter__"):
+        for obj_elem, ref_elem in zip(obj, reference):
+            assert_is_subset(obj_elem, ref_elem)
+    else:
+        assert obj == reference
 
 
 @pytest.mark.parametrize(
@@ -53,4 +51,4 @@ def test_simulation_load_then_write_generates_identical_file(
     dumped_data = sim.to_dict()
 
     # Assert
-    assert is_subset(loaded_data, dumped_data)
+    assert_is_subset(loaded_data, dumped_data)
