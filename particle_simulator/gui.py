@@ -8,6 +8,8 @@ from .extra_window import ExtraWindow
 from .particle_dict import ParticleDict
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
+CANVAS_X = 0  # The X coordinate of the top-left corner of the canvas
+CANVAS_Y = 30  # The Y coordinate of the top-left corner of the canvas
 
 
 class GUI:
@@ -24,7 +26,7 @@ class GUI:
         )
         self.gui_canvas.pack()
         self.canvas = tk.Canvas(self.tk, width=self.sim.width, height=self.sim.height)
-        self.canvas.place(x=0, y=30)
+        self.canvas.place(x=CANVAS_X, y=CANVAS_Y)
 
         self.code_window = None
         self.extra_window = None

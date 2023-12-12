@@ -19,12 +19,11 @@ from pynput.keyboard import Listener, Key, KeyCode
 
 from .error import Error
 from .grid import Grid
-from .gui import GUI, Mode
+from .gui import GUI, Mode, CANVAS_X, CANVAS_Y
 from .particle import Particle
 from .save_manager import SaveManager
 from .simulation_state import SimulationState
 
-_CANVAS_Y = 30  # The Y coordinates of the top-left corner of the canvas
 AttributeType = Literal["set", "entry", "var"]
 
 
@@ -79,8 +78,8 @@ class Simulation(SimulationState):
         self.listener = Listener(on_press=self._on_press, on_release=self._on_release)
         self.listener.start()
 
-    def _mouse_p_part(self, particle: Particle, event: tk.Event) -> bool:
-        if np.sqrt((event.x - particle.x) ** 2 + (event.y - particle.y) ** 2) <= max(
+    def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:
+        if np.sqrt((x - particle.x) ** 2 + (y - particle.y) ** 2) <= max(
             int(self.mr), particle.r
         ):
             if self.mouse_mode == "SELECT":
@@ -97,7 +96,9 @@ class Simulation(SimulationState):
         self.mouse_down_start = time.time()
         self.mouse_down = True
         if self.mouse_mode == "SELECT" or self.mouse_mode == "MOVE":
-            selected = any(self._mouse_p_part(p, event) for p in self.particles)
+            selected = any(
+                self._mouse_p_part(p, event.x, event.y) for p in self.particles
+            )
             if not selected:
                 self.selection = []
             elif self.mouse_mode == "MOVE":
@@ -109,15 +110,18 @@ class Simulation(SimulationState):
 
             self.add_particle(event.x, event.y)
 
-    def _mouse_m(self, event: tk.Event) -> None:
+    def _mouse_moved(self, x: int, y: int) -> None:
         if self.mouse_mode == "SELECT":
             for p in self.particles:
-                self._mouse_p_part(p, event)
+                self._mouse_p_part(p, x, y)
         elif (
             self.mouse_mode == "ADD"
             and time.time() - self.last_mouse_time >= self.min_spawn_delay
         ):
-            self.add_particle(event.x, event.y)
+            self.add_particle(x, y)
+
+    def _mouse_m(self, event: tk.Event) -> None:
+        self._mouse_moved(event.x, event.y)
 
     def _mouse_r(self, _event: tk.Event) -> None:
         self.mouse_down = False
@@ -550,9 +554,7 @@ class Simulation(SimulationState):
                 self.mouse_down
                 and time.time() - self.mouse_down_start >= self.min_hold_delay
             ):
-                event = tk.Event()
-                event.x, event.y = self.mx, self.my
-                self._mouse_m(event)
+                self._mouse_moved(self.mx, self.my)
 
             try:
                 self.focus = isinstance(
@@ -581,9 +583,11 @@ class Simulation(SimulationState):
             self.prev_time = time.time()
 
             self.prev_mx, self.prev_my = self.mx, self.my
-            self.mx = self.gui.tk.winfo_pointerx() - self.gui.tk.winfo_rootx()
+            self.mx = (
+                self.gui.tk.winfo_pointerx() - self.gui.tk.winfo_rootx() - CANVAS_X
+            )
             self.my = (
-                self.gui.tk.winfo_pointery() - self.gui.tk.winfo_rooty() - _CANVAS_Y
+                self.gui.tk.winfo_pointery() - self.gui.tk.winfo_rooty() - CANVAS_Y
             )
 
             image = self._draw_image()
