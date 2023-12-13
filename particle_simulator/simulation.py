@@ -268,32 +268,29 @@ class Simulation(SimulationState):
                 self._replace_particle(p, kwargs)
 
     def copy_from_selected(self) -> None:
-        variable_names: Dict[str, Tuple[str, AttributeType]] = {
-            "radius_entry": ("r", "entry"),
-            "color_entry": ("color", "entry"),
-            "mass_entry": ("m", "entry"),
-            "velocity_x_entry": ("v[0]", "entry"),
-            "velocity_y_entry": ("v[1]", "entry"),
-            "bounciness_entry": ("bounciness", "entry"),
-            "do_collision_bool": ("collision_bool", "set"),
-            "locked_bool": ("locked", "set"),
-            "linked_group_bool": ("linked_group_particles", "set"),
-            "attr_r_entry": ("attr_r", "entry"),
-            "repel_r_entry": ("repel_r", "entry"),
-            "attr_strength_entry": ("attr", "entry"),
-            "repel_strength_entry": ("repel", "entry"),
-            "link_attr_break_entry": ("link_attr_breaking_force", "entry"),
-            "link_repel_break_entry": ("link_repel_breaking_force", "entry"),
-            "groups_entry": ("group", "entry"),
-            "separate_group_bool": ("separate_group", "set"),
-            "gravity_mode_bool": ("gravity_mode", "set"),
-        }
-        particle_settings = variable_names.copy()
-
+        particle_settings: Dict[str, Any] = {}
         for i, p in enumerate(self.selection):
-            for gui_attr, (part_attr, attribute_type) in variable_names.items():
-                part_val = eval("p." + part_attr)
-
+            variable_names: Dict[str, Tuple[Any, AttributeType]] = {
+                "radius_entry": (p.r, "entry"),
+                "color_entry": (p.color, "entry"),
+                "mass_entry": (p.m, "entry"),
+                "velocity_x_entry": (p.v[0], "entry"),
+                "velocity_y_entry": (p.v[1], "entry"),
+                "bounciness_entry": (p.bounciness, "entry"),
+                "do_collision_bool": (p.collision_bool, "set"),
+                "locked_bool": (p.locked, "set"),
+                "linked_group_bool": (p.linked_group_particles, "set"),
+                "attr_r_entry": (p.attr_r, "entry"),
+                "repel_r_entry": (p.repel_r, "entry"),
+                "attr_strength_entry": (p.attr, "entry"),
+                "repel_strength_entry": (p.repel, "entry"),
+                "link_attr_break_entry": (p.link_attr_breaking_force, "entry"),
+                "link_repel_break_entry": (p.link_repel_breaking_force, "entry"),
+                "groups_entry": (p.group, "entry"),
+                "separate_group_bool": (p.separate_group, "set"),
+                "gravity_mode_bool": (p.gravity_mode, "set"),
+            }
+            for gui_attr, (part_val, attribute_type) in variable_names.items():
                 if i == 0:
                     particle_settings[gui_attr] = part_val
 
