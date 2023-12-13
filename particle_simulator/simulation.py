@@ -270,42 +270,43 @@ class Simulation(SimulationState):
     def copy_from_selected(self) -> None:
         particle_settings: Dict[str, Any] = {}
         for i, p in enumerate(self.selection):
-            variable_names: Dict[str, Tuple[Any, AttributeType]] = {
-                "radius_entry": (p.r, "entry"),
-                "color_entry": (p.color, "entry"),
-                "mass_entry": (p.m, "entry"),
-                "velocity_x_entry": (p.v[0], "entry"),
-                "velocity_y_entry": (p.v[1], "entry"),
-                "bounciness_entry": (p.bounciness, "entry"),
-                "do_collision_bool": (p.collision_bool, "set"),
-                "locked_bool": (p.locked, "set"),
-                "linked_group_bool": (p.linked_group_particles, "set"),
-                "attr_r_entry": (p.attr_r, "entry"),
-                "repel_r_entry": (p.repel_r, "entry"),
-                "attr_strength_entry": (p.attr, "entry"),
-                "repel_strength_entry": (p.repel, "entry"),
-                "link_attr_break_entry": (p.link_attr_breaking_force, "entry"),
-                "link_repel_break_entry": (p.link_repel_breaking_force, "entry"),
-                "groups_entry": (p.group, "entry"),
-                "separate_group_bool": (p.separate_group, "set"),
-                "gravity_mode_bool": (p.gravity_mode, "set"),
+            variable_names: Dict[str, Any] = {
+                "radius_entry": p.r,
+                "color_entry": p.color,
+                "mass_entry": p.m,
+                "velocity_x_entry": p.v[0],
+                "velocity_y_entry": p.v[1],
+                "bounciness_entry": p.bounciness,
+                "do_collision_bool": p.collision_bool,
+                "locked_bool": p.locked,
+                "linked_group_bool": p.linked_group_particles,
+                "attr_r_entry": p.attr_r,
+                "repel_r_entry": p.repel_r,
+                "attr_strength_entry": p.attr,
+                "repel_strength_entry": p.repel,
+                "link_attr_break_entry": p.link_attr_breaking_force,
+                "link_repel_break_entry": p.link_repel_breaking_force,
+                "groups_entry": p.group,
+                "separate_group_bool": p.separate_group,
+                "gravity_mode_bool": p.gravity_mode,
             }
-            for gui_attr, (part_val, attribute_type) in variable_names.items():
+            for gui_attr, part_val in variable_names.items():
                 if i == 0:
                     particle_settings[gui_attr] = part_val
 
                 same = particle_settings[gui_attr] == part_val
-                if attribute_type == "set":
-                    bool_var: tk.BooleanVar = getattr(self.gui, gui_attr)
+                widget: tk.Widget = getattr(self.gui, gui_attr)
+                if isinstance(widget, tk.BooleanVar):
                     if same:
-                        bool_var.set(part_val)
+                        widget.set(part_val)
                     else:
-                        bool_var.set(False)
-                else:
-                    spin_box: tk.Entry = getattr(self.gui, gui_attr)
-                    spin_box.delete(0, tk.END)
+                        widget.set(False)
+                elif isinstance(widget, (tk.Entry, tk.Spinbox)):
+                    widget.delete(0, tk.END)
                     if same:
-                        spin_box.insert(0, str(part_val))
+                        widget.insert(0, str(part_val))
+                else:
+                    raise NotImplementedError(f"Unexpected widget: {type(widget)}")
 
     def to_dict(self) -> SimPickle:
         sim_settings: SimSettings = {
