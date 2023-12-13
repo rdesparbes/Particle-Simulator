@@ -1,20 +1,15 @@
 import time
 import tkinter as tk
-from tkinter import messagebox
 from typing import (
     Optional,
     Any,
     Dict,
     Tuple,
-    Literal,
-    TypedDict,
-    List,
 )
 
 import cv2
 import numpy as np
 import numpy.typing as npt
-from PIL import ImageTk, Image
 from pynput.keyboard import Listener, Key, KeyCode
 
 from .error import Error
@@ -22,22 +17,8 @@ from .grid import Grid
 from .gui import GUI, Mode, CANVAS_X, CANVAS_Y
 from .particle import Particle
 from .save_manager import SaveManager
+from .sim_pickle import SimPickle, SimSettings, ParticleSettings, AttributeType
 from .simulation_state import SimulationState
-
-AttributeType = Literal["set", "entry", "var"]
-
-
-ParticlesPickle = List[Dict[str, Any]]
-ParticleSettings = Dict[str, Tuple[Any, AttributeType]]
-SimSettings = Dict[str, Tuple[Any, AttributeType]]
-SimPickle = TypedDict(
-    "SimPickle",
-    {
-        "particles": ParticlesPickle,
-        "particle-settings": ParticleSettings,
-        "sim-settings": SimSettings,
-    },
-)
 
 
 class Simulation(SimulationState):
@@ -344,6 +325,8 @@ class Simulation(SimulationState):
             **data["particle-settings"],
             **data["sim-settings"],
         }
+        self.gui.group_indices = []
+        self.gui.groups_entry["values"] = []
         for key, (attribute_name, attribute_type) in all_settings.items():
             if attribute_type == "set":
                 getattr(self.gui, key).set(attribute_name)
@@ -353,20 +336,15 @@ class Simulation(SimulationState):
                 getattr(self.gui, key).delete(0, tk.END)
                 getattr(self.gui, key).insert(0, attribute_name)
 
-        temp = self.particles.copy()
-        for p in temp:
+        for p in self.particles.copy():
             self.remove_particle(p)
 
         self.groups = {}
-        self.gui.group_indices = []
-        self.gui.groups_entry["values"] = []
-        for i in range(len(data["particles"])):
-            p = Particle(self, 0, 0, group=data["particles"][i]["group"])
+        for i, d in enumerate(data["particles"]):
+            p = Particle(self, 0, 0, group=d["group"])
             self.register_particle(p)
 
-        for i, d in enumerate(data["particles"]):
-            particle = self.particles[i]
-
+        for particle, d in zip(self.particles, data["particles"]):
             for key, value in d.items():
                 setattr(particle, key, value)
             particle.init_constants()
