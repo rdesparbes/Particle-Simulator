@@ -1,9 +1,14 @@
 import os
 import tkinter as tk
 from tkinter import ttk, colorchooser, messagebox
-from typing import Literal, Sequence, Dict, Any
+from typing import Literal, Sequence, Dict, Any, Optional
+
+import numpy as np
+import numpy.typing as npt
+from PIL import ImageTk, Image
 
 from .code_window import CodeWindow
+from .error import Error
 from .extra_window import ExtraWindow
 from .particle_data import ParticleData
 from .particle_dict import ParticleDict
@@ -814,13 +819,47 @@ class GUI:
             if self.color_var.get() == "random" or self.color_var.get() == "":
                 self.tab2_canvas.itemconfig(self.part_color_rect, fill="#ffffff")
 
-    def update(self):
+    def _update(self):
         if self.code_window is not None:
             self.code_window.tk.update()
         if self.extra_window is not None:
             self.extra_window.update()
 
         self.tk.update()
+
+    def update(
+        self,
+        image: npt.NDArray[np.uint8],
+        paused: bool = True,
+        fps: Optional[float] = None,
+        particle_count: Optional[int] = None,
+        error: Optional[Error] = None,
+    ) -> None:
+        if error is not None:
+            messagebox.showerror(error.name, str(error.exception))
+        photo = ImageTk.PhotoImage(image=Image.fromarray(image.astype(np.uint8)))
+        self.pause_button.config(image=self.play_photo if paused else self.pause_photo)
+
+        self.canvas.delete("all")
+        self.canvas.create_image(0, 0, image=photo, anchor=tk.NW)
+        if self.show_fps.get() and fps is not None:
+            self.canvas.create_text(
+                10,
+                10,
+                text=f"FPS: {round(fps, 2)}",
+                anchor="nw",
+                font=("Helvetica", 9, "bold"),
+            )
+        if self.show_num.get() and particle_count is not None:
+            self.canvas.create_text(
+                10,
+                25,
+                text=f"Particles: {particle_count}",
+                anchor="nw",
+                font=("Helvetica", 9, "bold"),
+            )
+
+        self._update()
 
     def destroy(self):
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
