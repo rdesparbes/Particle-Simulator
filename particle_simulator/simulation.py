@@ -110,18 +110,15 @@ class Simulation(SimulationState):
 
             self.add_particle(event.x, event.y)
 
-    def _mouse_moved(self, x: int, y: int) -> None:
+    def _mouse_m(self, event: tk.Event) -> None:
         if self.mouse_mode == "SELECT":
             for p in self.particles:
-                self._mouse_p_part(p, x, y)
+                self._mouse_p_part(p, event.x, event.y)
         elif (
             self.mouse_mode == "ADD"
             and time.time() - self.last_mouse_time >= self.min_spawn_delay
         ):
-            self.add_particle(x, y)
-
-    def _mouse_m(self, event: tk.Event) -> None:
-        self._mouse_moved(event.x, event.y)
+            self.add_particle(event.x, event.y)
 
     def _mouse_r(self, _event: tk.Event) -> None:
         self.mouse_down = False
@@ -430,9 +427,9 @@ class Simulation(SimulationState):
         self.left = self.gui.left_bool.get()
         self.right = self.gui.right_bool.get()
 
-    def _draw_image(self) -> npt.NDArray[np.uint8]:
+    def _draw_image(self, show_links: bool) -> npt.NDArray[np.uint8]:
         image = np.full((self.height, self.width, 3), self.bg_color[0], dtype=np.uint8)
-        if self.gui.show_links.get():
+        if show_links:
             if self.stress_visualization and not self.paused:
                 for p1, p2, percentage in self.link_colors:
                     color = [max(255 * percentage, 235)] + [235 * (1 - percentage)] * 2
@@ -502,50 +499,42 @@ class Simulation(SimulationState):
 
         self.gui.update()
 
+    def _update_focus(self):
+        try:
+            self.focus = isinstance(self.gui.tk.focus_displayof(), (tk.Canvas, tk.Tk))
+        except KeyError:
+            # Combobox
+            self.focus = False
+
+    def _handle_save_manager(self):
+        if self.start_save:
+            self.save_manager.save()
+            self.start_save = False
+        if self.start_load:
+            self.save_manager.load()
+            self.start_load = False
+
+    def _update_timings(self):
+        if time.time() - self.start_time >= self.fps_update_delay:
+            try:
+                self.fps = 1 / (time.time() - self.prev_time)
+            except ZeroDivisionError:
+                pass
+            self.start_time = time.time()
+        self.prev_time = time.time()
+
+    def _update_mouse_position(self):
+        self.prev_mx, self.prev_my = self.mx, self.my
+        self.mx = self.gui.tk.winfo_pointerx() - self.gui.tk.winfo_rootx() - CANVAS_X
+        self.my = self.gui.tk.winfo_pointery() - self.gui.tk.winfo_rooty() - CANVAS_Y
+
     def simulate(self) -> None:
         while self.running:
             self._update_attributes()
-
-            if (
-                self.mouse_down
-                and time.time() - self.mouse_down_start >= self.min_hold_delay
-            ):
-                self._mouse_moved(self.mx, self.my)
-
-            try:
-                self.focus = isinstance(
-                    self.gui.tk.focus_displayof(), (tk.Canvas, tk.Tk)
-                )
-            except KeyError:
-                # Combobox
-                self.focus = False
-
-            if self.start_save:
-                self.save_manager.save()
-                self.start_save = False
-
-            if self.start_load:
-                self.save_manager.load()
-                self.start_load = False
-
+            self._update_focus()
+            self._handle_save_manager()
             self._simulate_step()
-
-            if time.time() - self.start_time >= self.fps_update_delay:
-                try:
-                    self.fps = 1 / (time.time() - self.prev_time)
-                except ZeroDivisionError:
-                    pass
-                self.start_time = time.time()
-            self.prev_time = time.time()
-
-            self.prev_mx, self.prev_my = self.mx, self.my
-            self.mx = (
-                self.gui.tk.winfo_pointerx() - self.gui.tk.winfo_rootx() - CANVAS_X
-            )
-            self.my = (
-                self.gui.tk.winfo_pointery() - self.gui.tk.winfo_rooty() - CANVAS_Y
-            )
-
-            image = self._draw_image()
-
+            self._update_timings()
+            self._update_mouse_position()
+            image = self._draw_image(self.gui.show_links.get())
             self._update_gui(image)
