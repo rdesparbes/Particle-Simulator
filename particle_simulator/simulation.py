@@ -1,3 +1,4 @@
+import math
 import time
 import tkinter as tk
 from typing import (
@@ -5,6 +6,11 @@ from typing import (
     Any,
     Dict,
     Tuple,
+    List,
+    Literal,
+    Union,
+    Collection,
+    Iterable,
 )
 
 import cv2
@@ -15,7 +21,7 @@ from pynput.keyboard import Listener, Key, KeyCode
 from .error import Error
 from .grid import Grid
 from .gui import GUI, Mode, CANVAS_X, CANVAS_Y
-from .particle import Particle
+from .particle import Particle, Link
 from .save_manager import SaveManager
 from .sim_pickle import SimPickle, SimSettings, ParticleSettings, AttributeType
 from .simulation_state import SimulationState
@@ -37,13 +43,38 @@ class Simulation(SimulationState):
         super().__init__(
             width=width,
             height=height,
-            gridres=gridres,
             temperature=temperature,
             g=g,
             air_res=air_res,
             ground_friction=ground_friction,
-            fps_update_delay=fps_update_delay,
         )
+
+        self.fps = 0.0
+        self.fps_update_delay = fps_update_delay
+        self.mx, self.my = 0, 0
+        self.prev_mx, self.prev_my = 0, 0
+        self.rotate_mode = False
+        self.min_spawn_delay = 0.05
+        self.last_particle_added_time = 0.0
+        self.mr = 5.0
+        self.mouse_down = False
+        self.mouse_down_start: Optional[float] = None
+        self.shift = False
+        self.start_save = False
+        self.start_load = False
+        self.paused = True
+        self.toggle_pause = False
+        self.running = True
+        self.focus = True
+        self.error: Optional[Error] = None
+        self.link_colors: List[Link] = []
+        self.grid = Grid(*gridres, height=height, width=width)
+        self.start_time = time.time()
+        self.prev_time = self.start_time
+        self.selection: List[Particle] = []
+        self.clipboard: List[Dict[str, Any]] = []
+        self.pasting = False
+
         self.gui = GUI(self, title, gridres)
         self.save_manager = SaveManager(self)
         self.mouse_mode: Mode = "MOVE"
@@ -58,6 +89,108 @@ class Simulation(SimulationState):
 
         self.listener = Listener(on_press=self._on_press, on_release=self._on_release)
         self.listener.start()
+
+    @staticmethod
+    def _rotate_2d(
+        x: float, y: float, cx: float, cy: float, angle: float
+    ) -> Tuple[float, float]:
+        angle_rad = -np.radians(angle)
+        dist_x = x - cx
+        dist_y = y - cy
+        current_angle = math.atan2(dist_y, dist_x)
+        angle_rad += current_angle
+        radius = np.sqrt(dist_x**2 + dist_y**2)
+        x = cx + radius * np.cos(angle_rad)
+        y = cy + radius * np.sin(angle_rad)
+
+        return x, y
+
+    def toggle_paused(self) -> None:
+        self.toggle_pause = True
+
+    def _select_particle(self, particle: Particle) -> None:
+        if particle in self.selection:
+            return
+        self.selection.append(particle)
+
+    def remove_particle(self, particle: Particle) -> None:
+        self.particles.remove(particle)
+        if particle in self.selection:
+            self.selection.remove(particle)
+        for p in particle.link_lengths:
+            del p.link_lengths[particle]
+        self.groups[particle.group].remove(particle)
+        del particle
+
+    def _copy_selected(self) -> None:
+        self.clipboard = []
+        for p in self.selection:
+            dictionary = p.return_dict(index_source=self.selection)
+            dictionary["x"] -= self.mx
+            dictionary["y"] -= self.my
+            self.clipboard.append(dictionary)
+
+    def _cut(self) -> None:
+        self._copy_selected()
+        temp = self.selection.copy()
+        for p in temp:
+            self.remove_particle(p)
+
+    def link_selection(self, fit_link: bool = False) -> None:
+        self.link(self.selection, fit_link=fit_link)
+        self.selection = []
+
+    def unlink_selection(self) -> None:
+        self.unlink(self.selection)
+        self.selection = []
+
+    @staticmethod
+    def link(
+        particles: List[Particle],
+        fit_link: bool = False,
+        distance: Union[None, float, Literal["repel"]] = None,
+    ) -> None:
+        Particle.link(particles, fit_link, distance)
+
+    @staticmethod
+    def unlink(particles: Collection[Particle]) -> None:
+        Particle.unlink(particles)
+
+    def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
+        for p in particles:
+            for link, value in p.link_lengths.items():
+                if value != "repel":
+                    self.link([p, link], fit_link=True, distance=value + amount)
+
+    def set_code(self, code) -> None:
+        self.code = code
+
+    def execute(self, code: str) -> None:
+        try:
+            exec(code)
+        except Exception as error:
+            self.error = Error("Code-Error", error)
+
+    def _simulate_step(self):
+        self.link_colors = []
+        if self.use_grid:
+            self.grid.init_grid(self.particles)
+        if self.toggle_pause:
+            self.paused = not self.paused
+
+            if not self.paused:
+                self.selection = []
+            self.toggle_pause = False
+        for particle in self.particles:
+            if not particle.interacts:
+                near_particles = []
+            elif particle.interacts_will_all:
+                near_particles = self.particles
+            elif self.use_grid:
+                near_particles = self.grid.return_particles(particle)
+            else:
+                near_particles = self.particles
+            particle.update(near_particles)
 
     def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:
         if np.sqrt((x - particle.x) ** 2 + (y - particle.y) ** 2) <= max(
@@ -97,7 +230,7 @@ class Simulation(SimulationState):
                 self._mouse_p_part(p, event.x, event.y)
         elif (
             self.mouse_mode == "ADD"
-            and time.time() - self.last_mouse_time >= self.min_spawn_delay
+            and time.time() - self.last_particle_added_time >= self.min_spawn_delay
         ):
             self.add_particle(event.x, event.y)
 
@@ -358,7 +491,7 @@ class Simulation(SimulationState):
         if kwargs is not None:
             p = Particle(self, x, y, **kwargs)
             self.register_particle(p)
-            self.last_mouse_time = time.time()
+            self.last_particle_added_time = time.time()
 
     def _paste(self) -> None:
         self.pasting = True

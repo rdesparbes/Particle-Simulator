@@ -207,7 +207,7 @@ class GUI:
             command=lambda: setattr(self.sim, "g", float(self.gravity_entry.get())),
         )
         self.gravity_entry.delete(0, tk.END)
-        self.gravity_entry.insert(0, self.sim.g)
+        self.gravity_entry.insert(0, str(self.sim.g))
         self.gravity_entry.place(x=100, y=20)
 
         tk.Label(self.tab1, text="Air Resistance:", font=("helvetica", 8)).place(
@@ -224,7 +224,7 @@ class GUI:
             ),
         )
         self.air_res_entry.delete(0, tk.END)
-        self.air_res_entry.insert(0, self.sim.air_res)
+        self.air_res_entry.insert(0, str(self.sim.air_res))
         self.air_res_entry.place(x=100, y=50)
 
         tk.Label(self.tab1, text="Ground Friction:", font=("helvetica", 8)).place(
@@ -241,7 +241,7 @@ class GUI:
             ),
         )
         self.friction_entry.delete(0, tk.END)
-        self.friction_entry.insert(0, self.sim.ground_friction)
+        self.friction_entry.insert(0, str(self.sim.ground_friction))
         self.friction_entry.place(x=100, y=80)
 
         self.temp_sc = tk.Scale(
@@ -421,7 +421,7 @@ class GUI:
             ),
         )
         self.delay_entry.delete(0, tk.END)
-        self.delay_entry.insert(0, self.sim.min_spawn_delay)
+        self.delay_entry.insert(0, str(self.sim.min_spawn_delay))
         self.delay_entry.place(x=100, y=533)
 
         self.calculate_radii_diff_bool = tk.BooleanVar(self.tk, False)
