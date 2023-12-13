@@ -3,6 +3,9 @@ from typing import (
     Tuple,
     List,
     Dict,
+    Literal,
+    Union,
+    Collection,
 )
 
 import numpy as np
@@ -36,6 +39,21 @@ class SimulationState:
     code: str = 'print("Hello World")'
     particles: List[Particle] = field(default_factory=list)
     groups: Dict[str, List[Particle]] = field(default_factory=lambda: {"group1": []})
+    paused: bool = True
+    toggle_pause: bool = False
+    selection: List[Particle] = field(default_factory=list)
+
+    @staticmethod
+    def link(
+        particles: List[Particle],
+        fit_link: bool = False,
+        distance: Union[None, float, Literal["repel"]] = None,
+    ) -> None:
+        Particle.link(particles, fit_link, distance)
+
+    @staticmethod
+    def unlink(particles: Collection[Particle]) -> None:
+        Particle.unlink(particles)
 
     @property
     def g_vector(self) -> npt.NDArray[np.float_]:
@@ -44,3 +62,14 @@ class SimulationState:
     @property
     def air_res_calc(self) -> float:
         return (1 - self.air_res) ** self.speed
+
+    def toggle_paused(self) -> None:
+        self.toggle_pause = True
+
+    def link_selection(self, fit_link: bool = False) -> None:
+        self.link(self.selection, fit_link=fit_link)
+        self.selection = []
+
+    def unlink_selection(self) -> None:
+        self.unlink(self.selection)
+        self.selection = []

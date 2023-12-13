@@ -12,6 +12,7 @@ from .error import Error
 from .extra_window import ExtraWindow
 from .particle_data import ParticleData
 from .particle_dict import ParticleDict
+from .simulation_state import SimulationState
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
 CANVAS_X = 0  # The X coordinate of the top-left corner of the canvas
@@ -19,7 +20,7 @@ CANVAS_Y = 30  # The Y coordinate of the top-left corner of the canvas
 
 
 class GUI:
-    def __init__(self, sim, title, gridres):
+    def __init__(self, sim: SimulationState, title, gridres):
         self.sim = sim
         self.path = os.path.split(os.path.abspath(__file__))[0]
 
@@ -34,8 +35,8 @@ class GUI:
         self.canvas = tk.Canvas(self.tk, width=self.sim.width, height=self.sim.height)
         self.canvas.place(x=CANVAS_X, y=CANVAS_Y)
 
-        self.code_window = None
-        self.extra_window = None
+        self.code_window: Optional[CodeWindow] = None
+        self.extra_window: Optional[ExtraWindow] = None
 
         self.toolbar = self.gui_canvas.create_rectangle(
             0, 0, self.sim.width, 30, fill="#1f3333"

@@ -3,16 +3,15 @@ import pickle
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 from typing import Optional
 
-from .error import Error
+from .sim_pickle import SimPickle
 
 
 class SaveManager:
-    def __init__(self, sim):
-        self.sim = sim
-        self.file_location = os.path.dirname(self.sim.gui.path)
+    def __init__(self, file_location: Optional[str] = None):
+        self.file_location = file_location
         self.filename = "simulation"
 
-    def save(self, filename: Optional[str] = None) -> None:
+    def save(self, data: SimPickle, filename: Optional[str] = None):
         if filename is None:
             filename = asksaveasfilename(
                 initialdir=self.file_location,
@@ -23,18 +22,12 @@ class SaveManager:
 
             if not filename:
                 return
-        try:
-            data = self.sim.to_dict()
-            with open(filename, "wb") as file_object:
-                pickle.dump(data, file_object)
+        with open(filename, "wb") as file_object:
+            pickle.dump(data, file_object)
 
-            self.file_location, self.filename = os.path.split(filename)
-        except Exception as error:
-            self.sim.error = Error("Saving-Error", error)
+        self.file_location, self.filename = os.path.split(filename)
 
-    def load(self, filename: Optional[str] = None) -> None:
-        if not self.sim.paused:
-            self.sim.toggle_paused()
+    def load(self, filename: Optional[str] = None) -> Optional[SimPickle]:
         if filename is None:
             filename = askopenfilename(
                 initialdir=self.file_location,
@@ -44,12 +37,10 @@ class SaveManager:
             )
 
             if not filename:
-                return
-        try:
-            with open(filename, "rb") as file_object:
-                data = pickle.load(file_object)
+                return None
 
-            self.sim.from_dict(data)
-            self.file_location, self.filename = os.path.split(filename)
-        except Exception as error:
-            self.sim.error = Error("Loading-Error", error)
+        with open(filename, "rb") as file_object:
+            data = pickle.load(file_object)
+
+        self.file_location, self.filename = os.path.split(filename)
+        return data

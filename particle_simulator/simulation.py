@@ -1,4 +1,5 @@
 import math
+import os
 import time
 import tkinter as tk
 from typing import (
@@ -7,9 +8,6 @@ from typing import (
     Dict,
     Tuple,
     List,
-    Literal,
-    Union,
-    Collection,
     Iterable,
 )
 
@@ -62,8 +60,6 @@ class Simulation(SimulationState):
         self.shift = False
         self.start_save = False
         self.start_load = False
-        self.paused = True
-        self.toggle_pause = False
         self.running = True
         self.focus = True
         self.error: Optional[Error] = None
@@ -71,12 +67,11 @@ class Simulation(SimulationState):
         self.grid = Grid(*gridres, height=height, width=width)
         self.start_time = time.time()
         self.prev_time = self.start_time
-        self.selection: List[Particle] = []
         self.clipboard: List[Dict[str, Any]] = []
         self.pasting = False
 
         self.gui = GUI(self, title, gridres)
-        self.save_manager = SaveManager(self)
+        self.save_manager = SaveManager(file_location=os.path.dirname(self.gui.path))
         self.mouse_mode: Mode = "MOVE"
 
         # Keyboard- and mouse-controls
@@ -105,9 +100,6 @@ class Simulation(SimulationState):
 
         return x, y
 
-    def toggle_paused(self) -> None:
-        self.toggle_pause = True
-
     def _select_particle(self, particle: Particle) -> None:
         if particle in self.selection:
             return
@@ -135,26 +127,6 @@ class Simulation(SimulationState):
         temp = self.selection.copy()
         for p in temp:
             self.remove_particle(p)
-
-    def link_selection(self, fit_link: bool = False) -> None:
-        self.link(self.selection, fit_link=fit_link)
-        self.selection = []
-
-    def unlink_selection(self) -> None:
-        self.unlink(self.selection)
-        self.selection = []
-
-    @staticmethod
-    def link(
-        particles: List[Particle],
-        fit_link: bool = False,
-        distance: Union[None, float, Literal["repel"]] = None,
-    ) -> None:
-        Particle.link(particles, fit_link, distance)
-
-    @staticmethod
-    def unlink(particles: Collection[Particle]) -> None:
-        Particle.unlink(particles)
 
     def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
         for p in particles:
@@ -586,12 +558,30 @@ class Simulation(SimulationState):
             # Combobox
             self.focus = False
 
+    def save(self, filename: Optional[str] = None) -> None:
+        try:
+            data = self.to_dict()
+            self.save_manager.save(data, filename=filename)
+        except Exception as error:
+            self.error = Error("Saving-Error", error)
+
+    def load(self, filename: Optional[str] = None) -> None:
+        if not self.paused:
+            self.toggle_paused()
+        try:
+            data = self.save_manager.load(filename=filename)
+            if data is None:
+                return
+            self.from_dict(data)
+        except Exception as error:
+            self.error = Error("Loading-Error", error)
+
     def _handle_save_manager(self):
         if self.start_save:
-            self.save_manager.save()
+            self.save()
             self.start_save = False
         if self.start_load:
-            self.save_manager.load()
+            self.load()
             self.start_load = False
 
     def _update_timings(self):
