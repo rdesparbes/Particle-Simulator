@@ -1,5 +1,4 @@
 import math
-import os
 import time
 import tkinter as tk
 from typing import (
@@ -20,7 +19,6 @@ from .error import Error
 from .grid import Grid
 from .gui import GUI, Mode, CANVAS_X, CANVAS_Y
 from .particle import Particle, Link
-from .save_manager import SaveManager
 from .sim_pickle import SimPickle, SimSettings, ParticleSettings, AttributeType
 from .simulation_state import SimulationState
 
@@ -71,7 +69,6 @@ class Simulation(SimulationState):
         self.pasting = False
 
         self.gui = GUI(self, title, gridres)
-        self.save_manager = SaveManager(file_location=os.path.dirname(self.gui.path))
         self.mouse_mode: Mode = "MOVE"
 
         # Keyboard- and mouse-controls
@@ -561,7 +558,7 @@ class Simulation(SimulationState):
     def save(self, filename: Optional[str] = None) -> None:
         try:
             data = self.to_dict()
-            self.save_manager.save(data, filename=filename)
+            self.gui.save_manager.save(data, filename=filename)
         except Exception as error:
             self.error = Error("Saving-Error", error)
 
@@ -569,7 +566,7 @@ class Simulation(SimulationState):
         if not self.paused:
             self.toggle_paused()
         try:
-            data = self.save_manager.load(filename=filename)
+            data = self.gui.save_manager.load(filename=filename)
             if data is None:
                 return
             self.from_dict(data)

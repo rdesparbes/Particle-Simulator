@@ -12,6 +12,7 @@ from .error import Error
 from .extra_window import ExtraWindow
 from .particle_data import ParticleData
 from .particle_dict import ParticleDict
+from .save_manager import SaveManager
 from .simulation_state import SimulationState
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
@@ -143,6 +144,7 @@ class GUI:
         self.save_img = tk.PhotoImage(
             file=os.path.join(self.path, "Assets/save.gif"), master=self.tk
         ).subsample(28, 28)
+        self.save_manager = SaveManager(file_location=os.path.dirname(self.path))
         self.save_btn = tk.Button(
             self.tk,
             image=self.save_img,
@@ -150,7 +152,7 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             relief="flat",
-            command=lambda: self.sim.save_manager.save(),
+            command=lambda: self.sim.save(),
         )
         self.save_btn.place(x=self.sim.width - 110, y=16, anchor="center")
 
@@ -164,7 +166,7 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             relief="flat",
-            command=lambda: self.sim.save_manager.load(),
+            command=lambda: self.sim.load(),
         )
         self.load_btn.place(x=self.sim.width - 75, y=16, anchor="center")
 
