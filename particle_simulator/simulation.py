@@ -342,13 +342,12 @@ class Simulation(SimulationState):
         self.groups = {}
         for i, d in enumerate(data["particles"]):
             p = Particle(self, 0, 0, group=d["group"])
+            for key, value in d.items():
+                setattr(p, key, value)
+            p.init_constants()
             self.register_particle(p)
 
-        for particle, d in zip(self.particles, data["particles"]):
-            for key, value in d.items():
-                setattr(particle, key, value)
-            particle.init_constants()
-
+        for particle in self.particles:
             particle.link_lengths = {
                 self.particles[index]: value
                 for index, value in particle.link_lengths.items()
