@@ -267,47 +267,6 @@ class Simulation(SimulationState):
             if kwargs is not None:
                 self._replace_particle(p, kwargs)
 
-    def copy_from_selected(self) -> None:
-        particle_settings: Dict[str, Any] = {}
-        for i, p in enumerate(self.selection):
-            variable_names: Dict[str, Any] = {
-                "radius_entry": p.r,
-                "color_entry": p.color,
-                "mass_entry": p.m,
-                "velocity_x_entry": p.v[0],
-                "velocity_y_entry": p.v[1],
-                "bounciness_entry": p.bounciness,
-                "do_collision_bool": p.collision_bool,
-                "locked_bool": p.locked,
-                "linked_group_bool": p.linked_group_particles,
-                "attr_r_entry": p.attr_r,
-                "repel_r_entry": p.repel_r,
-                "attr_strength_entry": p.attr,
-                "repel_strength_entry": p.repel,
-                "link_attr_break_entry": p.link_attr_breaking_force,
-                "link_repel_break_entry": p.link_repel_breaking_force,
-                "groups_entry": p.group,
-                "separate_group_bool": p.separate_group,
-                "gravity_mode_bool": p.gravity_mode,
-            }
-            for gui_attr, part_val in variable_names.items():
-                if i == 0:
-                    particle_settings[gui_attr] = part_val
-
-                same = particle_settings[gui_attr] == part_val
-                widget: tk.Widget = getattr(self.gui, gui_attr)
-                if isinstance(widget, tk.BooleanVar):
-                    if same:
-                        widget.set(part_val)
-                    else:
-                        widget.set(False)
-                elif isinstance(widget, (tk.Entry, tk.Spinbox)):
-                    widget.delete(0, tk.END)
-                    if same:
-                        widget.insert(0, str(part_val))
-                else:
-                    raise NotImplementedError(f"Unexpected widget: {type(widget)}")
-
     def to_dict(self) -> SimPickle:
         sim_settings: SimSettings = {
             "gravity_entry": (self.gui.gravity_entry.get(), "entry"),

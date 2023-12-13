@@ -1,10 +1,11 @@
 import os
 import tkinter as tk
 from tkinter import ttk, colorchooser, messagebox
-from typing import Literal
+from typing import Literal, Sequence, Dict, Any
 
 from .code_window import CodeWindow
 from .extra_window import ExtraWindow
+from .particle_data import ParticleData
 from .particle_dict import ParticleDict
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
@@ -661,7 +662,7 @@ class GUI:
             self.tab2,
             text="Copy from selected",
             bg="light coral",
-            command=self.sim.copy_from_selected,
+            command=self._copy_from_selected,
         )
         self.copy_selected_btn.place(x=15, y=self.sim.height - 65)
         self.set_selected_btn = tk.Button(
@@ -759,6 +760,49 @@ class GUI:
             kwargs["color"] = list(map(int, eval(color)))
 
         return kwargs
+
+    def _copy_from_selected(self) -> None:
+        selection: Sequence[ParticleData] = self.sim.selection
+
+        particle_settings: Dict[str, Any] = {}
+        for i, p in enumerate(selection):
+            variable_names: Dict[str, Any] = {
+                "radius_entry": p.r,
+                "color_entry": p.color,
+                "mass_entry": p.m,
+                "velocity_x_entry": p.v[0],
+                "velocity_y_entry": p.v[1],
+                "bounciness_entry": p.bounciness,
+                "do_collision_bool": p.collision_bool,
+                "locked_bool": p.locked,
+                "linked_group_bool": p.linked_group_particles,
+                "attr_r_entry": p.attr_r,
+                "repel_r_entry": p.repel_r,
+                "attr_strength_entry": p.attr,
+                "repel_strength_entry": p.repel,
+                "link_attr_break_entry": p.link_attr_breaking_force,
+                "link_repel_break_entry": p.link_repel_breaking_force,
+                "groups_entry": p.group,
+                "separate_group_bool": p.separate_group,
+                "gravity_mode_bool": p.gravity_mode,
+            }
+            for gui_attr, part_val in variable_names.items():
+                if i == 0:
+                    particle_settings[gui_attr] = part_val
+
+                same = particle_settings[gui_attr] == part_val
+                widget: tk.Widget = getattr(self, gui_attr)
+                if isinstance(widget, tk.BooleanVar):
+                    if same:
+                        widget.set(part_val)
+                    else:
+                        widget.set(False)
+                elif isinstance(widget, (tk.Entry, tk.Spinbox)):
+                    widget.delete(0, tk.END)
+                    if same:
+                        widget.insert(0, str(part_val))
+                else:
+                    raise NotImplementedError(f"Unexpected widget: {type(widget)}")
 
     def change_color_entry(self, *event):
         try:
