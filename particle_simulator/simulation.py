@@ -1,4 +1,3 @@
-import math
 import time
 import tkinter as tk
 from typing import (
@@ -7,7 +6,6 @@ from typing import (
     Dict,
     Tuple,
     List,
-    Iterable,
 )
 
 import cv2
@@ -60,7 +58,6 @@ class Simulation(SimulationState):
         self.start_load = False
         self.running = True
         self.focus = True
-        self.error: Optional[Error] = None
         self.link_colors: List[Link] = []
         self.grid = Grid(*gridres, height=height, width=width)
         self.start_time = time.time()
@@ -82,35 +79,6 @@ class Simulation(SimulationState):
         self.listener = Listener(on_press=self._on_press, on_release=self._on_release)
         self.listener.start()
 
-    @staticmethod
-    def _rotate_2d(
-        x: float, y: float, cx: float, cy: float, angle: float
-    ) -> Tuple[float, float]:
-        angle_rad = -np.radians(angle)
-        dist_x = x - cx
-        dist_y = y - cy
-        current_angle = math.atan2(dist_y, dist_x)
-        angle_rad += current_angle
-        radius = np.sqrt(dist_x**2 + dist_y**2)
-        x = cx + radius * np.cos(angle_rad)
-        y = cy + radius * np.sin(angle_rad)
-
-        return x, y
-
-    def _select_particle(self, particle: Particle) -> None:
-        if particle in self.selection:
-            return
-        self.selection.append(particle)
-
-    def remove_particle(self, particle: Particle) -> None:
-        self.particles.remove(particle)
-        if particle in self.selection:
-            self.selection.remove(particle)
-        for p in particle.link_lengths:
-            del p.link_lengths[particle]
-        self.groups[particle.group].remove(particle)
-        del particle
-
     def _copy_selected(self) -> None:
         self.clipboard = []
         for p in self.selection:
@@ -124,21 +92,6 @@ class Simulation(SimulationState):
         temp = self.selection.copy()
         for p in temp:
             self.remove_particle(p)
-
-    def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
-        for p in particles:
-            for link, value in p.link_lengths.items():
-                if value != "repel":
-                    self.link([p, link], fit_link=True, distance=value + amount)
-
-    def set_code(self, code) -> None:
-        self.code = code
-
-    def execute(self, code: str) -> None:
-        try:
-            exec(code)
-        except Exception as error:
-            self.error = Error("Code-Error", error)
 
     def _simulate_step(self):
         self.link_colors = []
@@ -291,17 +244,6 @@ class Simulation(SimulationState):
             height=self.height,
             width=self.width,
         )
-
-    def add_group(self) -> str:
-        for i in range(1, len(self.groups) + 2):
-            name = f"group{i}"
-            if name not in self.groups:
-                self.groups[name] = []
-                return name
-        assert False  # Unreachable (pigeonhole principle)
-
-    def select_group(self, name: str) -> None:
-        self.selection = list(self.groups[name])
 
     def _inputs2dict(self) -> Optional[Dict[str, Any]]:
         try:
