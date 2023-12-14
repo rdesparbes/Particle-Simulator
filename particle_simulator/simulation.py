@@ -255,30 +255,6 @@ class Simulation(SimulationState):
             self.error = Error("Input-Error", error)
         return None
 
-    def _get_group(self, name: str) -> List[Particle]:
-        try:
-            return self.groups[name]
-        except KeyError:
-            new_group = []
-            self.groups[name] = new_group
-            for callback in self.add_group_callbacks:
-                callback(name)
-            return new_group
-
-    def register_particle(self, particle: Particle) -> None:
-        self._get_group(particle.group).append(particle)
-        self.particles.append(particle)
-
-    def _replace_particle(self, p: Particle, kwargs: Dict[str, Any]) -> Particle:
-        temp_link_lengths = p.link_lengths.copy()
-        px, py = p.x, p.y
-        self.remove_particle(p)
-        p = Particle(self, px, py, **kwargs)
-        self.register_particle(p)
-        for link, length in temp_link_lengths.items():
-            self.link([link, p], fit_link=length != "repel", distance=length)
-        return p
-
     def set_selected(self) -> None:
         kwargs = self._inputs2dict()
         if kwargs is None:
