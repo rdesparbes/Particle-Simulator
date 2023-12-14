@@ -9,6 +9,7 @@ from typing import (
     Collection,
     Iterable,
     Optional,
+    Callable,
 )
 
 import numpy as np
@@ -48,6 +49,7 @@ class SimulationState:
     toggle_pause: bool = False
     selection: List[Particle] = field(default_factory=list)
     error: Optional[Error] = None
+    add_group_callbacks: List[Callable[[str], None]] = field(default_factory=list)
 
     @staticmethod
     def link(

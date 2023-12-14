@@ -255,12 +255,18 @@ class Simulation(SimulationState):
             self.error = Error("Input-Error", error)
         return None
 
-    def register_particle(self, particle: Particle) -> None:
+    def _get_group(self, name: str) -> List[Particle]:
         try:
-            self.groups[particle.group].append(particle)
+            return self.groups[name]
         except KeyError:
-            self.groups[particle.group] = [particle]
-            self.gui.create_group(particle.group)
+            new_group = []
+            self.groups[name] = new_group
+            for callback in self.add_group_callbacks:
+                callback(name)
+            return new_group
+
+    def register_particle(self, particle: Particle) -> None:
+        self._get_group(particle.group).append(particle)
         self.particles.append(particle)
 
     def _replace_particle(self, p: Particle, kwargs: Dict[str, Any]) -> Particle:

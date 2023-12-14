@@ -628,6 +628,7 @@ class GUI:
         self.groups_entry = ttk.Combobox(self.tab2, width=10, values=["group1"])
         self.groups_entry.current(0)
         self.groups_entry.place(x=10, y=470, anchor="nw")
+        self.sim.add_group_callbacks.append(self.create_group)
 
         self.group_add_btn = tk.Button(
             self.tab2,
