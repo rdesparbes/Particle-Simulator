@@ -353,14 +353,14 @@ class Simulation(SimulationState):
         }
         self.gui.group_indices = []
         self.gui.groups_entry["values"] = []
-        for key, (attribute_name, attribute_type) in all_settings.items():
+        for key, (attribute_value, attribute_type) in all_settings.items():
             if attribute_type == "set":
-                getattr(self.gui, key).set(attribute_name)
+                getattr(self.gui, key).set(attribute_value)
             elif attribute_type == "var":
-                setattr(self, key, attribute_name)
+                setattr(self, key, attribute_value)
             else:
                 getattr(self.gui, key).delete(0, tk.END)
-                getattr(self.gui, key).insert(0, attribute_name)
+                getattr(self.gui, key).insert(0, attribute_value)
 
         for p in self.particles.copy():
             self.remove_particle(p)
