@@ -4,6 +4,7 @@ from typing import Any
 
 import pytest
 
+from particle_simulator.sim_pickle import SimPickle
 from particle_simulator.simulation import Simulation
 
 
@@ -23,6 +24,7 @@ def assert_is_subset(obj: Any, reference: Any) -> None:
 
 @pytest.fixture(
     name="sim_file_name",
+    scope="session",
     params=[
         "building.sim",
         "cloth.sim",
@@ -41,18 +43,43 @@ def fixture_sim_file_name(request: pytest.FixtureRequest) -> str:
     return request.param
 
 
-def test_simulation_load_then_write_generates_identical_file(
-    sim_file_name: str, tmp_path: Path
+@pytest.fixture(name="pickle_data", scope="session")
+def fixture_pickle_data(sim_file_name: str) -> SimPickle:
+    sim_file_path = Path("example_simulations", sim_file_name)
+    with open(sim_file_path, "rb") as file_object:
+        return pickle.load(file_object)
+
+
+@pytest.fixture(name="simulation", scope="session")
+def fixture_simulation(pickle_data: SimPickle) -> Simulation:
+    sim = Simulation()
+    sim.from_dict(pickle_data)
+    return sim
+
+
+def test_simulation_load_then_write_generates_subset_file(
+    pickle_data: SimPickle, tmp_path: Path
 ) -> None:
     # Arrange
-    sim_file_path = Path("example_simulations", sim_file_name)
     sim = Simulation()
-    with open(sim_file_path, "rb") as file_object:
-        loaded_data = pickle.load(file_object)
+    sim.from_dict(pickle_data)
 
     # Act
-    sim.from_dict(loaded_data)
     dumped_data = sim.to_dict()
 
     # Assert
-    assert_is_subset(loaded_data, dumped_data)
+    assert_is_subset(pickle_data, dumped_data)
+
+
+def test_simulation_write_then_load_generates_identical_file(
+    simulation: Simulation,
+) -> None:
+    # Arrange
+    dumped_data = simulation.to_dict()
+
+    # Act
+    sim = Simulation()
+    sim.from_dict(dumped_data)
+
+    # Assert
+    assert dumped_data == sim.to_dict()
