@@ -21,9 +21,9 @@ def assert_is_subset(obj: Any, reference: Any) -> None:
         assert obj == reference
 
 
-@pytest.mark.parametrize(
-    "sim_file_name",
-    [
+@pytest.fixture(
+    name="sim_file_name",
+    params=[
         "building.sim",
         "cloth.sim",
         "elliptical_mirror.sim",
@@ -37,6 +37,10 @@ def assert_is_subset(obj: Any, reference: Any) -> None:
         "wind_simulation.sim",
     ],
 )
+def fixture_sim_file_name(request: pytest.FixtureRequest) -> str:
+    return request.param
+
+
 def test_simulation_load_then_write_generates_identical_file(
     sim_file_name: str, tmp_path: Path
 ) -> None:
