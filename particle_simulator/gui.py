@@ -287,27 +287,33 @@ class GUI:
             x=7, y=190, anchor="nw"
         )
 
-        self.show_fps = tk.BooleanVar(self.tk, True)
+        self.show_fps = tk.BooleanVar(self.tk, self.sim.show_fps)
         self.fps_chk = tk.Checkbutton(
-            self.tab1, text="Display FPS", font=("helvetica", 8), variable=self.show_fps
+            self.tab1,
+            text="Display FPS",
+            font=("helvetica", 8),
+            variable=self.show_fps,
+            command=lambda: setattr(self.sim, "show_fps", self.show_fps.get()),
         )
         self.fps_chk.place(x=10, y=260, anchor="nw")
 
-        self.show_num = tk.BooleanVar(self.tk, True)
+        self.show_num = tk.BooleanVar(self.tk, self.sim.show_num)
         self.num_chk = tk.Checkbutton(
             self.tab1,
             text="Display # Particles",
             font=("helvetica", 8),
             variable=self.show_num,
+            command=lambda: setattr(self.sim, "show_num", self.show_num.get()),
         )
         self.num_chk.place(x=10, y=280, anchor="nw")
 
-        self.show_links = tk.BooleanVar(self.tk, True)
+        self.show_links = tk.BooleanVar(self.tk, self.sim.show_links)
         self.links_chk = tk.Checkbutton(
             self.tab1,
             text="Display links",
             font=("helvetica", 8),
             variable=self.show_links,
+            command=lambda: setattr(self.sim, "show_links", self.show_links.get()),
         )
         self.links_chk.place(x=10, y=300, anchor="nw")
 
@@ -854,7 +860,7 @@ class GUI:
                 anchor="nw",
                 font=("Helvetica", 9, "bold"),
             )
-        if self.show_num.get() and particle_count is not None:
+        if self.sim.show_num and particle_count is not None:
             self.canvas.create_text(
                 10,
                 25,

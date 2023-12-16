@@ -50,7 +50,12 @@ class SimulationState:
     toggle_pause: bool = False
     selection: List[Particle] = field(default_factory=list)
     error: Optional[Error] = None
+    show_fps: bool = True
+    show_num: bool = True
+    show_links: bool = True
     add_group_callbacks: List[Callable[[str], None]] = field(default_factory=list)
+    grid_res_x: int = 50
+    grid_res_y: int = 50
 
     @staticmethod
     def link(

@@ -17,7 +17,12 @@ from .error import Error
 from .grid import Grid
 from .gui import GUI, Mode, CANVAS_X, CANVAS_Y
 from .particle import Particle, Link
-from .sim_pickle import SimPickle, SimSettings, ParticleSettings, AttributeType
+from .sim_pickle import (
+    SimPickle,
+    ParticleSettings,
+    AttributeType,
+    SimSettings,
+)
 from .simulation_state import SimulationState
 
 
@@ -238,6 +243,8 @@ class Simulation(SimulationState):
             self.rotate_mode = False
 
     def update_grid(self, row_count: int, col_count: int) -> None:
+        self.grid_res_x = col_count
+        self.grid_res_y = row_count
         self.grid = Grid(
             row_count,
             col_count,
