@@ -3,7 +3,6 @@ from typing import (
     Any,
     Dict,
     Tuple,
-    Literal,
     List,
     TypedDict,
     Union,
@@ -12,10 +11,9 @@ from typing import (
 from particle_simulator.sim_format import SimFormat
 from particle_simulator.simulation_state import SimulationState
 
-AttributeType = Literal["set", "entry", "var"]
 ParticlesPickle = List[Dict[str, Any]]
-ParticleSettings = Dict[str, Tuple[Any, AttributeType]]
-SimSettings = Dict[str, Tuple[Any, AttributeType]]
+ParticleSettings = Dict[str, Tuple[Any]]
+SimSettings = Dict[str, Tuple[Any]]
 SimPickle = TypedDict(
     "SimPickle",
     {
