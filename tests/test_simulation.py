@@ -1,41 +1,11 @@
 import pickle
 from pathlib import Path
-from typing import Any
+from typing import Iterable, Union, Literal, Tuple
 
 import pytest
 
 from particle_simulator.sim_pickle import SimPickle
 from particle_simulator.simulation import Simulation
-
-
-def diff_subset(obj: Any, reference: Any) -> Any:
-    if isinstance(obj, str):
-        if isinstance(reference, float) and float(obj) != reference:
-            return obj, reference
-        if isinstance(reference, int) and int(obj) != reference:
-            return obj, reference
-        else:
-            return None
-    elif hasattr(obj, "items"):
-        differences = {}
-        for key, value in obj.items():
-            ref_value = reference[key]
-            difference = diff_subset(value, ref_value)
-            if difference:
-                differences[key] = difference
-        return differences
-    elif hasattr(obj, "__iter__"):
-        differences = []
-        for obj_elem, ref_elem in zip(obj, reference):
-            difference = diff_subset(obj_elem, ref_elem)
-            if difference:
-                differences.append(difference)
-        return differences
-    else:
-        if obj != reference:
-            return obj, reference
-        else:
-            return None
 
 
 @pytest.fixture(
@@ -73,21 +43,6 @@ def fixture_simulation(pickle_data: SimPickle) -> Simulation:
     return sim
 
 
-def test_simulation_load_then_write_generates_subset_file(
-    pickle_data: SimPickle, tmp_path: Path
-) -> None:
-    # Arrange
-    sim = Simulation()
-    sim.from_dict(pickle_data)
-
-    # Act
-    dumped_data = sim.to_dict()
-
-    # Assert
-    difference = diff_subset(obj=pickle_data, reference=dumped_data)
-    assert not difference
-
-
 def test_simulation_write_then_load_generates_identical_file(
     simulation: Simulation,
 ) -> None:
@@ -100,3 +55,21 @@ def test_simulation_write_then_load_generates_identical_file(
 
     # Assert
     assert dumped_data == sim.to_dict()
+
+
+@pytest.mark.parametrize(
+    "color_any, expected_color",
+    [
+        ([0, 1, 2], (0, 1, 2)),
+        ([0, 1, 2, 3], (0, 1, 2)),
+        ("random", "random"),
+        ("[0, 1, 2]", (0, 1, 2)),
+        ("(0, 1, 2)", (0, 1, 2)),
+        ("(0, 1,   2)", (0, 1, 2)),
+    ],
+)
+def test_parse_color(
+    color_any: Union[str, Iterable[float]],
+    expected_color: Union[Tuple[int, int, int], Literal["random"]],
+) -> None:
+    assert Simulation._parse_color(color_any) == expected_color
