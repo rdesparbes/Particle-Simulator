@@ -1,5 +1,5 @@
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import (
     Tuple,
     List,
@@ -18,6 +18,7 @@ from numpy import typing as npt
 
 from particle_simulator.error import Error
 from particle_simulator.particle import Particle
+from particle_simulator.particle_state import ParticleState
 
 
 @dataclass
@@ -157,11 +158,11 @@ class SimulationState:
         self._get_group(particle.group).append(particle)
         self.particles.append(particle)
 
-    def _replace_particle(self, p: Particle, kwargs: Dict[str, Any]) -> Particle:
+    def _replace_particle(self, p: Particle, kwargs: ParticleState) -> Particle:
         temp_link_lengths = p.link_lengths.copy()
         px, py = p.x, p.y
         self.remove_particle(p)
-        p = Particle(self, px, py, **kwargs)
+        p = Particle(self, px, py, **asdict(kwargs))
         self.register_particle(p)
         for link, length in temp_link_lengths.items():
             self.link([link, p], fit_link=length != "repel", distance=length)

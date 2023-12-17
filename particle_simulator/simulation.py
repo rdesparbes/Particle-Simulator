@@ -18,6 +18,7 @@ from .error import Error
 from .grid import Grid
 from .gui import GUI, Mode, CANVAS_X, CANVAS_Y
 from .particle import Particle, Link
+from .particle_state import ParticleState
 from .sim_pickle import (
     SimPickle,
     ParticleSettings,
@@ -253,12 +254,12 @@ class Simulation(SimulationState):
             width=self.width,
         )
 
-    def _inputs2dict(self) -> Optional[Dict[str, Any]]:
+    def _inputs2dict(self) -> Optional[ParticleState]:
         try:
             kwargs = self.gui.inputs2dict()
             if kwargs.radius is None:
                 kwargs.radius = self.mr
-            return asdict(kwargs)
+            return kwargs
         except Exception as error:
             self.error = Error("Input-Error", error)
         return None
@@ -390,7 +391,7 @@ class Simulation(SimulationState):
     def add_particle(self, x: float, y: float) -> None:
         kwargs = self._inputs2dict()
         if kwargs is not None:
-            p = Particle(self, x, y, **kwargs)
+            p = Particle(self, x, y, **asdict(kwargs))
             self.register_particle(p)
             self.last_particle_added_time = time.time()
 
