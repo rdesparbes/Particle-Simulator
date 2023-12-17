@@ -9,8 +9,10 @@ from particle_simulator.simulation import Simulation
 
 
 def diff_subset(obj: Any, reference: Any) -> Any:
-    if isinstance(obj, (str, float)):
-        if obj != reference:
+    if isinstance(obj, str):
+        if isinstance(reference, float) and float(obj) != reference:
+            return obj, reference
+        if isinstance(reference, int) and int(obj) != reference:
             return obj, reference
         else:
             return None
