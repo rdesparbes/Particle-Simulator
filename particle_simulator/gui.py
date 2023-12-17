@@ -11,7 +11,7 @@ from .code_window import CodeWindow
 from .error import Error
 from .extra_window import ExtraWindow
 from .particle_data import ParticleData
-from .particle_dict import ParticleDict
+from .particle_state import ParticleState
 from .save_manager import SaveManager
 from .simulation_state import SimulationState
 
@@ -745,7 +745,7 @@ class GUI:
             self.color_entry.insert(0, str(list(color)))
             self.tab2_canvas.itemconfig(self.part_color_rect, fill=color_exa)
 
-    def inputs2dict(self) -> ParticleDict:
+    def inputs2dict(self) -> ParticleState:
         radius_str: str = self.radius_entry.get()
         if radius_str == "scroll":
             radius = None
@@ -758,7 +758,7 @@ class GUI:
         else:
             color = tuple(map(int, eval(color_str)))
 
-        return ParticleDict(
+        return ParticleState(
             color=color,
             mass=float(self.mass_entry.get()),
             velocity=(
