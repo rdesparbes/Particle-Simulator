@@ -254,31 +254,33 @@ class Simulation(SimulationState):
             width=self.width,
         )
 
-    def _inputs2dict(self) -> Optional[ParticleState]:
+    def _get_particle_settings(self) -> Optional[ParticleState]:
         try:
-            kwargs = self.gui.inputs2dict()
-            if kwargs.radius is None:
-                kwargs.radius = self.mr
-            return kwargs
+            particle_settings = self.gui.get_particle_settings()
+            if particle_settings.radius is None:
+                particle_settings.radius = self.mr
+            return particle_settings
         except Exception as error:
             self.error = Error("Input-Error", error)
         return None
 
     def set_selected(self) -> None:
-        kwargs = self._inputs2dict()
-        if kwargs is None:
+        particle_settings = self._get_particle_settings()
+        if particle_settings is None:
             return
         temp = self.selection.copy()
         for p in temp:
-            p = self._replace_particle(p, kwargs)
+            p = self._replace_particle(p, particle_settings)
             self.selection.append(p)
 
     def set_all(self) -> None:
         temp = self.particles.copy()
         for p in temp:
-            kwargs = self._inputs2dict()  # Update for each particle in case of 'random'
-            if kwargs is not None:
-                self._replace_particle(p, kwargs)
+            particle_settings = (
+                self._get_particle_settings()
+            )  # Update for each particle in case of 'random'
+            if particle_settings is not None:
+                self._replace_particle(p, particle_settings)
 
     def to_dict(self) -> SimPickle:
         g = self.gui.get_sim_settings()
@@ -310,7 +312,7 @@ class Simulation(SimulationState):
             "void_edges": (self.void_edges, "var"),
             "code": (self.code, "var"),
         }
-        p = self.gui.inputs2dict()
+        p = self.gui.get_particle_settings()
         particle_settings: ParticleSettings = {
             "radius_entry": (str(p.radius), "entry"),
             "color_entry": (str(p.color), "entry"),
@@ -378,9 +380,9 @@ class Simulation(SimulationState):
             }
 
     def add_particle(self, x: float, y: float) -> None:
-        kwargs = self._inputs2dict()
-        if kwargs is not None:
-            p = Particle(self, x, y, **asdict(kwargs))
+        particle_settings = self._get_particle_settings()
+        if particle_settings is not None:
+            p = Particle(self, x, y, **asdict(particle_settings))
             self.register_particle(p)
             self.last_particle_added_time = time.time()
 

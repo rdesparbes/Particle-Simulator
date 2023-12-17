@@ -158,11 +158,13 @@ class SimulationState:
         self._get_group(particle.group).append(particle)
         self.particles.append(particle)
 
-    def _replace_particle(self, p: Particle, kwargs: ParticleState) -> Particle:
+    def _replace_particle(
+        self, p: Particle, particle_settings: ParticleState
+    ) -> Particle:
         temp_link_lengths = p.link_lengths.copy()
         px, py = p.x, p.y
         self.remove_particle(p)
-        p = Particle(self, px, py, **asdict(kwargs))
+        p = Particle(self, px, py, **asdict(particle_settings))
         self.register_particle(p)
         for link, length in temp_link_lengths.items():
             self.link([link, p], fit_link=length != "repel", distance=length)

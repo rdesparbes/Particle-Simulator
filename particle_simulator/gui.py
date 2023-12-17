@@ -767,7 +767,7 @@ class GUI:
             calculate_radii_diff=self.calculate_radii_diff_bool.get(),
         )
 
-    def inputs2dict(self) -> ParticleState:
+    def get_particle_settings(self) -> ParticleState:
         radius_str: str = self.radius_entry.get()
         if radius_str == "scroll":
             radius: Optional[float] = None
