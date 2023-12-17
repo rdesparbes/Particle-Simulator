@@ -364,16 +364,20 @@ class Simulation(SimulationState):
             )
         return int(color_any[0]), int(color_any[1]), int(color_any[2])
 
+    @staticmethod
+    def _parse_radius(
+        radius_any: Union[float, None, Literal["scroll"]]
+    ) -> Optional[float]:
+        if radius_any == "scroll" or radius_any is None:
+            return None
+        return float(radius_any)
+
     def _parse_particle_settings(
         self, particle_settings: ParticleSettings
     ) -> ParticleState:
         p = particle_settings
         color = self._parse_color(p["color_entry"][0])
-        radius_any = p["radius_entry"][0]
-        if radius_any == "scroll" or radius_any is None:
-            radius: Optional[float] = None
-        else:
-            radius = float(radius_any)
+        radius = self._parse_radius(p["radius_entry"][0])
         return ParticleState(
             radius=radius,
             color=color,
