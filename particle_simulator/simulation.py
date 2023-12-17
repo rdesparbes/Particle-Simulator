@@ -18,6 +18,8 @@ import numpy as np
 import numpy.typing as npt
 from pynput.keyboard import Listener, Key, KeyCode
 
+from . import sim_pickle
+from .controller_state import ControllerState
 from .error import Error
 from .grid import Grid
 from .gui import GUI, Mode, CANVAS_X, CANVAS_Y
@@ -287,62 +289,12 @@ class Simulation(SimulationState):
                 self._replace_particle(p, particle_settings)
 
     def to_dict(self) -> SimPickle:
-        g = self.gui.get_sim_settings()
-        sim_settings: SimSettings = {
-            "gravity_entry": (self.g,),
-            "air_res_entry": (self.air_res,),
-            "friction_entry": (self.ground_friction,),
-            "temp_sc": (self.temperature,),
-            "speed_sc": (self.speed,),
-            "top_bool": (self.top,),
-            "bottom_bool": (self.bottom,),
-            "left_bool": (self.left,),
-            "right_bool": (self.right,),
-            "grid_bool": (self.use_grid,),
-            "grid_res_x_value": (self.grid.rows,),
-            "grid_res_y_value": (self.grid.columns,),
-            "calculate_radii_diff_bool": (self.calculate_radii_diff,),
-            "g_dir": ((float(self.g_dir[0]), float(self.g_dir[1])),),
-            "wind_force": ((float(self.wind_force[0]), float(self.wind_force[1])),),
-            "stress_visualization": (self.stress_visualization,),
-            "bg_color": (self.bg_color,),
-            "void_edges": (self.void_edges,),
-            "code": (self.code,),
-            "delay_entry": (g.delay,),
-            "show_fps": (g.show_fps,),
-            "show_num": (g.show_num,),
-            "show_links": (g.show_links,),
-        }
-        p = self.gui.get_particle_settings()
-        particle_settings: ParticleSettings = {
-            "radius_entry": (p.radius,),
-            "color_entry": (p.color,),
-            "mass_entry": (p.mass,),
-            "velocity_x_entry": (p.velocity[0],),
-            "velocity_y_entry": (p.velocity[1],),
-            "bounciness_entry": (p.bounciness,),
-            "do_collision_bool": (p.collisions,),
-            "locked_bool": (p.locked,),
-            "linked_group_bool": (p.linked_group_particles,),
-            "attr_r_entry": (p.attract_r,),
-            "repel_r_entry": (p.repel_r,),
-            "attr_strength_entry": (p.attraction_strength,),
-            "gravity_mode_bool": (p.gravity_mode,),
-            "repel_strength_entry": (p.repulsion_strength,),
-            "link_attr_break_entry": (p.link_attr_breaking_force,),
-            "link_repel_break_entry": (p.link_repel_breaking_force,),
-            "groups_entry": (p.group,),
-            "separate_group_bool": (p.separate_group,),
-        }
-
-        return {
-            "particles": [
-                particle.return_dict(index_source=self.particles)
-                for particle in self.particles
-            ],
-            "particle-settings": particle_settings,
-            "sim-settings": sim_settings,
-        }
+        controller_state = ControllerState(
+            sim_state=self,
+            gui_settings=self.gui.get_sim_settings(),
+            gui_particle_state=self.gui.get_particle_settings(),
+        )
+        return sim_pickle.to_dict(controller_state)
 
     @staticmethod
     def _parse_color(
@@ -372,12 +324,13 @@ class Simulation(SimulationState):
             return None
         return float(radius_any)
 
+    @classmethod
     def _parse_particle_settings(
-        self, particle_settings: ParticleSettings
+        cls, particle_settings: ParticleSettings
     ) -> ParticleState:
         p = particle_settings
-        color = self._parse_color(p["color_entry"][0])
-        radius = self._parse_radius(p["radius_entry"][0])
+        color = cls._parse_color(p["color_entry"][0])
+        radius = cls._parse_radius(p["radius_entry"][0])
         return ParticleState(
             radius=radius,
             color=color,
