@@ -314,7 +314,7 @@ class Simulation(SimulationState):
         }
         p = self.gui.get_particle_settings()
         particle_settings: ParticleSettings = {
-            "radius_entry": (str(p.radius), "entry"),
+            "radius_entry": (p.radius, "entry"),
             "color_entry": (str(p.color), "entry"),
             "mass_entry": (str(p.mass), "entry"),
             "velocity_x_entry": (str(p.velocity[0]), "entry"),
@@ -374,7 +374,7 @@ class Simulation(SimulationState):
             )
         radius_any = p["radius_entry"][0]
         if radius_any == "scroll" or radius_any is None:
-            radius = self.mr
+            radius: Optional[float] = None
         else:
             radius = float(radius_any)
         return ParticleState(
