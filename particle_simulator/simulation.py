@@ -23,10 +23,10 @@ from .grid import Grid
 from .gui import GUI, Mode, CANVAS_X, CANVAS_Y
 from .particle import Particle, Link
 from .particle_state import ParticleState
+from .sim_gui_settings import SimGUISettings
 from .sim_pickle import (
     SimPickle,
     ParticleSettings,
-    AttributeType,
     SimSettings,
 )
 from .simulation_state import SimulationState
@@ -398,20 +398,40 @@ class Simulation(SimulationState):
             separate_group=p["separate_group_bool"][0],
         )
 
+    @staticmethod
+    def _extract_sim_gui_settings(sim_settings: SimSettings) -> SimGUISettings:
+        s = sim_settings
+        return SimGUISettings(
+            gravity=float(s["gravity_entry"][0]),
+            air_res=float(s["air_res_entry"][0]),
+            friction=float(s["friction_entry"][0]),
+            temp=float(s["temp_sc"][0]),
+            speed=float(s["speed_sc"][0]),
+            show_fps=bool(s["show_fps"][0]),
+            show_num=bool(s["show_num"][0]),
+            show_links=bool(s["show_links"][0]),
+            top=bool(s["top_bool"][0]),
+            bottom=bool(s["bottom_bool"][0]),
+            left=bool(s["left_bool"][0]),
+            right=bool(s["right_bool"][0]),
+            use_grid=bool(s["grid_bool"][0]),
+            grid_res_x=int(s["grid_res_x_value"][0]),
+            grid_res_y=int(s["grid_res_y_value"][0]),
+            delay=float(s["delay_entry"][0]),
+            calculate_radii_diff=bool(s["calculate_radii_diff_bool"][0]),
+        )
+
     def from_dict(self, data: SimPickle) -> None:
         particle_settings = self._parse_particle_settings(data["particle-settings"])
         self.gui.set_particle_settings(particle_settings)
 
         self.gui.group_indices = []
         self.gui.groups_entry["values"] = []
+        sim_gui_settings = self._extract_sim_gui_settings(data["sim-settings"])
+        self.gui.set_sim_settings(sim_gui_settings)
         for key, (attribute_value, attribute_type) in data["sim-settings"].items():
-            if attribute_type == "set":
-                getattr(self.gui, key).set(attribute_value)
-            elif attribute_type == "var":
+            if attribute_type == "var":
                 setattr(self, key, attribute_value)
-            else:
-                getattr(self.gui, key).delete(0, tk.END)
-                getattr(self.gui, key).insert(0, attribute_value)
 
         for p in self.particles.copy():
             self.remove_particle(p)
