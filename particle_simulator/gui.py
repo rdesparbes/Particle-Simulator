@@ -1,7 +1,7 @@
 import os
 import tkinter as tk
 from tkinter import ttk, colorchooser, messagebox
-from typing import Literal, Sequence, Dict, Any, Optional
+from typing import Literal, Sequence, Dict, Any, Optional, Union, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -746,35 +746,40 @@ class GUI:
             self.tab2_canvas.itemconfig(self.part_color_rect, fill=color_exa)
 
     def inputs2dict(self) -> ParticleDict:
-        kwargs: ParticleDict = {
-            "mass": float(self.mass_entry.get()),
-            "velocity": (
+        radius_str: str = self.radius_entry.get()
+        if radius_str == "scroll":
+            radius = None
+        else:
+            radius = int(self.radius_entry.get())
+
+        color_str: str = self.color_entry.get()
+        if color_str == "random":
+            color: Union[Tuple[int, int, int], Literal["random"]] = color_str
+        else:
+            color = tuple(map(int, eval(color_str)))
+
+        return ParticleDict(
+            color=color,
+            mass=float(self.mass_entry.get()),
+            velocity=(
                 float(self.velocity_x_entry.get()),
                 float(self.velocity_y_entry.get()),
             ),
-            "bounciness": float(self.bounciness_entry.get()),
-            "attract_r": int(self.attr_r_entry.get()),
-            "repel_r": int(self.repel_r_entry.get()),
-            "attraction_strength": float(self.attr_strength_entry.get()),
-            "repulsion_strength": float(self.repel_strength_entry.get()),
-            "link_attr_breaking_force": float(self.link_attr_break_entry.get()),
-            "link_repel_breaking_force": float(self.link_repel_break_entry.get()),
-            "collisions": self.do_collision_bool.get(),
-            "locked": self.locked_bool.get(),
-            "linked_group_particles": self.linked_group_bool.get(),
-            "group": self.groups_entry.get(),
-            "separate_group": self.separate_group_bool.get(),
-            "gravity_mode": self.gravity_mode_bool.get(),
-        }
-        radius: str = self.radius_entry.get()
-        if radius != "scroll":
-            kwargs["radius"] = int(self.radius_entry.get())
-
-        color: str = self.color_entry.get()
-        if color != "random":
-            kwargs["color"] = list(map(int, eval(color)))
-
-        return kwargs
+            bounciness=float(self.bounciness_entry.get()),
+            attract_r=int(self.attr_r_entry.get()),
+            repel_r=int(self.repel_r_entry.get()),
+            attraction_strength=float(self.attr_strength_entry.get()),
+            repulsion_strength=float(self.repel_strength_entry.get()),
+            link_attr_breaking_force=float(self.link_attr_break_entry.get()),
+            link_repel_breaking_force=float(self.link_repel_break_entry.get()),
+            collisions=self.do_collision_bool.get(),
+            locked=self.locked_bool.get(),
+            linked_group_particles=self.linked_group_bool.get(),
+            group=self.groups_entry.get(),
+            separate_group=self.separate_group_bool.get(),
+            gravity_mode=self.gravity_mode_bool.get(),
+            radius=radius,
+        )
 
     def _copy_from_selected(self) -> None:
         selection: Sequence[ParticleData] = self.sim.selection

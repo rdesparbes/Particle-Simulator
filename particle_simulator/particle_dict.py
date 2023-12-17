@@ -1,21 +1,23 @@
-from typing import TypedDict, Tuple, Literal, Union, NotRequired
+from dataclasses import dataclass
+from typing import Tuple, Literal, Union, Optional
 
 
-class ParticleDict(TypedDict):
-    radius: NotRequired[float]
-    color: NotRequired[Union[Tuple[int, int, int], Literal["random"]]]
-    mass: NotRequired[float]
-    velocity: NotRequired[Tuple[float, float]]
-    bounciness: NotRequired[float]
-    locked: NotRequired[bool]
-    collisions: NotRequired[bool]
-    attract_r: NotRequired[int]
-    repel_r: NotRequired[int]
-    attraction_strength: NotRequired[float]
-    repulsion_strength: NotRequired[float]
-    linked_group_particles: NotRequired[bool]
-    link_attr_breaking_force: NotRequired[float]
-    link_repel_breaking_force: NotRequired[float]
-    group: NotRequired[str]
-    separate_group: NotRequired[bool]
-    gravity_mode: NotRequired[bool]
+@dataclass
+class ParticleDict:
+    color: Union[Tuple[int, int, int], Literal["random"]]
+    mass: float
+    velocity: Tuple[float, float]
+    bounciness: float
+    locked: bool
+    collisions: bool
+    attract_r: int
+    repel_r: int
+    attraction_strength: float
+    repulsion_strength: float
+    linked_group_particles: bool
+    link_attr_breaking_force: float
+    link_repel_breaking_force: float
+    group: str
+    separate_group: bool
+    gravity_mode: bool
+    radius: Optional[int] = None

@@ -1,5 +1,6 @@
 import time
 import tkinter as tk
+from dataclasses import asdict
 from typing import (
     Optional,
     Any,
@@ -255,9 +256,9 @@ class Simulation(SimulationState):
     def _inputs2dict(self) -> Optional[Dict[str, Any]]:
         try:
             kwargs = self.gui.inputs2dict()
-            if "radius" not in kwargs:
-                kwargs["radius"] = self.mr
-            return kwargs
+            if kwargs.radius is None:
+                kwargs.radius = self.mr
+            return asdict(kwargs)
         except Exception as error:
             self.error = Error("Input-Error", error)
         return None
