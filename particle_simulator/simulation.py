@@ -401,20 +401,15 @@ class Simulation(SimulationState):
     def from_dict(self, data: SimPickle) -> None:
         particle_settings = self._parse_particle_settings(data["particle-settings"])
         self.gui.set_particle_settings(particle_settings)
-        all_settings: Dict[str, Tuple[Any, AttributeType]] = {
-            **data["sim-settings"],
-        }
+
         self.gui.group_indices = []
         self.gui.groups_entry["values"] = []
-        for key, (attribute_value, attribute_type) in all_settings.items():
+        for key, (attribute_value, attribute_type) in data["sim-settings"].items():
             if attribute_type == "set":
                 getattr(self.gui, key).set(attribute_value)
             elif attribute_type == "var":
                 setattr(self, key, attribute_value)
             else:
-                # Temporary fix to make the tests pass
-                if key == "radius_entry" and attribute_value == "None":
-                    attribute_value = "scroll"
                 getattr(self.gui, key).delete(0, tk.END)
                 getattr(self.gui, key).insert(0, attribute_value)
 

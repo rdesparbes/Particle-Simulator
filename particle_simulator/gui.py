@@ -767,6 +767,27 @@ class GUI:
             calculate_radii_diff=self.calculate_radii_diff_bool.get(),
         )
 
+    def set_sim_settings(self, sim_settings: SimGUISettings) -> None:
+        s = sim_settings
+
+        self._set_entry(self.gravity_entry, str(s.gravity))
+        self._set_entry(self.air_res_entry, str(s.air_res))
+        self._set_entry(self.friction_entry, str(s.friction))
+        self.temp_sc.set(s.temp)
+        self.speed_sc.set(s.speed)
+        self.show_fps.set(s.show_fps)
+        self.show_num.set(s.show_num)
+        self.show_links.set(s.show_links)
+        self.top_bool.set(s.top)
+        self.bottom_bool.set(s.bottom)
+        self.left_bool.set(s.left)
+        self.right_bool.set(s.right)
+        self.grid_bool.set(s.use_grid)
+        self.grid_res_x_value.set(s.grid_res_x)
+        self.grid_res_y_value.set(s.grid_res_y)
+        self._set_entry(self.delay_entry, str(s.delay))
+        self.calculate_radii_diff_bool.set(s.calculate_radii_diff)
+
     def get_particle_settings(self) -> ParticleState:
         radius_str: str = self.radius_entry.get()
         if radius_str == "scroll":
