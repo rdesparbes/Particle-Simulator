@@ -10,7 +10,6 @@ from typing import (
     Iterable,
     Optional,
     Callable,
-    Any,
 )
 
 import numpy as np
