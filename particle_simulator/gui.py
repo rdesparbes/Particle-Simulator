@@ -748,9 +748,9 @@ class GUI:
     def inputs2dict(self) -> ParticleState:
         radius_str: str = self.radius_entry.get()
         if radius_str == "scroll":
-            radius = None
+            radius: Optional[float] = None
         else:
-            radius = int(self.radius_entry.get())
+            radius = float(self.radius_entry.get())
 
         color_str: str = self.color_entry.get()
         if color_str == "random":
@@ -766,8 +766,8 @@ class GUI:
                 float(self.velocity_y_entry.get()),
             ),
             bounciness=float(self.bounciness_entry.get()),
-            attract_r=int(self.attr_r_entry.get()),
-            repel_r=int(self.repel_r_entry.get()),
+            attract_r=float(self.attr_r_entry.get()),
+            repel_r=float(self.repel_r_entry.get()),
             attraction_strength=float(self.attr_strength_entry.get()),
             repulsion_strength=float(self.repel_strength_entry.get()),
             link_attr_breaking_force=float(self.link_attr_break_entry.get()),

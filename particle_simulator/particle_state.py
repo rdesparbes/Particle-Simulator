@@ -10,8 +10,8 @@ class ParticleState:
     bounciness: float
     locked: bool
     collisions: bool
-    attract_r: int
-    repel_r: int
+    attract_r: float
+    repel_r: float
     attraction_strength: float
     repulsion_strength: float
     linked_group_particles: bool
@@ -20,4 +20,4 @@ class ParticleState:
     group: str
     separate_group: bool
     gravity_mode: bool
-    radius: Optional[int] = None
+    radius: Optional[float] = None
