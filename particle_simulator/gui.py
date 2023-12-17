@@ -13,6 +13,7 @@ from .extra_window import ExtraWindow
 from .particle_data import ParticleData
 from .particle_state import ParticleState
 from .save_manager import SaveManager
+from .sim_gui_settings import SimGUISettings
 from .simulation_state import SimulationState
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
@@ -744,6 +745,27 @@ class GUI:
             self.color_entry.delete(0, tk.END)
             self.color_entry.insert(0, str(list(color)))
             self.tab2_canvas.itemconfig(self.part_color_rect, fill=color_exa)
+
+    def get_sim_settings(self) -> SimGUISettings:
+        return SimGUISettings(
+            gravity=float(self.gravity_entry.get()),
+            air_res=float(self.air_res_entry.get()),
+            friction=float(self.friction_entry.get()),
+            temp=float(self.temp_sc.get()),
+            speed=float(self.speed_sc.get()),
+            show_fps=self.show_fps.get(),
+            show_num=self.show_num.get(),
+            show_links=self.show_links.get(),
+            top=self.top_bool.get(),
+            bottom=self.bottom_bool.get(),
+            left=self.left_bool.get(),
+            right=self.right_bool.get(),
+            use_grid=self.grid_bool.get(),
+            grid_res_x=int(self.grid_res_x.get()),
+            grid_res_y=int(self.grid_res_y.get()),
+            delay=float(self.delay_entry.get()),
+            calculate_radii_diff=self.calculate_radii_diff_bool.get(),
+        )
 
     def inputs2dict(self) -> ParticleState:
         radius_str: str = self.radius_entry.get()
