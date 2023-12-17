@@ -1,3 +1,4 @@
+import re
 import time
 import tkinter as tk
 from dataclasses import asdict
@@ -7,6 +8,8 @@ from typing import (
     Dict,
     Tuple,
     List,
+    Literal,
+    Union,
 )
 
 import cv2
@@ -340,15 +343,42 @@ class Simulation(SimulationState):
             "sim-settings": sim_settings,
         }
 
+    def _parse_color(
+        self, color_repr: str
+    ) -> Union[Tuple[int, int, int], Literal["random"]]:
+        if color_repr == "random":
+            return color_repr
+
+        match = re.search(r"(?P<blue>\d+), *(?P<green>\d+), *(?P<red>\d+)", color_repr)
+        if match is None:
+            raise ValueError(f"Impossible to parse color: {color_repr}")
+
+        return (
+            int(match.group("blue")),
+            int(match.group("green")),
+            int(match.group("red")),
+        )
+
     def _parse_particle_settings(
         self, particle_settings: ParticleSettings
     ) -> ParticleState:
         p = particle_settings
-        color = p["color_entry"][0]
-        if color != "random":
-            color = (int(color[0]), int(color[1]), int(color[2]))
+        color_any = p["color_entry"][0]
+        if isinstance(color_any, str):
+            color = self._parse_color(color_any)
+        elif isinstance(color_any, (list, tuple)):
+            color = int(color_any[0]), int(color_any[1]), int(color_any[2])
+        else:
+            raise NotImplemented(
+                f"Unsupported type {type(color_any)} for colors: {color_any}"
+            )
+        radius_any = p["radius_entry"][0]
+        if radius_any == "scroll" or radius_any is None:
+            radius = self.mr
+        else:
+            radius = float(radius_any)
         return ParticleState(
-            radius=float(p["radius_entry"][0]),
+            radius=radius,
             color=color,
             mass=float(p["mass_entry"][0]),
             velocity=(float(p["velocity_x_entry"][0]), float(p["velocity_y_entry"][0])),
@@ -368,8 +398,9 @@ class Simulation(SimulationState):
         )
 
     def from_dict(self, data: SimPickle) -> None:
+        particle_settings = self._parse_particle_settings(data["particle-settings"])
+        self.gui.set_particle_settings(particle_settings)
         all_settings: Dict[str, Tuple[Any, AttributeType]] = {
-            **data["particle-settings"],
             **data["sim-settings"],
         }
         self.gui.group_indices = []
