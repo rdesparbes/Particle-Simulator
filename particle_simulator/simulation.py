@@ -301,10 +301,7 @@ class Simulation(SimulationState):
             "grid_res_x_value": (g.grid_res_x, "set"),
             "grid_res_y_value": (g.grid_res_y, "set"),
             "delay_entry": (str(g.delay), "entry"),
-            "calculate_radii_diff_bool": (
-                g.calculate_radii_diff,
-                "set",
-            ),
+            "calculate_radii_diff_bool": (g.calculate_radii_diff, "set"),
             "g_dir": (self.g_dir, "var"),
             "wind_force": (self.wind_force, "var"),
             "stress_visualization": (self.stress_visualization, "var"),
@@ -342,6 +339,33 @@ class Simulation(SimulationState):
             "particle-settings": particle_settings,
             "sim-settings": sim_settings,
         }
+
+    def _parse_particle_settings(
+        self, particle_settings: ParticleSettings
+    ) -> ParticleState:
+        p = particle_settings
+        color = p["color_entry"][0]
+        if color != "random":
+            color = (int(color[0]), int(color[1]), int(color[2]))
+        return ParticleState(
+            radius=float(p["radius_entry"][0]),
+            color=color,
+            mass=float(p["mass_entry"][0]),
+            velocity=(float(p["velocity_x_entry"][0]), float(p["velocity_y_entry"][0])),
+            bounciness=float(p["bounciness_entry"][0]),
+            collisions=p["do_collision_bool"][0],
+            locked=p["locked_bool"][0],
+            linked_group_particles=p["linked_group_bool"][0],
+            attract_r=float(p["attr_r_entry"][0]),
+            repel_r=float(p["repel_r_entry"][0]),
+            attraction_strength=float(p["attr_strength_entry"][0]),
+            gravity_mode=p["gravity_mode_bool"][0],
+            repulsion_strength=float(p["repel_strength_entry"][0]),
+            link_attr_breaking_force=float(p["link_attr_break_entry"][0]),
+            link_repel_breaking_force=float(p["link_repel_break_entry"][0]),
+            group=p["groups_entry"][0],
+            separate_group=p["separate_group_bool"][0],
+        )
 
     def from_dict(self, data: SimPickle) -> None:
         all_settings: Dict[str, Tuple[Any, AttributeType]] = {
