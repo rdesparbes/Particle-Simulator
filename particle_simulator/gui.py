@@ -803,6 +803,34 @@ class GUI:
             radius=radius,
         )
 
+    @staticmethod
+    def _set_entry(entry: Union[tk.Entry, tk.Spinbox], text: str) -> None:
+        entry.delete(0, tk.END)
+        entry.insert(0, text)
+
+    def set_particle_settings(self, particle_settings: ParticleState) -> None:
+        p = particle_settings
+        self._set_entry(self.color_entry, str(p.color))
+        self._set_entry(self.mass_entry, str(p.mass))
+        self._set_entry(self.velocity_x_entry, str(p.velocity[0]))
+        self._set_entry(self.velocity_y_entry, str(p.velocity[1]))
+        self._set_entry(self.bounciness_entry, str(p.bounciness))
+        self._set_entry(self.attr_r_entry, str(p.attract_r))
+        self._set_entry(self.repel_r_entry, str(p.repel_r))
+        self._set_entry(self.attr_strength_entry, str(p.attraction_strength))
+        self._set_entry(self.repel_strength_entry, str(p.repulsion_strength))
+        self._set_entry(self.link_attr_break_entry, str(p.link_attr_breaking_force))
+        self._set_entry(self.link_repel_break_entry, str(p.link_repel_breaking_force))
+        self.do_collision_bool.set(p.collisions)
+        self.locked_bool.set(p.locked)
+        self.linked_group_bool.set(p.linked_group_particles)
+        self._set_entry(self.groups_entry, p.group)
+        self.separate_group_bool.set(p.separate_group)
+        self.gravity_mode_bool.set(p.gravity_mode)
+        self._set_entry(
+            self.radius_entry, "scroll" if p.radius is None else str(p.radius)
+        )
+
     def _copy_from_selected(self) -> None:
         selection: Sequence[ParticleData] = self.sim.selection
 
