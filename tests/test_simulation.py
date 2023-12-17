@@ -8,18 +8,32 @@ from particle_simulator.sim_pickle import SimPickle
 from particle_simulator.simulation import Simulation
 
 
-def assert_is_subset(obj: Any, reference: Any) -> None:
+def diff_subset(obj: Any, reference: Any) -> Any:
     if isinstance(obj, (str, float)):
-        assert obj == reference
+        if obj != reference:
+            return obj, reference
+        else:
+            return None
     elif hasattr(obj, "items"):
+        differences = {}
         for key, value in obj.items():
             ref_value = reference[key]
-            assert_is_subset(value, ref_value)
+            difference = diff_subset(value, ref_value)
+            if difference:
+                differences[key] = difference
+        return differences
     elif hasattr(obj, "__iter__"):
+        differences = []
         for obj_elem, ref_elem in zip(obj, reference):
-            assert_is_subset(obj_elem, ref_elem)
+            difference = diff_subset(obj_elem, ref_elem)
+            if difference:
+                differences.append(difference)
+        return differences
     else:
-        assert obj == reference
+        if obj != reference:
+            return obj, reference
+        else:
+            return None
 
 
 @pytest.fixture(
@@ -68,7 +82,8 @@ def test_simulation_load_then_write_generates_subset_file(
     dumped_data = sim.to_dict()
 
     # Assert
-    assert_is_subset(pickle_data, dumped_data)
+    difference = diff_subset(obj=pickle_data, reference=dumped_data)
+    assert not difference
 
 
 def test_simulation_write_then_load_generates_identical_file(
