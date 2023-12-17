@@ -306,8 +306,11 @@ class Simulation(SimulationState):
             "grid_res_y_value": (g.grid_res_y, "set"),
             "delay_entry": (g.delay, "entry"),
             "calculate_radii_diff_bool": (g.calculate_radii_diff, "set"),
-            "g_dir": (self.g_dir, "var"),
-            "wind_force": (self.wind_force, "var"),
+            "g_dir": ((float(self.g_dir[0]), float(self.g_dir[1])), "var"),
+            "wind_force": (
+                (float(self.wind_force[0]), float(self.wind_force[1])),
+                "var",
+            ),
             "stress_visualization": (self.stress_visualization, "var"),
             "bg_color": (self.bg_color, "var"),
             "void_edges": (self.void_edges, "var"),
@@ -421,6 +424,20 @@ class Simulation(SimulationState):
             calculate_radii_diff=bool(s["calculate_radii_diff_bool"][0]),
         )
 
+    def _set_sim_settings(self, sim_settings: SimSettings) -> None:
+        s = sim_settings
+        g_dir_x, g_dir_y = s["g_dir"][0]
+        self.g_dir = np.array([float(g_dir_x), float(g_dir_y)])
+        wind_dir_x, wind_dir_y = s["wind_force"][0]
+        self.wind_force = np.array([float(wind_dir_x), float(wind_dir_y)])
+        self.stress_visualization = bool(s["stress_visualization"][0])
+        bg_color, bg_hexa = s["bg_color"][0]
+        self.bg_color = (int(bg_color[0]), int(bg_color[1]), int(bg_color[2])), str(
+            bg_hexa
+        )
+        self.void_edges = bool(s["void_edges"][0])
+        self.code = str(s.get("code", [""])[0])
+
     def from_dict(self, data: SimPickle) -> None:
         particle_settings = self._parse_particle_settings(data["particle-settings"])
         self.gui.set_particle_settings(particle_settings)
@@ -429,9 +446,8 @@ class Simulation(SimulationState):
         self.gui.groups_entry["values"] = []
         sim_gui_settings = self._extract_sim_gui_settings(data["sim-settings"])
         self.gui.set_sim_settings(sim_gui_settings)
-        for key, (attribute_value, attribute_type) in data["sim-settings"].items():
-            if attribute_type == "var":
-                setattr(self, key, attribute_value)
+
+        self._set_sim_settings(data["sim-settings"])
 
         for p in self.particles.copy():
             self.remove_particle(p)
