@@ -4,7 +4,7 @@ from typing import Iterable, Union, Literal, Tuple
 
 import pytest
 
-from particle_simulator.sim_pickle import SimPickle
+from particle_simulator.sim_pickle import SimPickle, _parse_color
 from particle_simulator.simulation import Simulation
 
 
@@ -54,7 +54,8 @@ def test_simulation_write_then_load_generates_identical_file(
     sim.from_dict(dumped_data)
 
     # Assert
-    assert dumped_data == sim.to_dict()
+    # Pickle is necessary because of numpy arrays:
+    assert pickle.dumps(dumped_data) == pickle.dumps(sim.to_dict())
 
 
 @pytest.mark.parametrize(
@@ -72,4 +73,4 @@ def test_parse_color(
     color_any: Union[str, Iterable[float]],
     expected_color: Union[Tuple[int, int, int], Literal["random"]],
 ) -> None:
-    assert Simulation._parse_color(color_any) == expected_color
+    assert _parse_color(color_any) == expected_color

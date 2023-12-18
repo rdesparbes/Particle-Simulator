@@ -3,7 +3,7 @@ from typing import Tuple, Literal, Union, Optional
 
 
 @dataclass
-class ParticleState:
+class ParticleFactory:
     color: Union[Tuple[int, int, int], Literal["random"]]
     mass: float
     velocity: Tuple[float, float]

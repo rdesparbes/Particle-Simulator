@@ -1,30 +1,39 @@
+import re
 from typing import (
     Any,
     Dict,
     Tuple,
     List,
     TypedDict,
+    Union,
+    Literal,
+    Optional,
+    Sequence,
 )
 
+import numpy as np
+
 from particle_simulator.controller_state import ControllerState
+from particle_simulator.particle_data import ParticleData
+from particle_simulator.particle_factory import ParticleFactory
+from particle_simulator.sim_gui_settings import SimGUISettings
+from particle_simulator.simulation_state import SimulationState
 
 ParticlesPickle = List[Dict[str, Any]]
-ParticleSettings = Dict[str, Tuple[Any]]
-SimSettings = Dict[str, Tuple[Any]]
+PickleSettings = Dict[str, Tuple[Any]]
 SimPickle = TypedDict(
     "SimPickle",
     {
         "particles": ParticlesPickle,
-        "particle-settings": ParticleSettings,
-        "sim-settings": SimSettings,
+        "particle-settings": PickleSettings,
+        "sim-settings": PickleSettings,
     },
 )
 
 
-def to_dict(controller_state: ControllerState) -> SimPickle:
-    g = controller_state.gui_settings
-    s = controller_state.sim_state
-    sim_settings: SimSettings = {
+def _sim_settings_to_dict(sim_state: SimulationState) -> PickleSettings:
+    s = sim_state
+    return {
         "gravity_entry": (s.g,),
         "air_res_entry": (s.air_res,),
         "friction_entry": (s.ground_friction,),
@@ -42,6 +51,12 @@ def to_dict(controller_state: ControllerState) -> SimPickle:
         "bg_color": (s.bg_color,),
         "void_edges": (s.void_edges,),
         "code": (s.code,),
+    }
+
+
+def _gui_settings_to_dict(gui_settings: SimGUISettings) -> PickleSettings:
+    g = gui_settings
+    return {
         "grid_res_x_value": (g.grid_res_y,),
         "grid_res_y_value": (g.grid_res_y,),
         "delay_entry": (g.delay,),
@@ -49,8 +64,11 @@ def to_dict(controller_state: ControllerState) -> SimPickle:
         "show_num": (g.show_num,),
         "show_links": (g.show_links,),
     }
-    p = controller_state.gui_particle_state
-    particle_settings: ParticleSettings = {
+
+
+def _particle_settings_to_dict(particle_factory: ParticleFactory) -> PickleSettings:
+    p = particle_factory
+    return {
         "radius_entry": (p.radius,),
         "color_entry": (p.color,),
         "mass_entry": (p.mass,),
@@ -71,10 +89,178 @@ def to_dict(controller_state: ControllerState) -> SimPickle:
         "separate_group_bool": (p.separate_group,),
     }
 
+
+def _particles_to_dict(particles: Sequence[ParticleData]) -> ParticlesPickle:
+    return [
+        {
+            "x": p.x,
+            "y": p.y,
+            "v": p.velocity,
+            "a": p.acceleration,
+            "r": p.radius,
+            "color": p.color,
+            "m": p.mass,
+            "bounciness": p.bounciness,
+            "locked": p.locked,
+            "collision_bool": p.collisions,
+            "attr_r": p.attract_r,
+            "repel_r": p.repel_r,
+            "attr": p.attraction_strength,
+            "repel": p.repulsion_strength,
+            "linked_group_particles": p.linked_group_particles,
+            "link_attr_breaking_force": p.link_attr_breaking_force,
+            "link_repel_breaking_force": p.link_repel_breaking_force,
+            "group": p.group,
+            "separate_group": p.separate_group,
+            "gravity_mode": p.gravity_mode,
+            "mouse": p.mouse,
+            "link_lengths": {
+                particles.index(particle): value
+                for particle, value in p.link_lengths.items()
+                if particle in particles
+            },
+        }
+        for p in particles
+    ]
+
+
+def to_dict(controller_state: ControllerState) -> SimPickle:
+    sim_settings = _sim_settings_to_dict(controller_state.sim_state)
+    gui_settings = _gui_settings_to_dict(controller_state.gui_settings)
+    particle_settings = _particle_settings_to_dict(controller_state.gui_particle_state)
+    particles = _particles_to_dict(controller_state.particles)
+
     return {
-        "particles": [
-            particle.return_dict(index_source=s.particles) for particle in s.particles
-        ],
+        "particles": particles,
         "particle-settings": particle_settings,
-        "sim-settings": sim_settings,
+        "sim-settings": {**sim_settings, **gui_settings},
     }
+
+
+def _parse_color(
+    color_any: Union[Sequence[float], str]
+) -> Union[Tuple[int, int, int], Literal["random"]]:
+    if color_any == "random":
+        return "random"
+
+    if isinstance(color_any, str):
+        match = re.search(r"(?P<blue>\d+), *(?P<green>\d+), *(?P<red>\d+)", color_any)
+        if match is None:
+            raise ValueError(f"Impossible to parse color: {color_any}")
+        return (
+            int(match.group("blue")),
+            int(match.group("green")),
+            int(match.group("red")),
+        )
+    return int(color_any[0]), int(color_any[1]), int(color_any[2])
+
+
+def _parse_radius(radius_any: Union[float, None, Literal["scroll"]]) -> Optional[float]:
+    if radius_any == "scroll" or radius_any is None:
+        return None
+    return float(radius_any)
+
+
+def _parse_particle_settings(particle_settings: PickleSettings) -> ParticleFactory:
+    p = particle_settings
+    color = _parse_color(p["color_entry"][0])
+    radius = _parse_radius(p["radius_entry"][0])
+    return ParticleFactory(
+        radius=radius,
+        color=color,
+        mass=float(p["mass_entry"][0]),
+        velocity=(float(p["velocity_x_entry"][0]), float(p["velocity_y_entry"][0])),
+        bounciness=float(p["bounciness_entry"][0]),
+        collisions=p["do_collision_bool"][0],
+        locked=p["locked_bool"][0],
+        linked_group_particles=p["linked_group_bool"][0],
+        attract_r=float(p["attr_r_entry"][0]),
+        repel_r=float(p["repel_r_entry"][0]),
+        attraction_strength=float(p["attr_strength_entry"][0]),
+        gravity_mode=p["gravity_mode_bool"][0],
+        repulsion_strength=float(p["repel_strength_entry"][0]),
+        link_attr_breaking_force=float(p["link_attr_break_entry"][0]),
+        link_repel_breaking_force=float(p["link_repel_break_entry"][0]),
+        group=p["groups_entry"][0],
+        separate_group=p["separate_group_bool"][0],
+    )
+
+
+def _extract_sim_gui_settings(sim_settings: PickleSettings) -> SimGUISettings:
+    s = sim_settings
+    return SimGUISettings(
+        delay=float(s["delay_entry"][0]),
+        grid_res_x=int(s["grid_res_x_value"][0]),
+        grid_res_y=int(s["grid_res_y_value"][0]),
+        show_fps=bool(s["show_fps"][0]),
+        show_num=bool(s["show_num"][0]),
+        show_links=bool(s["show_links"][0]),
+    )
+
+
+def _extract_sim_settings(sim_pickle: PickleSettings) -> SimulationState:
+    s = sim_pickle
+    g_dir_x, g_dir_y = s["g_dir"][0]
+    wind_dir_x, wind_dir_y = s["wind_force"][0]
+    bg_color, bg_hexa = s["bg_color"][0]
+    return SimulationState(
+        g=float(s["gravity_entry"][0]),
+        air_res=float(s["air_res_entry"][0]),
+        ground_friction=float(s["friction_entry"][0]),
+        temperature=float(s["temp_sc"][0]),
+        speed=float(s["speed_sc"][0]),
+        top=bool(s["top_bool"][0]),
+        bottom=bool(s["bottom_bool"][0]),
+        left=bool(s["left_bool"][0]),
+        right=bool(s["right_bool"][0]),
+        use_grid=bool(s["grid_bool"][0]),
+        calculate_radii_diff=bool(s["calculate_radii_diff_bool"][0]),
+        g_dir=np.array([float(g_dir_x), float(g_dir_y)]),
+        wind_force=np.array([float(wind_dir_x), float(wind_dir_y)]),
+        stress_visualization=bool(s["stress_visualization"][0]),
+        bg_color=((int(bg_color[0]), int(bg_color[1]), int(bg_color[2])), str(bg_hexa)),
+        void_edges=bool(s["void_edges"][0]),
+        code=str(s.get("code", [""])[0]),
+    )
+
+
+def _parse_particles(particles_pickle: ParticlesPickle) -> List[ParticleData]:
+    particles: List[ParticleData] = []
+    for d in particles_pickle:
+        v_x, v_y = d["v"]
+        particle = ParticleData(
+            x=float(d["x"]),
+            y=float(d["y"]),
+            color=d["color"],
+            mass=float(d["m"]),
+            velocity=np.array([float(v_x), float(v_y)]),
+            bounciness=float(d["bounciness"]),
+            locked=bool(d["locked"]),
+            collisions=bool(d["collision_bool"]),
+            attract_r=float(d["attr_r"]),
+            repel_r=float(d["repel_r"]),
+            attraction_strength=float(d["attr"]),
+            repulsion_strength=float(d["repel"]),
+            linked_group_particles=bool(d["linked_group_particles"]),
+            link_attr_breaking_force=float(d["link_attr_breaking_force"]),
+            link_repel_breaking_force=float(d["link_repel_breaking_force"]),
+            group=str(d["group"]),
+            separate_group=bool(d["separate_group"]),
+            gravity_mode=bool(d["gravity_mode"]),
+        )
+        particles.append(particle)
+    return particles
+
+
+def from_dict(controller_pickle: SimPickle) -> ControllerState:
+    sim_settings = _extract_sim_settings(controller_pickle["sim-settings"])
+    sim_gui_settings = _extract_sim_gui_settings(controller_pickle["sim-settings"])
+    particle_settings = _parse_particle_settings(controller_pickle["particle-settings"])
+    particles = _parse_particles(controller_pickle["particles"])
+
+    return ControllerState(
+        sim_state=sim_settings,
+        gui_settings=sim_gui_settings,
+        gui_particle_state=particle_settings,
+        particles=particles,
+    )

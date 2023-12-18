@@ -11,7 +11,7 @@ from .code_window import CodeWindow
 from .error import Error
 from .extra_window import ExtraWindow
 from .particle_data import ParticleData
-from .particle_state import ParticleState
+from .particle_factory import ParticleFactory
 from .save_manager import SaveManager
 from .sim_gui_settings import SimGUISettings
 from .simulation_state import SimulationState
@@ -748,47 +748,25 @@ class GUI:
 
     def get_sim_settings(self) -> SimGUISettings:
         return SimGUISettings(
-            gravity=float(self.gravity_entry.get()),
-            air_res=float(self.air_res_entry.get()),
-            friction=float(self.friction_entry.get()),
-            temp=float(self.temp_sc.get()),
-            speed=float(self.speed_sc.get()),
             show_fps=self.show_fps.get(),
             show_num=self.show_num.get(),
             show_links=self.show_links.get(),
-            top=self.top_bool.get(),
-            bottom=self.bottom_bool.get(),
-            left=self.left_bool.get(),
-            right=self.right_bool.get(),
-            use_grid=self.grid_bool.get(),
             grid_res_x=int(self.grid_res_x.get()),
             grid_res_y=int(self.grid_res_y.get()),
             delay=float(self.delay_entry.get()),
-            calculate_radii_diff=self.calculate_radii_diff_bool.get(),
         )
 
     def set_sim_settings(self, sim_settings: SimGUISettings) -> None:
         s = sim_settings
 
-        self._set_entry(self.gravity_entry, str(s.gravity))
-        self._set_entry(self.air_res_entry, str(s.air_res))
-        self._set_entry(self.friction_entry, str(s.friction))
-        self.temp_sc.set(s.temp)
-        self.speed_sc.set(s.speed)
         self.show_fps.set(s.show_fps)
         self.show_num.set(s.show_num)
         self.show_links.set(s.show_links)
-        self.top_bool.set(s.top)
-        self.bottom_bool.set(s.bottom)
-        self.left_bool.set(s.left)
-        self.right_bool.set(s.right)
-        self.grid_bool.set(s.use_grid)
         self.grid_res_x_value.set(s.grid_res_x)
         self.grid_res_y_value.set(s.grid_res_y)
         self._set_entry(self.delay_entry, str(s.delay))
-        self.calculate_radii_diff_bool.set(s.calculate_radii_diff)
 
-    def get_particle_settings(self) -> ParticleState:
+    def get_particle_settings(self) -> ParticleFactory:
         radius_str: str = self.radius_entry.get()
         if radius_str == "scroll":
             radius: Optional[float] = None
@@ -801,7 +779,7 @@ class GUI:
         else:
             color = tuple(map(int, eval(color_str)))
 
-        return ParticleState(
+        return ParticleFactory(
             color=color,
             mass=float(self.mass_entry.get()),
             velocity=(
@@ -829,7 +807,7 @@ class GUI:
         entry.delete(0, tk.END)
         entry.insert(0, text)
 
-    def set_particle_settings(self, particle_settings: ParticleState) -> None:
+    def set_particle_settings(self, particle_settings: ParticleFactory) -> None:
         p = particle_settings
         self._set_entry(self.color_entry, str(p.color))
         self._set_entry(self.mass_entry, str(p.mass))
@@ -858,19 +836,19 @@ class GUI:
         particle_settings: Dict[str, Any] = {}
         for i, p in enumerate(selection):
             variable_names: Dict[str, Any] = {
-                "radius_entry": p.r,
+                "radius_entry": p.radius,
                 "color_entry": p.color,
-                "mass_entry": p.m,
-                "velocity_x_entry": p.v[0],
-                "velocity_y_entry": p.v[1],
+                "mass_entry": p.mass,
+                "velocity_x_entry": p.velocity[0],
+                "velocity_y_entry": p.velocity[1],
                 "bounciness_entry": p.bounciness,
-                "do_collision_bool": p.collision_bool,
+                "do_collision_bool": p.collisions,
                 "locked_bool": p.locked,
                 "linked_group_bool": p.linked_group_particles,
-                "attr_r_entry": p.attr_r,
+                "attr_r_entry": p.attract_r,
                 "repel_r_entry": p.repel_r,
-                "attr_strength_entry": p.attr,
-                "repel_strength_entry": p.repel,
+                "attr_strength_entry": p.attraction_strength,
+                "repel_strength_entry": p.repulsion_strength,
                 "link_attr_break_entry": p.link_attr_breaking_force,
                 "link_repel_break_entry": p.link_repel_breaking_force,
                 "groups_entry": p.group,

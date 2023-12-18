@@ -1,4 +1,3 @@
-import re
 import time
 import tkinter as tk
 from dataclasses import asdict
@@ -8,9 +7,6 @@ from typing import (
     Dict,
     Tuple,
     List,
-    Literal,
-    Union,
-    Sequence,
 )
 
 import cv2
@@ -24,12 +20,9 @@ from .error import Error
 from .grid import Grid
 from .gui import GUI, Mode, CANVAS_X, CANVAS_Y
 from .particle import Particle, Link
-from .particle_state import ParticleState
-from .sim_gui_settings import SimGUISettings
+from .particle_factory import ParticleFactory
 from .sim_pickle import (
     SimPickle,
-    ParticleSettings,
-    SimSettings,
 )
 from .simulation_state import SimulationState
 
@@ -129,7 +122,7 @@ class Simulation(SimulationState):
 
     def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:
         if np.sqrt((x - particle.x) ** 2 + (y - particle.y) ** 2) <= max(
-            int(self.mr), particle.r
+            self.mr, particle.radius
         ):
             if self.mouse_mode == "SELECT":
                 self._select_particle(particle)
@@ -181,7 +174,7 @@ class Simulation(SimulationState):
         temp = self.particles.copy()
         for p in temp:
             if np.sqrt((event.x - p.x) ** 2 + (event.y - p.y) ** 2) <= max(
-                int(self.mr), p.r
+                self.mr, p.radius
             ):
                 self.remove_particle(p)
 
@@ -260,7 +253,7 @@ class Simulation(SimulationState):
             width=self.width,
         )
 
-    def _get_particle_settings(self) -> Optional[ParticleState]:
+    def _get_particle_settings(self) -> Optional[ParticleFactory]:
         try:
             particle_settings = self.gui.get_particle_settings()
             if particle_settings.radius is None:
@@ -293,122 +286,25 @@ class Simulation(SimulationState):
             sim_state=self,
             gui_settings=self.gui.get_sim_settings(),
             gui_particle_state=self.gui.get_particle_settings(),
+            particles=self.particles,
         )
         return sim_pickle.to_dict(controller_state)
 
-    @staticmethod
-    def _parse_color(
-        color_any: Union[Sequence[float], str]
-    ) -> Union[Tuple[int, int, int], Literal["random"]]:
-        if color_any == "random":
-            return "random"
-
-        if isinstance(color_any, str):
-            match = re.search(
-                r"(?P<blue>\d+), *(?P<green>\d+), *(?P<red>\d+)", color_any
-            )
-            if match is None:
-                raise ValueError(f"Impossible to parse color: {color_any}")
-            return (
-                int(match.group("blue")),
-                int(match.group("green")),
-                int(match.group("red")),
-            )
-        return int(color_any[0]), int(color_any[1]), int(color_any[2])
-
-    @staticmethod
-    def _parse_radius(
-        radius_any: Union[float, None, Literal["scroll"]]
-    ) -> Optional[float]:
-        if radius_any == "scroll" or radius_any is None:
-            return None
-        return float(radius_any)
-
-    @classmethod
-    def _parse_particle_settings(
-        cls, particle_settings: ParticleSettings
-    ) -> ParticleState:
-        p = particle_settings
-        color = cls._parse_color(p["color_entry"][0])
-        radius = cls._parse_radius(p["radius_entry"][0])
-        return ParticleState(
-            radius=radius,
-            color=color,
-            mass=float(p["mass_entry"][0]),
-            velocity=(float(p["velocity_x_entry"][0]), float(p["velocity_y_entry"][0])),
-            bounciness=float(p["bounciness_entry"][0]),
-            collisions=p["do_collision_bool"][0],
-            locked=p["locked_bool"][0],
-            linked_group_particles=p["linked_group_bool"][0],
-            attract_r=float(p["attr_r_entry"][0]),
-            repel_r=float(p["repel_r_entry"][0]),
-            attraction_strength=float(p["attr_strength_entry"][0]),
-            gravity_mode=p["gravity_mode_bool"][0],
-            repulsion_strength=float(p["repel_strength_entry"][0]),
-            link_attr_breaking_force=float(p["link_attr_break_entry"][0]),
-            link_repel_breaking_force=float(p["link_repel_break_entry"][0]),
-            group=p["groups_entry"][0],
-            separate_group=p["separate_group_bool"][0],
-        )
-
-    @staticmethod
-    def _extract_sim_gui_settings(sim_settings: SimSettings) -> SimGUISettings:
-        s = sim_settings
-        return SimGUISettings(
-            gravity=float(s["gravity_entry"][0]),
-            air_res=float(s["air_res_entry"][0]),
-            friction=float(s["friction_entry"][0]),
-            temp=float(s["temp_sc"][0]),
-            speed=float(s["speed_sc"][0]),
-            show_fps=bool(s["show_fps"][0]),
-            show_num=bool(s["show_num"][0]),
-            show_links=bool(s["show_links"][0]),
-            top=bool(s["top_bool"][0]),
-            bottom=bool(s["bottom_bool"][0]),
-            left=bool(s["left_bool"][0]),
-            right=bool(s["right_bool"][0]),
-            use_grid=bool(s["grid_bool"][0]),
-            grid_res_x=int(s["grid_res_x_value"][0]),
-            grid_res_y=int(s["grid_res_y_value"][0]),
-            delay=float(s["delay_entry"][0]),
-            calculate_radii_diff=bool(s["calculate_radii_diff_bool"][0]),
-        )
-
-    def _set_sim_settings(self, sim_settings: SimSettings) -> None:
-        s = sim_settings
-        g_dir_x, g_dir_y = s["g_dir"][0]
-        self.g_dir = np.array([float(g_dir_x), float(g_dir_y)])
-        wind_dir_x, wind_dir_y = s["wind_force"][0]
-        self.wind_force = np.array([float(wind_dir_x), float(wind_dir_y)])
-        self.stress_visualization = bool(s["stress_visualization"][0])
-        bg_color, bg_hexa = s["bg_color"][0]
-        self.bg_color = (int(bg_color[0]), int(bg_color[1]), int(bg_color[2])), str(
-            bg_hexa
-        )
-        self.void_edges = bool(s["void_edges"][0])
-        self.code = str(s.get("code", [""])[0])
-
     def from_dict(self, data: SimPickle) -> None:
-        particle_settings = self._parse_particle_settings(data["particle-settings"])
-        self.gui.set_particle_settings(particle_settings)
+        controller_state = sim_pickle.from_dict(data)
+        self.gui.set_particle_settings(controller_state.gui_particle_state)
 
         self.gui.group_indices = []
         self.gui.groups_entry["values"] = []
-        sim_gui_settings = self._extract_sim_gui_settings(data["sim-settings"])
-        self.gui.set_sim_settings(sim_gui_settings)
-
-        self._set_sim_settings(data["sim-settings"])
+        self.gui.set_sim_settings(controller_state.gui_settings)
 
         for p in self.particles.copy():
             self.remove_particle(p)
 
         self.groups = {}
-        for i, d in enumerate(data["particles"]):
-            p = Particle(self, 0, 0, group=d["group"])
-            for key, value in d.items():
-                setattr(p, key, value)
-            p.init_constants()
-            self.register_particle(p)
+        for particle_data in controller_state.particles:
+            particle = Particle(self, **asdict(particle_data))
+            self.register_particle(particle)
 
         for particle in self.particles:
             particle.link_lengths = {
@@ -417,9 +313,9 @@ class Simulation(SimulationState):
             }
 
     def add_particle(self, x: float, y: float) -> None:
-        particle_settings = self._get_particle_settings()
-        if particle_settings is not None:
-            p = Particle(self, x, y, **asdict(particle_settings))
+        particle_factory = self._get_particle_settings()
+        if particle_factory is not None:
+            p = Particle(self, x=x, y=y, **asdict(particle_factory))
             self.register_particle(p)
             self.last_particle_added_time = time.time()
 
@@ -427,7 +323,7 @@ class Simulation(SimulationState):
         self.pasting = True
         temp_particles = []
         for data in self.clipboard:
-            p = Particle(self, 0, 0, group=data["group"])
+            p = Particle(self, x=0, y=0, group=data["group"])
             self.register_particle(p)
             temp_particles.append(p)
 
@@ -442,7 +338,6 @@ class Simulation(SimulationState):
                 except AttributeError:
                     vars(particle)[key] = value
 
-            particle.init_constants()
             particle.link_lengths = {
                 temp_particles[index]: value
                 for index, value in particle.link_lengths.items()
@@ -494,7 +389,7 @@ class Simulation(SimulationState):
             cv2.circle(
                 image,
                 (int(particle.x), int(particle.y)),
-                int(particle.r),
+                int(particle.radius),
                 particle.color,
                 -1,
             )
@@ -502,7 +397,7 @@ class Simulation(SimulationState):
             cv2.circle(
                 image,
                 (int(particle.x), int(particle.y)),
-                int(particle.r),
+                int(particle.radius),
                 [0, 0, 255],
                 2,
             )

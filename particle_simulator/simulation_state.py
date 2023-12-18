@@ -17,7 +17,7 @@ from numpy import typing as npt
 
 from particle_simulator.error import Error
 from particle_simulator.particle import Particle
-from particle_simulator.particle_state import ParticleState
+from particle_simulator.particle_factory import ParticleFactory
 
 
 @dataclass
@@ -158,7 +158,7 @@ class SimulationState:
         self.particles.append(particle)
 
     def _replace_particle(
-        self, p: Particle, particle_settings: ParticleState
+        self, p: Particle, particle_settings: ParticleFactory
     ) -> Particle:
         temp_link_lengths = p.link_lengths.copy()
         px, py = p.x, p.y

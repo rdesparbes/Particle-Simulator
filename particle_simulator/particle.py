@@ -22,10 +22,62 @@ _Simulation = Any
 
 
 class Particle(ParticleData):
-    def __init__(self, sim: _Simulation, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.link_lengths: Dict[Particle, Union[Literal["repel"], float]] = {}
+    def __init__(
+        self,
+        sim: _Simulation,
+        x: float,
+        y: float,
+        radius: float = 4.0,
+        color: Union[List[int], Literal["random"]] = "random",
+        mass: float = 1.0,
+        acceleration: Optional[npt.NDArray[np.float_]] = None,
+        velocity: Optional[npt.NDArray[np.float_]] = None,
+        bounciness: float = 0.7,
+        locked: bool = False,
+        collisions: bool = False,
+        attract_r: float = -1.0,
+        repel_r: float = 10.0,
+        attraction_strength: float = 0.5,
+        repulsion_strength: float = 1.0,
+        linked_group_particles: bool = True,
+        link_attr_breaking_force: float = -1.0,
+        link_repel_breaking_force: float = -1.0,
+        group: str = "group1",
+        separate_group: bool = False,
+        gravity_mode: bool = False,
+        link_lengths: Optional[Dict[Self, Union[Literal["repel"], float]]] = None,
+    ) -> None:
+        if color == "random":
+            color = tuple(np.random.randint(0, 255, 3))
+        if acceleration is None:
+            acceleration = np.zeros(2)
+        if velocity is None:
+            velocity = np.zeros(2)
+        if link_lengths is None:
+            link_lengths = {}
+        super().__init__(
+            x=x,
+            y=y,
+            radius=radius,
+            color=color,
+            mass=mass,
+            velocity=velocity,
+            acceleration=acceleration,
+            bounciness=bounciness,
+            locked=locked,
+            collisions=collisions,
+            attract_r=attract_r,
+            repel_r=repel_r,
+            attraction_strength=attraction_strength,
+            repulsion_strength=repulsion_strength,
+            linked_group_particles=linked_group_particles,
+            link_attr_breaking_force=link_attr_breaking_force,
+            link_repel_breaking_force=link_repel_breaking_force,
+            group=group,
+            separate_group=separate_group,
+            gravity_mode=gravity_mode,
+            link_lengths=link_lengths,
+        )
 
         self._sim = sim
         self._collisions: Dict[Particle, npt.NDArray[np.float_]] = {}
@@ -133,9 +185,9 @@ class Particle(ParticleData):
 
     def update(self, near_particles: Iterable[Self]) -> None:
         if not self._sim.paused:
-            self.a = np.zeros(2)
-            self._apply_force(self._sim.g_vector * self.m)  # Gravity
-            self._apply_force(self._sim.wind_force * self.r)
+            self.acceleration = np.zeros(2)
+            self._apply_force(self._sim.g_vector * self.mass)  # Gravity
+            self._apply_force(self._sim.wind_force * self.radius)
 
             for force in self._collisions.values():
                 self._apply_force(force)
@@ -145,15 +197,15 @@ class Particle(ParticleData):
                     self._compute_interactions(near_particle)
 
                 if not self.mouse:
-                    self.v += np.clip(self.a, -2, 2) * self._sim.speed
-                    self.v += (
+                    self.velocity += np.clip(self.acceleration, -2, 2) * self._sim.speed
+                    self.velocity += (
                         np.random.uniform(-1, 1, 2)
                         * self._sim.temperature
                         * self._sim.speed
                     )
-                    self.v *= self._sim.air_res_calc
-                    self.x += self.v[0] * self._sim.speed
-                    self.y += self.v[1] * self._sim.speed
+                    self.velocity *= self._sim.air_res_calc
+                    self.x += self.velocity[0] * self._sim.speed
+                    self.y += self.velocity[1] * self._sim.speed
 
         if self.mouse:
             delta_mx = self._sim.mx - self._sim.prev_mx
@@ -161,26 +213,26 @@ class Particle(ParticleData):
             self.x += delta_mx
             self.y += delta_my
             if not self._sim.paused:
-                self.v = np.divide([delta_mx, delta_my], self._sim.speed)
+                self.velocity = np.divide([delta_mx, delta_my], self._sim.speed)
 
-        if self._sim.right and self.x + self.r >= self._sim.width:
-            self.v *= [-self.bounciness, 1 - self._sim.ground_friction]
-            self.x = self._sim.width - self.r
-        if self._sim.left and self.x - self.r <= 0:
-            self.v *= [-self.bounciness, 1 - self._sim.ground_friction]
-            self.x = self.r
-        if self._sim.bottom and self.y + self.r >= self._sim.height:
-            self.v *= [1 - self._sim.ground_friction, -self.bounciness]
-            self.y = self._sim.height - self.r
-        if self._sim.top and self.y - self.r <= 0:
-            self.v *= [1 - self._sim.ground_friction, -self.bounciness]
-            self.y = self.r
+        if self._sim.right and self.x + self.radius >= self._sim.width:
+            self.velocity *= [-self.bounciness, 1 - self._sim.ground_friction]
+            self.x = self._sim.width - self.radius
+        if self._sim.left and self.x - self.radius <= 0:
+            self.velocity *= [-self.bounciness, 1 - self._sim.ground_friction]
+            self.x = self.radius
+        if self._sim.bottom and self.y + self.radius >= self._sim.height:
+            self.velocity *= [1 - self._sim.ground_friction, -self.bounciness]
+            self.y = self._sim.height - self.radius
+        if self._sim.top and self.y - self.radius <= 0:
+            self.velocity *= [1 - self._sim.ground_friction, -self.bounciness]
+            self.y = self.radius
 
         if self._sim.void_edges and (
-            self.x - self.r >= self._sim.width
-            or self.x + self.r <= 0
-            or self.y - self.r >= self._sim.height
-            or self.y + self.r <= 0
+            self.x - self.radius >= self._sim.width
+            or self.x + self.radius <= 0
+            or self.y - self.radius >= self._sim.height
+            or self.y + self.radius <= 0
         ):
             self._sim.remove_particle(self)
             return
@@ -220,19 +272,19 @@ class Particle(ParticleData):
             self._apply_force(force)
             p._collisions[self] = -force
 
-        if self.collision_bool and distance < self.r + p.r:
+        if self.collisions and distance < self.radius + p.radius:
             new_speed = self._compute_collision_speed(p)
             p.v = p._compute_collision_speed(self)
-            self.v = new_speed
+            self.velocity = new_speed
 
             # Visual overlap fix
-            translate_vector = direction * (distance - (self.r + p.r))
+            translate_vector = direction * (distance - (self.radius + p.radius))
             if not self.mouse:
-                delta_pos = translate_vector * (self.m / (self.m + p.m))
+                delta_pos = translate_vector * (self.mass / (self.mass + p.mass))
                 self.x += delta_pos[0]
                 self.y += delta_pos[1]
             if not p.mouse and not p.locked:
-                delta_pos = translate_vector * (p.m / (self.m + p.m))
+                delta_pos = translate_vector * (p.mass / (self.mass + p.mass))
                 p.x -= delta_pos[0]
                 p.y -= delta_pos[1]
 
@@ -247,7 +299,7 @@ class Particle(ParticleData):
             if self.gravity_mode or p.gravity_mode:
                 return np.zeros(2)
             force = np.random.uniform(-10, 10, 2)
-            return force / np.linalg.norm(force) * -self.repel
+            return force / np.linalg.norm(force) * -self.repulsion_strength
         return direction * self._compute_magn(
             p,
             conditions,
@@ -264,8 +316,8 @@ class Particle(ParticleData):
             part=p,
             distance=distance,
             repel_r=p.repel_r if repel_r is None else repel_r,
-            attr=p.attr,
-            repel=p.repel,
+            attr=p.attraction_strength,
+            repel=p.repulsion_strength,
             gravity=p.gravity_mode,
         )
 
@@ -304,8 +356,8 @@ class Particle(ParticleData):
             part=p,
             distance=distance,
             repel_r=repel_r_,
-            attr=p.attr + self.attr,
-            repel=p.repel + self.repel,
+            attr=p.attraction_strength + self.attraction_strength,
+            repel=p.repulsion_strength + self.repulsion_strength,
             gravity=self.gravity_mode or p.gravity_mode,
         )
         return magnitude
