@@ -247,6 +247,7 @@ def _parse_particles(particles_pickle: ParticlesPickle) -> List[ParticleData]:
             group=str(d["group"]),
             separate_group=bool(d["separate_group"]),
             gravity_mode=bool(d["gravity_mode"]),
+            link_indices_lengths=d["link_lengths"],
         )
         particles.append(particle)
     return particles

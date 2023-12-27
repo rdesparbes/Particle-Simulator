@@ -302,15 +302,17 @@ class Simulation(SimulationState):
             self.remove_particle(p)
 
         self.groups = {}
-        for particle_data in controller_state.particles:
-            particle = Particle(self, **asdict(particle_data))
-            self.register_particle(particle)
-
-        for particle in self.particles:
+        particles = [
+            Particle(self, **asdict(particle_data))
+            for particle_data in controller_state.particles
+        ]
+        for particle in particles:
             particle.link_lengths = {
-                self.particles[index]: value
-                for index, value in particle.link_lengths.items()
+                particles[index]: value
+                for index, value in particle.link_indices_lengths.items()
             }
+            particle.linked_group_particles = {}
+            self.register_particle(particle)
 
     def add_particle(self, x: float, y: float) -> None:
         particle_factory = self._get_particle_settings()

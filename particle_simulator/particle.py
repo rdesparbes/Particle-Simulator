@@ -46,6 +46,9 @@ class Particle(ParticleData):
         separate_group: bool = False,
         gravity_mode: bool = False,
         link_lengths: Optional[Dict[Self, Union[Literal["repel"], float]]] = None,
+        link_indices_lengths: Optional[
+            Dict[int, Union[Literal["repel"], float]]
+        ] = None,
     ) -> None:
         if color == "random":
             color = tuple(np.random.randint(0, 255, 3))
@@ -55,6 +58,8 @@ class Particle(ParticleData):
             velocity = np.zeros(2)
         if link_lengths is None:
             link_lengths = {}
+        if link_indices_lengths is None:
+            link_indices_lengths = {}
         super().__init__(
             x=x,
             y=y,
@@ -77,6 +82,7 @@ class Particle(ParticleData):
             separate_group=separate_group,
             gravity_mode=gravity_mode,
             link_lengths=link_lengths,
+            link_indices_lengths=link_indices_lengths,
         )
 
         self._sim = sim

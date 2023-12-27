@@ -31,6 +31,9 @@ class ParticleData:
     link_lengths: Dict[Self, Union[Literal["repel"], float]] = field(
         default_factory=dict
     )
+    link_indices_lengths: Dict[int, Union[Literal["repel"], float]] = field(
+        default_factory=dict
+    )
 
     @property
     def interacts_will_all(self) -> bool:
