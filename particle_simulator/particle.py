@@ -316,30 +316,48 @@ class Particle(ParticleData):
                 repel_r = repel_radius
 
         if self._sim.calculate_radii_diff:
-            if all(are_reaching) and self._are_interaction_attributes_equal(p):
-                # Optimization to avoid having to compute the magnitude twice
-                return 2.0 * self._calculate_magnitude(
-                    p=p,
-                    distance=distance,
-                    repel_r=repel_r,
-                )
-            magnitude = 0.0
-            particles: List[Tuple[Particle, Particle]] = [(self, p), (p, self)]
-            for reaches, (particle_a, particle_b) in zip(are_reaching, particles):
-                if reaches:
-                    magnitude += particle_a._calculate_magnitude(
-                        p=particle_b,
-                        distance=distance,
-                        repel_r=repel_r,
-                    )
-            return magnitude
-        repel_r_ = max(self.repel_r, p.repel_r) if repel_r is None else repel_r
-        magnitude = self._calc_magnitude(
-            part=p,
+            return radii_compute_magnitude_strategy(
+                self, p, distance, repel_r, are_reaching
+            )
+        return default_compute_magnitude_strategy(self, p, distance, repel_r)
+
+
+def default_compute_magnitude_strategy(
+    part_a: Particle, part_b: Particle, distance: float, repel_r: Optional[float]
+) -> float:
+    repel_r_ = max(part_a.repel_r, part_b.repel_r) if repel_r is None else repel_r
+    magnitude = part_a._calc_magnitude(
+        part=part_b,
+        distance=distance,
+        repel_r=repel_r_,
+        attr=part_b.attraction_strength + part_a.attraction_strength,
+        repel=part_b.repulsion_strength + part_a.repulsion_strength,
+        gravity=part_a.gravity_mode or part_b.gravity_mode,
+    )
+    return magnitude
+
+
+def radii_compute_magnitude_strategy(
+    part_a: Particle,
+    part_b: Particle,
+    distance: float,
+    repel_r: Optional[float],
+    are_reaching: Tuple[bool, bool],
+) -> float:
+    if all(are_reaching) and part_a._are_interaction_attributes_equal(part_b):
+        # Optimization to avoid having to compute the magnitude twice
+        return 2.0 * part_a._calculate_magnitude(
+            p=part_b,
             distance=distance,
-            repel_r=repel_r_,
-            attr=p.attraction_strength + self.attraction_strength,
-            repel=p.repulsion_strength + self.repulsion_strength,
-            gravity=self.gravity_mode or p.gravity_mode,
+            repel_r=repel_r,
         )
-        return magnitude
+    magnitude = 0.0
+    particles: List[Tuple[Particle, Particle]] = [(part_a, part_b), (part_b, part_a)]
+    for reaches, (particle_a, particle_b) in zip(are_reaching, particles):
+        if reaches:
+            magnitude += particle_a._calculate_magnitude(
+                p=particle_b,
+                distance=distance,
+                repel_r=repel_r,
+            )
+    return magnitude
