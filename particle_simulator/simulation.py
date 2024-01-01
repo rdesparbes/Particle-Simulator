@@ -311,7 +311,7 @@ class Simulation(SimulationState):
                 particles[index]: value
                 for index, value in particle.link_indices_lengths.items()
             }
-            particle.linked_group_particles = {}
+            particle.link_indices_lengths = {}
             self.register_particle(particle)
 
     def add_particle(self, x: float, y: float) -> None:
