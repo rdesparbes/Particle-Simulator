@@ -315,11 +315,10 @@ class Particle(ParticleData):
         )
 
     def _compute_repel_r(self, p: Self) -> Optional[float]:
-        if self._is_linked_to(p):
-            repel_radius = self.link_lengths[p]
-            if repel_radius != "repel":
-                return repel_radius
-        return None
+        repel_radius = self.link_lengths.get(p)
+        if repel_radius == "repel":
+            return None
+        return repel_radius
 
 
 def default_compute_magnitude_strategy(
