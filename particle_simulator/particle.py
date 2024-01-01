@@ -1,4 +1,3 @@
-import functools
 from typing import (
     Self,
     Any,
@@ -188,8 +187,16 @@ class Particle(ParticleData):
                 self._apply_force(force)
 
             if not self.locked:
+                if self._sim.calculate_radii_diff:
+                    compute_magnitude_strategy: ComputeMagnitudeStrategy = (
+                        radii_compute_magnitude_strategy
+                    )
+                else:
+                    compute_magnitude_strategy = default_compute_magnitude_strategy
                 for near_particle in near_particles:
-                    self._compute_interactions(near_particle)
+                    self._compute_interactions(
+                        near_particle, compute_magnitude_strategy
+                    )
 
                 if not self.mouse:
                     self.velocity += np.clip(self.acceleration, -2, 2) * self._sim.speed
@@ -234,7 +241,9 @@ class Particle(ParticleData):
 
         self._collisions = {}
 
-    def _compute_interactions(self, p: Self) -> None:
+    def _compute_interactions(
+        self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
+    ) -> None:
         if p == self:
             return
 
@@ -256,19 +265,13 @@ class Particle(ParticleData):
             self._reaches(distance),
         )
         if any(are_reaching):
-            if self._sim.calculate_radii_diff:
-                compute_magnitude_strategy: ComputeMagnitudeStrategy = (
-                    functools.partial(
-                        radii_compute_magnitude_strategy, are_reaching=are_reaching
-                    )
-                )
+            if distance == 0.0:
+                force = self._compute_default_force(p)
             else:
-                compute_magnitude_strategy = default_compute_magnitude_strategy
+                repel_r: Optional[float] = self._compute_repel_r(p)
+                magnitude = compute_magnitude_strategy(self, p, distance, repel_r)
 
-            force = self._compute_force(
-                p, direction, distance, compute_magnitude_strategy
-            )
-
+                force = direction * magnitude
             self._apply_force(force)
             p._collisions[self] = -force
 
@@ -288,23 +291,14 @@ class Particle(ParticleData):
                 p.x -= delta_pos[0]
                 p.y -= delta_pos[1]
 
-    def _compute_force(
+    def _compute_default_force(
         self,
         p: Self,
-        direction: npt.NDArray[np.float_],
-        distance: float,
-        compute_magnitude_strategy: ComputeMagnitudeStrategy,
     ) -> npt.NDArray[np.float_]:
-        if distance == 0.0:
-            if self.gravity_mode or p.gravity_mode:
-                return np.zeros(2)
-            force = np.random.uniform(-10, 10, 2)
-            return force / np.linalg.norm(force) * -self.repulsion_strength
-        return direction * self._compute_magn(
-            p,
-            compute_magnitude_strategy,
-            distance,
-        )
+        if self.gravity_mode or p.gravity_mode:
+            return np.zeros(2)
+        force = np.random.uniform(-10, 10, 2)
+        return force / np.linalg.norm(force) * -self.repulsion_strength
 
     def _calculate_magnitude(
         self,
@@ -321,19 +315,12 @@ class Particle(ParticleData):
             gravity=p.gravity_mode,
         )
 
-    def _compute_magn(
-        self,
-        p: Self,
-        compute_magnitude_strategy: ComputeMagnitudeStrategy,
-        distance: float,
-    ) -> float:
-        repel_r: Optional[float] = None
+    def _compute_repel_r(self, p: Self) -> Optional[float]:
         if self._is_linked_to(p):
             repel_radius = self.link_lengths[p]
             if repel_radius != "repel":
-                repel_r = repel_radius
-
-        return compute_magnitude_strategy(self, p, distance, repel_r)
+                return repel_radius
+        return None
 
 
 def default_compute_magnitude_strategy(
@@ -356,8 +343,11 @@ def radii_compute_magnitude_strategy(
     part_b: Particle,
     distance: float,
     repel_r: Optional[float],
-    are_reaching: Tuple[bool, bool],
 ) -> float:
+    are_reaching: Tuple[bool, bool] = (
+        part_b._reaches(distance),
+        part_a._reaches(distance),
+    )
     if all(are_reaching) and part_a._are_interaction_attributes_equal(part_b):
         # Optimization to avoid having to compute the magnitude twice
         return 2.0 * part_a._calculate_magnitude(
