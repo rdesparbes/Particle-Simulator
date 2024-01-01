@@ -109,19 +109,16 @@ class Particle(ParticleData):
         gravity: bool,
     ) -> float:
         repel_r = part.repel_r if repel_r is None else repel_r
-        is_linked = self._is_linked_to(part)
         magnitude = self._compute_magnitude(
             part,
             attr,
             distance,
             gravity,
-            self._is_in_same_group(part),
-            is_linked,
             repel,
             repel_r,
         )
 
-        if is_linked:
+        if self._is_linked_to(part):
             attract = repel_r >= distance
             max_force = (
                 part.link_attr_breaking_force
