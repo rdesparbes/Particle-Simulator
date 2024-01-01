@@ -99,6 +99,32 @@ class Particle(ParticleData):
         }
         return dictionary
 
+    def _manage_link(self, part: Self, magnitude: float, max_force: float) -> None:
+        if self._is_linked_to(part):
+            if self._sim.stress_visualization:
+                if max_force > 0.0:
+                    percentage: float = min(abs(magnitude) / max_force, 1.0)
+                else:
+                    percentage = 1.0 if max_force == 0.0 else 0.0
+
+                self._sim.link_colors.append(
+                    Link(
+                        particle_a=self,
+                        particle_b=part,
+                        percentage=percentage,
+                    )
+                )
+
+            if 0 <= max_force <= abs(magnitude):
+                Particle.unlink([self, part])
+
+    def _compute_max_force(self, distance: float, repel_r: float) -> float:
+        attract = repel_r >= distance
+        max_force = (
+            self.link_attr_breaking_force if attract else self.link_repel_breaking_force
+        )
+        return max_force
+
     def _calc_magnitude(
         self,
         part: Self,
@@ -117,30 +143,8 @@ class Particle(ParticleData):
             repel,
             repel_r,
         )
-
-        if self._is_linked_to(part):
-            attract = repel_r >= distance
-            max_force = (
-                part.link_attr_breaking_force
-                if attract
-                else part.link_repel_breaking_force
-            )
-            if self._sim.stress_visualization:
-                if max_force > 0.0:
-                    percentage: float = round(abs(magnitude) / max_force, 2)
-                else:
-                    percentage = 1.0 if max_force == 0.0 else 0.0
-
-                self._sim.link_colors.append(
-                    Link(
-                        particle_a=self,
-                        particle_b=part,
-                        percentage=min(percentage, 1.0),
-                    )
-                )
-
-            if 0 <= max_force <= abs(magnitude):
-                Particle.unlink([self, part])
+        max_force = part._compute_max_force(distance, repel_r)
+        self._manage_link(part, magnitude, max_force)
 
         return magnitude
 
