@@ -84,12 +84,12 @@ class ParticleData:
     ) -> float:
         rest_distance = abs(distance - repel_r)
         if distance < repel_r:
-            return -repel * rest_distance / 10
+            return -repel * rest_distance / 10.0
         elif self._is_in_same_group(part) or self._is_linked_to(part):
             if gravity:
-                return attr * self.mass * part.mass / distance**2 * 10
+                return 10.0 * attr * self.mass * part.mass / distance**2
             else:
-                return attr * rest_distance / 3000
+                return attr * rest_distance / 3000.0
         return 0.0
 
     def __hash__(self) -> int:
