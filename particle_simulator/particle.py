@@ -139,12 +139,11 @@ class Particle(ParticleData):
         self,
         part: Self,
         distance: float,
-        repel_r: Optional[float],
+        repel_r: float,
         attr: float,
         repel: float,
         gravity: bool,
     ) -> float:
-        repel_r = part.repel_r if repel_r is None else repel_r
         magnitude = self._compute_magnitude(
             part,
             attr,
@@ -326,7 +325,9 @@ class Particle(ParticleData):
 def default_compute_magnitude_strategy(
     part_a: Particle, part_b: Particle, distance: float, repel_r: Optional[float]
 ) -> float:
-    repel_r_ = max(part_a.repel_r, part_b.repel_r) if repel_r is None else repel_r
+    repel_r_: float = (
+        max(part_a.repel_r, part_b.repel_r) if repel_r is None else repel_r
+    )
     magnitude = part_a._calc_magnitude(
         part=part_b,
         distance=distance,
