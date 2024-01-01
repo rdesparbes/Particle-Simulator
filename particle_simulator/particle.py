@@ -122,12 +122,6 @@ class Particle(ParticleData):
             percentage=percentage,
         )
 
-    def _remove_broken_link(
-        self, part: Self, magnitude: float, max_force: float
-    ) -> None:
-        if 0.0 <= max_force <= abs(magnitude):
-            Particle.unlink([self, part])
-
     def _compute_max_force(self, distance: float, repel_r: float) -> float:
         attract = repel_r >= distance
         max_force = (
@@ -158,7 +152,8 @@ class Particle(ParticleData):
                 self._sim.link_colors.append(
                     self._compute_link(part, magnitude, max_force)
                 )
-            self._remove_broken_link(part, magnitude, max_force)
+            if 0.0 <= max_force <= abs(magnitude):
+                Particle.unlink([self, part])
 
         return magnitude
 
@@ -344,24 +339,13 @@ def radii_compute_magnitude_strategy(
     distance: float,
     repel_r: Optional[float],
 ) -> float:
-    are_reaching: Tuple[bool, bool] = (
-        part_b._reaches(distance),
-        part_a._reaches(distance),
-    )
-    if all(are_reaching) and part_a._are_interaction_attributes_equal(part_b):
-        # Optimization to avoid having to compute the magnitude twice
-        return 2.0 * part_a._calculate_magnitude(
-            p=part_b,
-            distance=distance,
-            repel_r=repel_r,
-        )
     magnitude = 0.0
-    particles: List[Tuple[Particle, Particle]] = [(part_a, part_b), (part_b, part_a)]
-    for reaches, (particle_a, particle_b) in zip(are_reaching, particles):
-        if reaches:
-            magnitude += particle_a._calculate_magnitude(
-                p=particle_b,
-                distance=distance,
-                repel_r=repel_r,
-            )
+    if part_b._reaches(distance):
+        magnitude += part_a._calculate_magnitude(
+            p=part_b, distance=distance, repel_r=repel_r
+        )
+    if part_a._reaches(distance):
+        magnitude += part_b._calculate_magnitude(
+            p=part_a, distance=distance, repel_r=repel_r
+        )
     return magnitude

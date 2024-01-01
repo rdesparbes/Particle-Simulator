@@ -138,12 +138,3 @@ class ParticleData:
         return (self.mass - other.mass) / (
             self.mass + other.mass
         ) * self.velocity + 2 * other.mass / (self.mass + other.mass) * other.velocity
-
-    def _are_interaction_attributes_equal(self, other: Self) -> bool:
-        return (
-            self.attraction_strength == other.attraction_strength
-            and self.repulsion_strength == other.repulsion_strength
-            and self.link_attr_breaking_force == other.link_attr_breaking_force
-            and self.link_repel_breaking_force == other.link_repel_breaking_force
-            and self.gravity_mode == other.gravity_mode
-        )
