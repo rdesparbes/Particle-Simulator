@@ -1,5 +1,14 @@
 from dataclasses import dataclass, field
-from typing import Self, Tuple, Union, Literal, Dict
+from typing import (
+    Self,
+    Tuple,
+    Union,
+    Literal,
+    Dict,
+    Collection,
+    Optional,
+    Sequence,
+)
 
 import numpy as np
 import numpy.typing as npt
@@ -87,6 +96,40 @@ class ParticleData:
 
     def __hash__(self) -> int:
         return id(self)
+
+    def _is_linked_to(self, p: Self) -> bool:
+        return p in self.link_lengths
+
+    def _is_in_same_group(self, p: Self) -> bool:
+        return not self.separate_group and p.group == self.group
+
+    def _link(
+        self,
+        particles: Sequence[Self],
+        fit_link: bool = False,
+        distance: Union[None, float, Literal["repel"]] = None,
+    ) -> None:
+        position: Optional[npt.NDArray[np.float_]] = (
+            np.array([self.x, self.y]) if fit_link else None
+        )
+        for particle in particles:
+            if position is not None:
+                self.link_lengths[particle] = (
+                    np.linalg.norm(position - np.array([particle.x, particle.y]))
+                    if distance is None
+                    else distance
+                )
+            else:
+                self.link_lengths[particle] = "repel"
+
+        del self.link_lengths[self]
+
+    def _unlink(self, particles: Collection[Self]) -> None:
+        self.link_lengths = {
+            other: length
+            for other, length in self.link_lengths.items()
+            if other not in particles
+        }
 
     def _interacts(self, distance: float) -> bool:
         return (self.attraction_strength != 0.0 or self.repulsion_strength != 0.0) and (

@@ -147,34 +147,6 @@ class Particle(ParticleData):
 
         return magnitude
 
-    def _link(
-        self,
-        particles: List[Self],
-        fit_link: bool = False,
-        distance: Union[None, float, Literal["repel"]] = None,
-    ) -> None:
-        position: Optional[npt.NDArray[np.float_]] = (
-            np.array([self.x, self.y]) if fit_link else None
-        )
-        for particle in particles:
-            if position is not None:
-                self.link_lengths[particle] = (
-                    np.linalg.norm(position - np.array([particle.x, particle.y]))
-                    if distance is None
-                    else distance
-                )
-            else:
-                self.link_lengths[particle] = "repel"
-
-        del self.link_lengths[self]
-
-    def _unlink(self, particles: Collection[Self]) -> None:
-        self.link_lengths = {
-            other: length
-            for other, length in self.link_lengths.items()
-            if other not in particles
-        }
-
     @staticmethod
     def link(
         particles: List["Particle"],
@@ -245,12 +217,6 @@ class Particle(ParticleData):
 
         self._collisions = {}
 
-    def _is_linked_to(self, p: Self) -> bool:
-        return p in self.link_lengths
-
-    def _is_in_same_group(self, p: Self) -> bool:
-        return not self.separate_group and p.group == self.group
-
     def _compute_interactions(self, p: Self) -> None:
         if p == self:
             return
@@ -268,12 +234,12 @@ class Particle(ParticleData):
         distance: float = np.linalg.norm(direction)
         if distance != 0:
             direction = direction / distance
-        conditions: Tuple[bool, bool] = (
+        are_interacting: Tuple[bool, bool] = (
             p._interacts(distance),
             self._interacts(distance),
         )
-        if any(conditions):
-            force = self._compute_force(p, direction, distance, conditions)
+        if any(are_interacting):
+            force = self._compute_force(p, direction, distance, are_interacting)
 
             self._apply_force(force)
             p._collisions[self] = -force
@@ -299,7 +265,7 @@ class Particle(ParticleData):
         p: Self,
         direction: npt.NDArray[np.float_],
         distance: float,
-        conditions: Tuple[bool, bool],
+        are_interacting: Tuple[bool, bool],
     ) -> npt.NDArray[np.float_]:
         if distance == 0.0:
             if self.gravity_mode or p.gravity_mode:
@@ -308,7 +274,7 @@ class Particle(ParticleData):
             return force / np.linalg.norm(force) * -self.repulsion_strength
         return direction * self._compute_magn(
             p,
-            conditions,
+            are_interacting,
             distance,
         )
 
@@ -330,7 +296,7 @@ class Particle(ParticleData):
     def _compute_magn(
         self,
         p: Self,
-        conditions: Tuple[bool, bool],
+        are_interacting: Tuple[bool, bool],
         distance: float,
     ) -> float:
         repel_r: Optional[float] = None
@@ -340,7 +306,7 @@ class Particle(ParticleData):
                 repel_r = repel_radius
 
         if self._sim.calculate_radii_diff:
-            if all(conditions) and self._are_interaction_attributes_equal(p):
+            if all(are_interacting) and self._are_interaction_attributes_equal(p):
                 # Optimization to avoid having to compute the magnitude twice
                 return 2.0 * self._calculate_magnitude(
                     p=p,
@@ -349,8 +315,8 @@ class Particle(ParticleData):
                 )
             magnitude = 0.0
             particles: List[Tuple[Particle, Particle]] = [(self, p), (p, self)]
-            for condition, (particle_a, particle_b) in zip(conditions, particles):
-                if condition:
+            for interacts, (particle_a, particle_b) in zip(are_interacting, particles):
+                if interacts:
                     magnitude += particle_a._calculate_magnitude(
                         p=particle_b,
                         distance=distance,
