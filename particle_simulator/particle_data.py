@@ -129,7 +129,7 @@ class ParticleData:
             if other not in particles
         }
 
-    def _interacts(self, distance: float) -> bool:
+    def _reaches(self, distance: float) -> bool:
         return (self.attraction_strength != 0.0 or self.repulsion_strength != 0.0) and (
             self.attract_r < 0 or distance < self.attract_r
         )

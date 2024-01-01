@@ -231,12 +231,12 @@ class Particle(ParticleData):
         distance: float = np.linalg.norm(direction)
         if distance != 0:
             direction = direction / distance
-        are_interacting: Tuple[bool, bool] = (
-            p._interacts(distance),
-            self._interacts(distance),
+        are_reaching: Tuple[bool, bool] = (
+            p._reaches(distance),
+            self._reaches(distance),
         )
-        if any(are_interacting):
-            force = self._compute_force(p, direction, distance, are_interacting)
+        if any(are_reaching):
+            force = self._compute_force(p, direction, distance, are_reaching)
 
             self._apply_force(force)
             p._collisions[self] = -force
@@ -262,7 +262,7 @@ class Particle(ParticleData):
         p: Self,
         direction: npt.NDArray[np.float_],
         distance: float,
-        are_interacting: Tuple[bool, bool],
+        are_reaching: Tuple[bool, bool],
     ) -> npt.NDArray[np.float_]:
         if distance == 0.0:
             if self.gravity_mode or p.gravity_mode:
@@ -271,7 +271,7 @@ class Particle(ParticleData):
             return force / np.linalg.norm(force) * -self.repulsion_strength
         return direction * self._compute_magn(
             p,
-            are_interacting,
+            are_reaching,
             distance,
         )
 
@@ -293,7 +293,7 @@ class Particle(ParticleData):
     def _compute_magn(
         self,
         p: Self,
-        are_interacting: Tuple[bool, bool],
+        are_reaching: Tuple[bool, bool],
         distance: float,
     ) -> float:
         repel_r: Optional[float] = None
@@ -303,7 +303,7 @@ class Particle(ParticleData):
                 repel_r = repel_radius
 
         if self._sim.calculate_radii_diff:
-            if all(are_interacting) and self._are_interaction_attributes_equal(p):
+            if all(are_reaching) and self._are_interaction_attributes_equal(p):
                 # Optimization to avoid having to compute the magnitude twice
                 return 2.0 * self._calculate_magnitude(
                     p=p,
@@ -312,8 +312,8 @@ class Particle(ParticleData):
                 )
             magnitude = 0.0
             particles: List[Tuple[Particle, Particle]] = [(self, p), (p, self)]
-            for interacts, (particle_a, particle_b) in zip(are_interacting, particles):
-                if interacts:
+            for reaches, (particle_a, particle_b) in zip(are_reaching, particles):
+                if reaches:
                     magnitude += particle_a._calculate_magnitude(
                         p=particle_b,
                         distance=distance,
