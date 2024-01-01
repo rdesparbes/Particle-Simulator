@@ -1,3 +1,4 @@
+import functools
 from typing import (
     Self,
     Any,
@@ -11,6 +12,7 @@ from typing import (
     Literal,
     Iterable,
     Collection,
+    Callable,
 )
 
 import numpy as np
@@ -25,6 +27,11 @@ class Link(NamedTuple):
     particle_a: "Particle"
     particle_b: "Particle"
     percentage: float
+
+
+ComputeMagnitudeStrategy = Callable[
+    ["Particle", "Particle", float, Optional[float]], float
+]
 
 
 class Particle(ParticleData):
@@ -249,7 +256,18 @@ class Particle(ParticleData):
             self._reaches(distance),
         )
         if any(are_reaching):
-            force = self._compute_force(p, direction, distance, are_reaching)
+            if self._sim.calculate_radii_diff:
+                compute_magnitude_strategy: ComputeMagnitudeStrategy = (
+                    functools.partial(
+                        radii_compute_magnitude_strategy, are_reaching=are_reaching
+                    )
+                )
+            else:
+                compute_magnitude_strategy = default_compute_magnitude_strategy
+
+            force = self._compute_force(
+                p, direction, distance, compute_magnitude_strategy
+            )
 
             self._apply_force(force)
             p._collisions[self] = -force
@@ -275,7 +293,7 @@ class Particle(ParticleData):
         p: Self,
         direction: npt.NDArray[np.float_],
         distance: float,
-        are_reaching: Tuple[bool, bool],
+        compute_magnitude_strategy: ComputeMagnitudeStrategy,
     ) -> npt.NDArray[np.float_]:
         if distance == 0.0:
             if self.gravity_mode or p.gravity_mode:
@@ -284,7 +302,7 @@ class Particle(ParticleData):
             return force / np.linalg.norm(force) * -self.repulsion_strength
         return direction * self._compute_magn(
             p,
-            are_reaching,
+            compute_magnitude_strategy,
             distance,
         )
 
@@ -306,7 +324,7 @@ class Particle(ParticleData):
     def _compute_magn(
         self,
         p: Self,
-        are_reaching: Tuple[bool, bool],
+        compute_magnitude_strategy: ComputeMagnitudeStrategy,
         distance: float,
     ) -> float:
         repel_r: Optional[float] = None
@@ -315,11 +333,7 @@ class Particle(ParticleData):
             if repel_radius != "repel":
                 repel_r = repel_radius
 
-        if self._sim.calculate_radii_diff:
-            return radii_compute_magnitude_strategy(
-                self, p, distance, repel_r, are_reaching
-            )
-        return default_compute_magnitude_strategy(self, p, distance, repel_r)
+        return compute_magnitude_strategy(self, p, distance, repel_r)
 
 
 def default_compute_magnitude_strategy(
