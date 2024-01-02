@@ -22,7 +22,9 @@ CANVAS_Y = 30  # The Y coordinate of the top-left corner of the canvas
 
 
 class GUI:
-    def __init__(self, sim: SimulationState, title, gridres):
+    def __init__(
+        self, sim: SimulationState, title: str, gridres: Tuple[int, int]
+    ) -> None:
         self.sim = sim
         self.path = os.path.split(os.path.abspath(__file__))[0]
 
@@ -153,7 +155,6 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             relief="flat",
-            command=self.sim.save,
         )
         self.save_btn.place(x=self.sim.width - 110, y=16, anchor="center")
 
@@ -167,7 +168,6 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             relief="flat",
-            command=self.sim.load,
         )
         self.load_btn.place(x=self.sim.width - 75, y=16, anchor="center")
 
@@ -404,9 +404,6 @@ class GUI:
             textvariable=self.grid_res_y_value,
         )
         self.grid_res_y.place(x=80, y=480)
-
-        self.grid_res_x_value.trace("w", self._update_grid)
-        self.grid_res_y_value.trace("w", self._update_grid)
 
         self.tab1_canvas.create_text(
             100, 515, text="Extra", font=("helvetica", 9), anchor="center"
@@ -677,12 +674,9 @@ class GUI:
             self.tab2,
             text="Set Selected",
             bg="light green",
-            command=self.sim.set_selected,
         )
         self.set_selected_btn.place(x=15, y=self.sim.height - 30)
-        self.set_all_btn = tk.Button(
-            self.tab2, text="Set All", bg="light blue", command=self.sim.set_all
-        )
+        self.set_all_btn = tk.Button(self.tab2, text="Set All", bg="light blue")
         self.set_all_btn.place(x=95, y=self.sim.height - 30)
 
     def _set_air_res(self) -> None:
@@ -729,11 +723,6 @@ class GUI:
 
     def _set_calculate_radii_diff(self) -> None:
         self.sim.calculate_radii_diff = self.calculate_radii_diff_bool.get()
-
-    def _update_grid(self, *_event) -> None:
-        row_count = self.grid_res_x_value.get()
-        col_count = self.grid_res_y_value.get()
-        self.sim.update_grid(row_count, col_count)
 
     def _set_select_mode(self) -> None:
         self.sim.mouse_mode = "SELECT"

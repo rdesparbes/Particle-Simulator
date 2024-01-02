@@ -18,7 +18,7 @@ import numpy.typing as npt
 
 from .particle_data import ParticleData
 
-_Simulation = Any
+_SimulationState = Any
 
 
 class Link(NamedTuple):
@@ -35,7 +35,7 @@ ComputeMagnitudeStrategy = Callable[
 class Particle(ParticleData):
     def __init__(
         self,
-        sim: _Simulation,
+        sim: _SimulationState,
         x: float,
         y: float,
         radius: float = 4.0,

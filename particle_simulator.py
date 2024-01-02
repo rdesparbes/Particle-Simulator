@@ -5,7 +5,7 @@ import numpy as np
 from particle_simulator.simulation import Simulation
 from particle_simulator.particle import Particle
 
-sim = Simulation(
+sim_controller = Simulation(
     width=650,
     height=600,
     title="Simulation",
@@ -15,6 +15,7 @@ sim = Simulation(
     air_res=0.05,
     ground_friction=0,
 )
+sim = sim_controller.state
 
 # Random particle-positions
 for i in range(50):
@@ -134,4 +135,4 @@ for i in range(50):
 #     add_planet(center_[0] + center[0] + x, center_[1] + center[1] + y, r=r, m=m, color=color,
 #                v=v, center=np.array(center_ + center))
 
-sim.simulate()
+sim_controller.simulate()

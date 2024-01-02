@@ -16,7 +16,7 @@ import numpy as np
 from numpy import typing as npt
 
 from particle_simulator.error import Error
-from particle_simulator.particle import Particle
+from particle_simulator.particle import Particle, Link
 from particle_simulator.particle_factory import ParticleFactory
 
 
@@ -56,6 +56,12 @@ class SimulationState:
     add_group_callbacks: List[Callable[[str], None]] = field(default_factory=list)
     grid_res_x: int = 50
     grid_res_y: int = 50
+    min_spawn_delay: float = 0.05
+    mx: int = 0
+    my: int = 0
+    prev_mx: int = 0
+    prev_my: int = 0
+    link_colors: List[Link] = field(default_factory=list)
 
     @staticmethod
     def link(

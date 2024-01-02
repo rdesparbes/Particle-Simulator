@@ -19,7 +19,7 @@ from .controller_state import ControllerState
 from .error import Error
 from .grid import Grid
 from .gui import GUI, Mode, CANVAS_X, CANVAS_Y
-from .particle import Particle, Link
+from .particle import Particle
 from .particle_factory import ParticleFactory
 from .sim_pickle import (
     SimPickle,
@@ -27,7 +27,7 @@ from .sim_pickle import (
 from .simulation_state import SimulationState
 
 
-class Simulation(SimulationState):
+class Simulation:
     def __init__(
         self,
         width: int = 650,
@@ -40,7 +40,7 @@ class Simulation(SimulationState):
         ground_friction: float = 0,
         fps_update_delay: float = 0.5,
     ):
-        super().__init__(
+        self.state = SimulationState(
             width=width,
             height=height,
             temperature=temperature,
@@ -51,10 +51,7 @@ class Simulation(SimulationState):
 
         self.fps = 0.0
         self.fps_update_delay = fps_update_delay
-        self.mx, self.my = 0, 0
-        self.prev_mx, self.prev_my = 0, 0
         self.rotate_mode = False
-        self.min_spawn_delay = 0.05
         self.last_particle_added_time = 0.0
         self.mr = 5.0
         self.mouse_down = False
@@ -64,14 +61,21 @@ class Simulation(SimulationState):
         self.start_load = False
         self.running = True
         self.focus = True
-        self.link_colors: List[Link] = []
         self.grid = Grid(*gridres, height=height, width=width)
         self.start_time = time.time()
         self.prev_time = self.start_time
         self.clipboard: List[Dict[str, Any]] = []
         self.pasting = False
 
-        self.gui = GUI(self, title, gridres)
+        self.gui = GUI(self.state, title, gridres)
+
+        self.gui.save_btn.configure(command=self.save)
+        self.gui.load_btn.configure(command=self.load)
+        self.gui.set_selected_btn.configure(command=self.set_selected)
+        self.gui.set_all_btn.configure(command=self.set_all)
+        self.gui.grid_res_x_value.trace("w", self._update_grid)
+        self.gui.grid_res_y_value.trace("w", self._update_grid)
+
         self.mouse_mode: Mode = "MOVE"
 
         # Keyboard- and mouse-controls
@@ -87,37 +91,37 @@ class Simulation(SimulationState):
 
     def _copy_selected(self) -> None:
         self.clipboard = []
-        for p in self.selection:
-            dictionary = p.return_dict(index_source=self.selection)
-            dictionary["x"] -= self.mx
-            dictionary["y"] -= self.my
+        for p in self.state.selection:
+            dictionary = p.return_dict(index_source=self.state.selection)
+            dictionary["x"] -= self.state.mx
+            dictionary["y"] -= self.state.my
             self.clipboard.append(dictionary)
 
     def _cut(self) -> None:
         self._copy_selected()
-        temp = self.selection.copy()
+        temp = self.state.selection.copy()
         for p in temp:
-            self.remove_particle(p)
+            self.state.remove_particle(p)
 
     def _simulate_step(self):
-        self.link_colors = []
-        if self.use_grid:
-            self.grid.init_grid(self.particles)
-        if self.toggle_pause:
-            self.paused = not self.paused
+        self.state.link_colors = []
+        if self.state.use_grid:
+            self.grid.init_grid(self.state.particles)
+        if self.state.toggle_pause:
+            self.state.paused = not self.state.paused
 
-            if not self.paused:
-                self.selection = []
-            self.toggle_pause = False
-        for particle in self.particles:
+            if not self.state.paused:
+                self.state.selection = []
+            self.state.toggle_pause = False
+        for particle in self.state.particles:
             if not particle.interacts:
                 near_particles = []
             elif particle.interacts_will_all:
-                near_particles = self.particles
-            elif self.use_grid:
+                near_particles = self.state.particles
+            elif self.state.use_grid:
                 near_particles = self.grid.return_particles(particle)
             else:
-                near_particles = self.particles
+                near_particles = self.state.particles
             particle.update(near_particles)
 
     def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:
@@ -125,11 +129,11 @@ class Simulation(SimulationState):
             self.mr, particle.radius
         ):
             if self.mouse_mode == "SELECT":
-                self._select_particle(particle)
+                self.state._select_particle(particle)
                 return True
 
             particle.mouse = True
-            if particle in self.selection:
+            if particle in self.state.selection:
                 return True
         return False
 
@@ -137,51 +141,52 @@ class Simulation(SimulationState):
         self.gui.canvas.focus_set()
         self.mouse_down_start = time.time()
         self.mouse_down = True
-        if self.mouse_mode == "SELECT" or self.mouse_mode == "MOVE":
+        if self.mouse_mode in {"SELECT", "MOVE"}:
             selected = any(
-                self._mouse_p_part(p, event.x, event.y) for p in self.particles
+                self._mouse_p_part(p, event.x, event.y) for p in self.state.particles
             )
             if not selected:
-                self.selection = []
+                self.state.selection = []
             elif self.mouse_mode == "MOVE":
-                for particle in self.selection:
+                for particle in self.state.selection:
                     particle.mouse = True
         elif self.mouse_mode == "ADD":
-            if len(self.selection) > 0:
-                self.selection = []
+            if len(self.state.selection) > 0:
+                self.state.selection = []
 
             self.add_particle(event.x, event.y)
 
     def _mouse_m(self, event: tk.Event) -> None:
         if self.mouse_mode == "SELECT":
-            for p in self.particles:
+            for p in self.state.particles:
                 self._mouse_p_part(p, event.x, event.y)
         elif (
             self.mouse_mode == "ADD"
-            and time.time() - self.last_particle_added_time >= self.min_spawn_delay
+            and time.time() - self.last_particle_added_time
+            >= self.state.min_spawn_delay
         ):
             self.add_particle(event.x, event.y)
 
     def _mouse_r(self, _event: tk.Event) -> None:
         self.mouse_down = False
         if self.mouse_mode == "MOVE" or self.pasting:
-            for p in self.particles:
+            for p in self.state.particles:
                 p.mouse = False
         self.pasting = False
 
     def _right_mouse(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
-        temp = self.particles.copy()
+        temp = self.state.particles.copy()
         for p in temp:
             if np.sqrt((event.x - p.x) ** 2 + (event.y - p.y) ** 2) <= max(
                 self.mr, p.radius
             ):
-                self.remove_particle(p)
+                self.state.remove_particle(p)
 
     def _on_scroll(self, event: tk.Event) -> None:
         if self.rotate_mode:
-            for p in self.selection:
-                p.x, p.y = self._rotate_2d(
+            for p in self.state.selection:
+                p.x, p.y = self.state._rotate_2d(
                     p.x, p.y, event.x, event.y, event.delta / 500 * self.mr
                 )
         else:
@@ -192,18 +197,18 @@ class Simulation(SimulationState):
             return
         # SPACE to pause
         if key == Key.space:
-            self.toggle_paused()
+            self.state.toggle_paused()
         # DELETE to delete
         elif key == Key.delete:
-            temp = self.selection.copy()
+            temp = self.state.selection.copy()
             for p in temp:
-                self.remove_particle(p)
+                self.state.remove_particle(p)
         elif key == Key.shift_l or key == Key.shift_r:
             self.shift = True
         # CTRL + A to select all
         elif KeyCode.from_char(str(key)).char == r"'\x01'":
-            for p in self.particles:
-                self._select_particle(p)
+            for p in self.state.particles:
+                self.state._select_particle(p)
         # CTRL + C to copy
         elif KeyCode.from_char(str(key)).char == r"'\x03'":
             self._copy_selected()
@@ -215,18 +220,18 @@ class Simulation(SimulationState):
             self._cut()
         # CTRL + L and CTRL + SHIFT + L to lock and 'unlock'
         elif KeyCode.from_char(str(key)).char == r"'\x0c'" and not self.shift:
-            for p in self.selection:
+            for p in self.state.selection:
                 p.locked = True
         elif KeyCode.from_char(str(key)).char == r"'\x0c'" and self.shift:
-            for p in self.selection:
+            for p in self.state.selection:
                 p.locked = False
         # L to link, SHIFT + L to unlink and ALT GR + L to fit-link
         elif KeyCode.from_char(str(key)).char == "'l'":
-            self.link_selection()
+            self.state.link_selection()
         elif KeyCode.from_char(str(key)).char == "<76>":
-            self.link_selection(fit_link=True)
+            self.state.link_selection(fit_link=True)
         elif KeyCode.from_char(str(key)).char == "'L'":
-            self.unlink_selection()
+            self.state.unlink_selection()
         # R to enter rotate-mode
         elif KeyCode.from_char(str(key)).char == "'r'":
             self.rotate_mode = True
@@ -238,20 +243,25 @@ class Simulation(SimulationState):
             self.start_load = True
 
     def _on_release(self, key: Key) -> None:
-        if key == Key.shift_l or key == Key.shift_r:
+        if key in {Key.shift_l, Key.shift_r}:
             self.shift = False
         elif KeyCode.from_char(str(key)).char == "'r'":
             self.rotate_mode = False
 
     def update_grid(self, row_count: int, col_count: int) -> None:
-        self.grid_res_x = col_count
-        self.grid_res_y = row_count
+        self.state.grid_res_x = col_count
+        self.state.grid_res_y = row_count
         self.grid = Grid(
             row_count,
             col_count,
-            height=self.height,
-            width=self.width,
+            height=self.state.height,
+            width=self.state.width,
         )
+
+    def _update_grid(self, *_event) -> None:
+        row_count = self.gui.grid_res_x_value.get()
+        col_count = self.gui.grid_res_y_value.get()
+        self.update_grid(row_count, col_count)
 
     def _get_particle_settings(self) -> Optional[ParticleFactory]:
         try:
@@ -260,33 +270,33 @@ class Simulation(SimulationState):
                 particle_settings.radius = self.mr
             return particle_settings
         except Exception as error:
-            self.error = Error("Input-Error", error)
+            self.state.error = Error("Input-Error", error)
         return None
 
     def set_selected(self) -> None:
         particle_settings = self._get_particle_settings()
         if particle_settings is None:
             return
-        temp = self.selection.copy()
+        temp = self.state.selection.copy()
         for p in temp:
-            p = self._replace_particle(p, particle_settings)
-            self.selection.append(p)
+            p = self.state._replace_particle(p, particle_settings)
+            self.state.selection.append(p)
 
     def set_all(self) -> None:
-        temp = self.particles.copy()
+        temp = self.state.particles.copy()
         for p in temp:
             particle_settings = (
                 self._get_particle_settings()
             )  # Update for each particle in case of 'random'
             if particle_settings is not None:
-                self._replace_particle(p, particle_settings)
+                self.state._replace_particle(p, particle_settings)
 
     def to_dict(self) -> SimPickle:
         controller_state = ControllerState(
-            sim_state=self,
+            sim_state=self.state,
             gui_settings=self.gui.get_sim_settings(),
             gui_particle_state=self.gui.get_particle_settings(),
-            particles=self.particles,
+            particles=self.state.particles,
         )
         return sim_pickle.to_dict(controller_state)
 
@@ -298,12 +308,12 @@ class Simulation(SimulationState):
         self.gui.groups_entry["values"] = []
         self.gui.set_sim_settings(controller_state.gui_settings)
 
-        for p in self.particles.copy():
-            self.remove_particle(p)
+        for p in self.state.particles.copy():
+            self.state.remove_particle(p)
 
-        self.groups = {}
+        self.state.groups = {}
         particles = [
-            Particle(self, **asdict(particle_data))
+            Particle(self.state, **asdict(particle_data))
             for particle_data in controller_state.particles
         ]
         for particle in particles:
@@ -312,28 +322,28 @@ class Simulation(SimulationState):
                 for index, value in particle.link_indices_lengths.items()
             }
             particle.link_indices_lengths = {}
-            self.register_particle(particle)
+            self.state.register_particle(particle)
 
     def add_particle(self, x: float, y: float) -> None:
         particle_factory = self._get_particle_settings()
         if particle_factory is not None:
-            p = Particle(self, x=x, y=y, **asdict(particle_factory))
-            self.register_particle(p)
+            p = Particle(self.state, x=x, y=y, **asdict(particle_factory))
+            self.state.register_particle(p)
             self.last_particle_added_time = time.time()
 
     def _paste(self) -> None:
         self.pasting = True
         temp_particles = []
         for data in self.clipboard:
-            p = Particle(self, x=0, y=0, group=data["group"])
-            self.register_particle(p)
+            p = Particle(self.state, x=0, y=0, group=data["group"])
+            self.state.register_particle(p)
             temp_particles.append(p)
 
         for i, data in enumerate(self.clipboard):
             d = data.copy()
             particle = temp_particles[i]
-            d["x"] += self.mx
-            d["y"] += self.my
+            d["x"] += self.state.mx
+            d["y"] += self.state.my
             for key, value in d.items():
                 try:
                     vars(particle)[key] = value.copy()
@@ -345,30 +355,34 @@ class Simulation(SimulationState):
                 for index, value in particle.link_lengths.items()
             }
             particle.mouse = True
-        self.selection = temp_particles
+        self.state.selection = temp_particles
 
     def _update_attributes(self) -> None:
         # Should be handled on the GUI side with callbacks
-        self.g = float(self.gui.gravity_entry.get())
-        self.air_res = float(self.gui.air_res_entry.get())
-        self.ground_friction = float(self.gui.friction_entry.get())
-        self.min_spawn_delay = float(self.gui.delay_entry.get())
+        self.state.g = float(self.gui.gravity_entry.get())
+        self.state.air_res = float(self.gui.air_res_entry.get())
+        self.state.ground_friction = float(self.gui.friction_entry.get())
+        self.state.min_spawn_delay = float(self.gui.delay_entry.get())
 
-        self.temperature = self.gui.temp_sc.get()
-        self.speed = self.gui.speed_sc.get()
+        self.state.temperature = self.gui.temp_sc.get()
+        self.state.speed = self.gui.speed_sc.get()
 
-        self.use_grid = self.gui.grid_bool.get()
-        self.calculate_radii_diff = self.gui.calculate_radii_diff_bool.get()
-        self.top = self.gui.top_bool.get()
-        self.bottom = self.gui.bottom_bool.get()
-        self.left = self.gui.left_bool.get()
-        self.right = self.gui.right_bool.get()
+        self.state.use_grid = self.gui.grid_bool.get()
+        self.state.calculate_radii_diff = self.gui.calculate_radii_diff_bool.get()
+        self.state.top = self.gui.top_bool.get()
+        self.state.bottom = self.gui.bottom_bool.get()
+        self.state.left = self.gui.left_bool.get()
+        self.state.right = self.gui.right_bool.get()
 
     def _draw_image(self, show_links: bool) -> npt.NDArray[np.uint8]:
-        image = np.full((self.height, self.width, 3), self.bg_color[0], dtype=np.uint8)
+        image = np.full(
+            (self.state.height, self.state.width, 3),
+            self.state.bg_color[0],
+            dtype=np.uint8,
+        )
         if show_links:
-            if self.stress_visualization and not self.paused:
-                for p1, p2, percentage in self.link_colors:
+            if self.state.stress_visualization and not self.state.paused:
+                for p1, p2, percentage in self.state.link_colors:
                     color = [max(255 * percentage, 235)] + [235 * (1 - percentage)] * 2
                     cv2.line(
                         image,
@@ -378,7 +392,7 @@ class Simulation(SimulationState):
                         1,
                     )
             else:
-                for p1 in self.particles:
+                for p1 in self.state.particles:
                     for p2 in p1.link_lengths:
                         cv2.line(
                             image,
@@ -387,7 +401,7 @@ class Simulation(SimulationState):
                             [235] * 3,
                             1,
                         )
-        for particle in self.particles:
+        for particle in self.state.particles:
             cv2.circle(
                 image,
                 (int(particle.x), int(particle.y)),
@@ -395,7 +409,7 @@ class Simulation(SimulationState):
                 particle.color,
                 -1,
             )
-        for particle in self.selection:
+        for particle in self.state.selection:
             cv2.circle(
                 image,
                 (int(particle.x), int(particle.y)),
@@ -403,7 +417,7 @@ class Simulation(SimulationState):
                 [0, 0, 255],
                 2,
             )
-        cv2.circle(image, (self.mx, self.my), int(self.mr), [127] * 3)
+        cv2.circle(image, (self.state.mx, self.state.my), int(self.mr), [127] * 3)
         return image
 
     def _update_focus(self):
@@ -418,18 +432,18 @@ class Simulation(SimulationState):
             data = self.to_dict()
             self.gui.save_manager.save(data, filename=filename)
         except Exception as error:
-            self.error = Error("Saving-Error", error)
+            self.state.error = Error("Saving-Error", error)
 
     def load(self, filename: Optional[str] = None) -> None:
-        if not self.paused:
-            self.toggle_paused()
+        if not self.state.paused:
+            self.state.toggle_paused()
         try:
             data = self.gui.save_manager.load(filename=filename)
             if data is None:
                 return
             self.from_dict(data)
         except Exception as error:
-            self.error = Error("Loading-Error", error)
+            self.state.error = Error("Loading-Error", error)
 
     def _handle_save_manager(self):
         if self.start_save:
@@ -449,9 +463,13 @@ class Simulation(SimulationState):
         self.prev_time = time.time()
 
     def _update_mouse_position(self):
-        self.prev_mx, self.prev_my = self.mx, self.my
-        self.mx = self.gui.tk.winfo_pointerx() - self.gui.tk.winfo_rootx() - CANVAS_X
-        self.my = self.gui.tk.winfo_pointery() - self.gui.tk.winfo_rooty() - CANVAS_Y
+        self.state.prev_mx, self.state.prev_my = self.state.mx, self.state.my
+        self.state.mx = (
+            self.gui.tk.winfo_pointerx() - self.gui.tk.winfo_rootx() - CANVAS_X
+        )
+        self.state.my = (
+            self.gui.tk.winfo_pointery() - self.gui.tk.winfo_rooty() - CANVAS_Y
+        )
 
     def simulate(self) -> None:
         while self.running:
@@ -464,9 +482,9 @@ class Simulation(SimulationState):
             image = self._draw_image(self.gui.show_links.get())
             self.gui.update(
                 image,
-                paused=self.paused,
+                paused=self.state.paused,
                 fps=self.fps,
-                particle_count=len(self.particles),
-                error=self.error,
+                particle_count=len(self.state.particles),
+                error=self.state.error,
             )
-            self.error = None
+            self.state.error = None
