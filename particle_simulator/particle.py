@@ -122,7 +122,7 @@ class Particle(ParticleData):
         )
 
     def _compute_max_force(self, distance: float, repel_r: float) -> float:
-        attract = repel_r >= distance
+        attract = distance >= repel_r
         max_force = (
             self.link_attr_breaking_force if attract else self.link_repel_breaking_force
         )
