@@ -6,10 +6,11 @@ from tkinter import colorchooser
 import numpy as np
 
 from .error import Error
+from .simulation_state import SimulationState
 
 
 class ExtraWindow:
-    def __init__(self, sim, path: str) -> None:
+    def __init__(self, sim: SimulationState, path: str) -> None:
         self.sim = sim
         self.path = path
         self.tk = tk.Tk()
