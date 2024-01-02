@@ -125,7 +125,7 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             relief="flat",
-            command=lambda: self.sim.link_selection(),
+            command=self.sim.link_selection,
         )
         self.link_btn.place(x=250, y=16, anchor="center")
 
@@ -138,7 +138,7 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             relief="flat",
-            command=lambda: self.sim.unlink_selection(),
+            command=self.sim.unlink_selection,
         )
         self.unlink_btn.place(x=300, y=16, anchor="center")
 
@@ -153,7 +153,7 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             relief="flat",
-            command=lambda: self.sim.save(),
+            command=self.sim.save,
         )
         self.save_btn.place(x=self.sim.width - 110, y=16, anchor="center")
 
@@ -167,7 +167,7 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             relief="flat",
-            command=lambda: self.sim.load(),
+            command=self.sim.load,
         )
         self.load_btn.place(x=self.sim.width - 75, y=16, anchor="center")
 
@@ -208,7 +208,7 @@ class GUI:
             from_=0,
             to=1,
             increment=0.1,
-            command=lambda: setattr(self.sim, "g", float(self.gravity_entry.get())),
+            command=self._set_gravity,
         )
         self.gravity_entry.delete(0, tk.END)
         self.gravity_entry.insert(0, str(self.sim.g))
@@ -223,9 +223,7 @@ class GUI:
             from_=0,
             to=1,
             increment=0.01,
-            command=lambda: setattr(
-                self.sim, "air_res", float(self.air_res_entry.get())
-            ),
+            command=self._set_air_res,
         )
         self.air_res_entry.delete(0, tk.END)
         self.air_res_entry.insert(0, str(self.sim.air_res))
@@ -240,9 +238,7 @@ class GUI:
             from_=0,
             to=1,
             increment=0.01,
-            command=lambda: setattr(
-                self.sim, "ground_friction", float(self.friction_entry.get())
-            ),
+            command=self._set_ground_friction,
         )
         self.friction_entry.delete(0, tk.END)
         self.friction_entry.insert(0, str(self.sim.ground_friction))
@@ -260,7 +256,7 @@ class GUI:
             fg="gray65",
             activebackground="midnight blue",
             cursor="hand2",
-            command=lambda new_temp: setattr(self.sim, "temperature", float(new_temp)),
+            command=self._set_temperature,
         )
         self.temp_sc.set(self.sim.temperature)
         self.temp_sc.place(x=100, y=153, anchor="center")
@@ -280,7 +276,7 @@ class GUI:
             fg="gray65",
             activebackground="midnight blue",
             cursor="hand2",
-            command=lambda new_speed: setattr(self.sim, "speed", float(new_speed)),
+            command=self._set_speed,
         )
         self.speed_sc.set(self.sim.speed)
         self.speed_sc.place(x=100, y=233, anchor="center")
@@ -294,7 +290,7 @@ class GUI:
             text="Display FPS",
             font=("helvetica", 8),
             variable=self.show_fps,
-            command=lambda: setattr(self.sim, "show_fps", self.show_fps.get()),
+            command=self._set_show_fps,
         )
         self.fps_chk.place(x=10, y=260, anchor="nw")
 
@@ -304,7 +300,7 @@ class GUI:
             text="Display # Particles",
             font=("helvetica", 8),
             variable=self.show_num,
-            command=lambda: setattr(self.sim, "show_num", self.show_num.get()),
+            command=self._set_show_num,
         )
         self.num_chk.place(x=10, y=280, anchor="nw")
 
@@ -314,7 +310,7 @@ class GUI:
             text="Display links",
             font=("helvetica", 8),
             variable=self.show_links,
-            command=lambda: setattr(self.sim, "show_links", self.show_links.get()),
+            command=self._set_show_links,
         )
         self.links_chk.place(x=10, y=300, anchor="nw")
 
@@ -329,7 +325,7 @@ class GUI:
             text="top",
             font=("helvetica", 8),
             variable=self.top_bool,
-            command=lambda: setattr(self.sim, "top", self.top_bool.get()),
+            command=self._set_top,
         )
         self.top_chk.place(x=30, y=350, anchor="nw")
 
@@ -339,7 +335,7 @@ class GUI:
             text="bottom",
             font=("helvetica", 8),
             variable=self.bottom_bool,
-            command=lambda: setattr(self.sim, "bottom", self.bottom_bool.get()),
+            command=self._set_bottom,
         )
         self.bottom_chk.place(x=110, y=350, anchor="nw")
 
@@ -349,7 +345,7 @@ class GUI:
             text="left",
             font=("helvetica", 8),
             variable=self.left_bool,
-            command=lambda: setattr(self.sim, "left", self.left_bool.get()),
+            command=self._set_left,
         )
         self.left_chk.place(x=30, y=370, anchor="nw")
 
@@ -359,7 +355,7 @@ class GUI:
             text="right",
             font=("helvetica", 8),
             variable=self.right_bool,
-            command=lambda: setattr(self.sim, "right", self.right_bool.get()),
+            command=self._set_right,
         )
         self.right_chk.place(x=110, y=370, anchor="nw")
 
@@ -374,7 +370,7 @@ class GUI:
             text="Use Grid",
             font=("helvetica", 8),
             variable=self.grid_bool,
-            command=lambda: setattr(self.sim, "use_grid", self.grid_bool.get()),
+            command=self._set_use_grid,
         )
         self.grid_chk.place(x=10, y=425, anchor="nw")
 
@@ -426,9 +422,7 @@ class GUI:
             from_=0,
             to=1,
             increment=0.01,
-            command=lambda: setattr(
-                self.sim, "min_spawn_delay", float(self.delay_entry.get())
-            ),
+            command=self._set_min_spawn_delay,
         )
         self.delay_entry.delete(0, tk.END)
         self.delay_entry.insert(0, str(self.sim.min_spawn_delay))
@@ -440,9 +434,7 @@ class GUI:
             text="Better Radii-Calculation",
             font=("helvetica", 8),
             variable=self.calculate_radii_diff_bool,
-            command=lambda: setattr(
-                self.sim, "calculate_radii_diff", self.calculate_radii_diff_bool.get()
-            ),
+            command=self._set_calculate_radii_diff,
         )
         self.calculate_radii_diff_chk.place(x=7, y=553, anchor="nw")
 
@@ -692,6 +684,51 @@ class GUI:
             self.tab2, text="Set All", bg="light blue", command=self.sim.set_all
         )
         self.set_all_btn.place(x=95, y=self.sim.height - 30)
+
+    def _set_air_res(self) -> None:
+        self.sim.air_res = float(self.air_res_entry.get())
+
+    def _set_gravity(self) -> None:
+        self.sim.g = float(self.gravity_entry.get())
+
+    def _set_ground_friction(self) -> None:
+        self.sim.ground_friction = float(self.friction_entry.get())
+
+    def _set_temperature(self, new_temp: str) -> None:
+        self.sim.temperature = float(new_temp)
+
+    def _set_speed(self, new_speed: str) -> None:
+        self.sim.speed = float(new_speed)
+
+    def _set_show_fps(self) -> None:
+        self.sim.show_fps = self.show_fps.get()
+
+    def _set_show_num(self) -> None:
+        self.sim.show_num = self.show_num.get()
+
+    def _set_show_links(self) -> None:
+        self.sim.show_links = self.show_links.get()
+
+    def _set_top(self) -> None:
+        self.sim.top = self.top_bool.get()
+
+    def _set_bottom(self) -> None:
+        self.sim.bottom = self.bottom_bool.get()
+
+    def _set_left(self) -> None:
+        self.sim.left = self.left_bool.get()
+
+    def _set_right(self) -> None:
+        self.sim.right = self.right_bool.get()
+
+    def _set_use_grid(self) -> None:
+        self.sim.use_grid = self.grid_bool.get()
+
+    def _set_min_spawn_delay(self) -> None:
+        self.sim.min_spawn_delay = float(self.delay_entry.get())
+
+    def _set_calculate_radii_diff(self) -> None:
+        self.sim.calculate_radii_diff = self.calculate_radii_diff_bool.get()
 
     def _update_grid(self, *_event) -> None:
         row_count = self.grid_res_x_value.get()
