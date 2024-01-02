@@ -404,7 +404,7 @@ class Simulation:
                 image,
                 (int(particle.x), int(particle.y)),
                 int(particle.radius),
-                particle.color,
+                [int(c) for c in particle.color],
                 -1,
             )
         for particle in self.state.selection:
