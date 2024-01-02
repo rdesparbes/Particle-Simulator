@@ -125,9 +125,7 @@ class Simulation:
             particle.update(near_particles)
 
     def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:
-        if np.sqrt((x - particle.x) ** 2 + (y - particle.y) ** 2) <= max(
-            self.mr, particle.radius
-        ):
+        if particle.distance(x, y) <= max(self.mr, particle.radius):
             if self.mouse_mode == "SELECT":
                 self.state._select_particle(particle)
                 return True

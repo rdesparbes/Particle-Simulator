@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass, field
 from typing import (
     Self,
@@ -43,6 +44,9 @@ class ParticleData:
     link_indices_lengths: Dict[int, Union[Literal["repel"], float]] = field(
         default_factory=dict
     )
+
+    def distance(self, x: float, y: float) -> float:
+        return math.dist((x, y), (self.x, self.y))
 
     @property
     def interacts_will_all(self) -> bool:
