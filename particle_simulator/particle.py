@@ -2,7 +2,6 @@ from typing import (
     Self,
     Any,
     Optional,
-    Tuple,
     NamedTuple,
     List,
     Sequence,
@@ -248,17 +247,11 @@ class Particle(ParticleData):
         ) or p in self._collisions:
             return
 
-        # Attract / repel
-
         direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
         distance: float = np.linalg.norm(direction)
         if distance != 0:
             direction = direction / distance
-        are_reaching: Tuple[bool, bool] = (
-            p._reaches(distance),
-            self._reaches(distance),
-        )
-        if any(are_reaching):
+        if p._reaches(distance) or self._reaches(distance):
             if distance == 0.0:
                 force = self._compute_default_force(p)
             else:
