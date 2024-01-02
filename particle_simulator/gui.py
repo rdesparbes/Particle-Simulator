@@ -16,7 +16,6 @@ from .save_manager import SaveManager
 from .sim_gui_settings import SimGUISettings
 from .simulation_state import SimulationState
 
-Mode = Literal["SELECT", "MOVE", "ADD"]
 CANVAS_X = 0  # The X coordinate of the top-left corner of the canvas
 CANVAS_Y = 30  # The Y coordinate of the top-left corner of the canvas
 

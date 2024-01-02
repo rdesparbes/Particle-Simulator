@@ -18,7 +18,7 @@ from . import sim_pickle
 from .controller_state import ControllerState
 from .error import Error
 from .grid import Grid
-from .gui import GUI, Mode, CANVAS_X, CANVAS_Y
+from .gui import GUI, CANVAS_X, CANVAS_Y
 from .particle import Particle
 from .particle_factory import ParticleFactory
 from .sim_pickle import (
@@ -59,7 +59,6 @@ class Simulation:
         self.shift = False
         self.start_save = False
         self.start_load = False
-        self.running = True
         self.focus = True
         self.grid = Grid(*gridres, height=height, width=width)
         self.start_time = time.time()
@@ -75,8 +74,6 @@ class Simulation:
         self.gui.set_all_btn.configure(command=self.set_all)
         self.gui.grid_res_x_value.trace("w", self._update_grid)
         self.gui.grid_res_y_value.trace("w", self._update_grid)
-
-        self.mouse_mode: Mode = "MOVE"
 
         # Keyboard- and mouse-controls
         self.gui.canvas.bind("<B1-Motion>", self._mouse_m)
@@ -126,7 +123,7 @@ class Simulation:
 
     def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:
         if particle.distance(x, y) <= max(self.mr, particle.radius):
-            if self.mouse_mode == "SELECT":
+            if self.state.mouse_mode == "SELECT":
                 self.state._select_particle(particle)
                 return True
 
@@ -139,27 +136,27 @@ class Simulation:
         self.gui.canvas.focus_set()
         self.mouse_down_start = time.time()
         self.mouse_down = True
-        if self.mouse_mode in {"SELECT", "MOVE"}:
+        if self.state.mouse_mode in {"SELECT", "MOVE"}:
             selected = any(
                 self._mouse_p_part(p, event.x, event.y) for p in self.state.particles
             )
             if not selected:
                 self.state.selection = []
-            elif self.mouse_mode == "MOVE":
+            elif self.state.mouse_mode == "MOVE":
                 for particle in self.state.selection:
                     particle.mouse = True
-        elif self.mouse_mode == "ADD":
+        elif self.state.mouse_mode == "ADD":
             if len(self.state.selection) > 0:
                 self.state.selection = []
 
             self.add_particle(event.x, event.y)
 
     def _mouse_m(self, event: tk.Event) -> None:
-        if self.mouse_mode == "SELECT":
+        if self.state.mouse_mode == "SELECT":
             for p in self.state.particles:
                 self._mouse_p_part(p, event.x, event.y)
         elif (
-            self.mouse_mode == "ADD"
+            self.state.mouse_mode == "ADD"
             and time.time() - self.last_particle_added_time
             >= self.state.min_spawn_delay
         ):
@@ -167,7 +164,7 @@ class Simulation:
 
     def _mouse_r(self, _event: tk.Event) -> None:
         self.mouse_down = False
-        if self.mouse_mode == "MOVE" or self.pasting:
+        if self.state.mouse_mode == "MOVE" or self.pasting:
             for p in self.state.particles:
                 p.mouse = False
         self.pasting = False
@@ -470,7 +467,7 @@ class Simulation:
         )
 
     def simulate(self) -> None:
-        while self.running:
+        while self.state.running:
             self._update_attributes()
             self._update_focus()
             self._handle_save_manager()

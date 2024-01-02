@@ -20,6 +20,9 @@ from particle_simulator.particle import Particle, Link
 from particle_simulator.particle_factory import ParticleFactory
 
 
+Mode = Literal["SELECT", "MOVE", "ADD"]
+
+
 @dataclass
 class SimulationState:
     width: int = 650
@@ -62,6 +65,8 @@ class SimulationState:
     prev_mx: int = 0
     prev_my: int = 0
     link_colors: List[Link] = field(default_factory=list)
+    mouse_mode: Mode = "MOVE"
+    running: bool = True
 
     @staticmethod
     def link(
