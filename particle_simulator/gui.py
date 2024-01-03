@@ -24,26 +24,23 @@ class GUI:
     def __init__(
         self, sim: SimulationState, title: str, gridres: Tuple[int, int]
     ) -> None:
-        self.sim = sim
+        width = sim.width
+        height = sim.height
         self.path = os.path.split(os.path.abspath(__file__))[0]
 
         self.tk = tk.Tk()
         self.tk.title(title)
         self.tk.resizable(False, False)
         self.tk.protocol("WM_DELETE_WINDOW", self.destroy)
-        self.gui_canvas = tk.Canvas(
-            self.tk, width=self.sim.width + 200, height=self.sim.height + 30
-        )
+        self.gui_canvas = tk.Canvas(self.tk, width=width + 200, height=height + 30)
         self.gui_canvas.pack()
-        self.canvas = tk.Canvas(self.tk, width=self.sim.width, height=self.sim.height)
+        self.canvas = tk.Canvas(self.tk, width=width, height=height)
         self.canvas.place(x=CANVAS_X, y=CANVAS_Y)
 
         self.code_window: Optional[CodeWindow] = None
         self.extra_window: Optional[ExtraWindow] = None
 
-        self.toolbar = self.gui_canvas.create_rectangle(
-            0, 0, self.sim.width, 30, fill="#1f3333"
-        )
+        self.toolbar = self.gui_canvas.create_rectangle(0, 0, width, 30, fill="#1f3333")
         self.gui_canvas.create_line(80, 0, 80, 30, fill="grey30")
 
         self.play_photo = tk.PhotoImage(
@@ -54,12 +51,11 @@ class GUI:
         ).subsample(7, 7)
         self.pause_button = tk.Button(
             self.gui_canvas,
-            image=self.play_photo if self.sim.paused else self.pause_photo,
+            image=self.pause_photo,
             cursor="hand2",
             border="0",
             bg="#1f3333",
             activebackground="#1f3333",
-            command=self.sim.toggle_paused,
         )
         self.pause_button.place(x=40, y=16, anchor="center")
 
@@ -126,7 +122,6 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             relief="flat",
-            command=self.sim.link_selection,
         )
         self.link_btn.place(x=250, y=16, anchor="center")
 
@@ -139,7 +134,6 @@ class GUI:
             bg="#1f3333",
             activebackground="#1f3333",
             relief="flat",
-            command=self.sim.unlink_selection,
         )
         self.unlink_btn.place(x=300, y=16, anchor="center")
 
@@ -155,7 +149,7 @@ class GUI:
             activebackground="#1f3333",
             relief="flat",
         )
-        self.save_btn.place(x=self.sim.width - 110, y=16, anchor="center")
+        self.save_btn.place(x=width - 110, y=16, anchor="center")
 
         self.load_img = tk.PhotoImage(
             file=os.path.join(self.path, "Assets/load.gif"), master=self.tk
@@ -168,7 +162,7 @@ class GUI:
             activebackground="#1f3333",
             relief="flat",
         )
-        self.load_btn.place(x=self.sim.width - 75, y=16, anchor="center")
+        self.load_btn.place(x=width - 75, y=16, anchor="center")
 
         self.code_img = tk.PhotoImage(
             file=os.path.join(self.path, "Assets/code.gif"), master=self.tk
@@ -182,20 +176,20 @@ class GUI:
             activebackground="#1f3333",
             command=self._create_code_window,
         )
-        self.code_btn.place(x=self.sim.width - 25, y=16, anchor="center")
+        self.code_btn.place(x=width - 25, y=16, anchor="center")
 
         # layout sidebar-GUI
         self.tabControl = ttk.Notebook(self.tk)
         self.tab1 = ttk.Frame(self.tabControl, relief="flat")
         self.tabControl.add(self.tab1, text="Sim-Settings")
         self.tab2 = ttk.Frame(
-            self.tabControl, relief="flat", width=200, height=self.sim.height + 30
+            self.tabControl, relief="flat", width=200, height=height + 30
         )
         self.tabControl.add(self.tab2, text="Particle-Settings")
-        self.tabControl.place(x=self.sim.width, y=0)
+        self.tabControl.place(x=width, y=0)
 
         # layout self.tab1
-        self.tab1_canvas = tk.Canvas(self.tab1, width=200, height=self.sim.height)
+        self.tab1_canvas = tk.Canvas(self.tab1, width=200, height=height)
         self.tab1_canvas.pack()
 
         tk.Label(self.tab1, text="Gravity:", font=("helvetica", 8)).place(
@@ -209,8 +203,6 @@ class GUI:
             increment=0.1,
             command=self._set_gravity,
         )
-        self.gravity_entry.delete(0, tk.END)
-        self.gravity_entry.insert(0, str(self.sim.g))
         self.gravity_entry.place(x=100, y=20)
 
         tk.Label(self.tab1, text="Air Resistance:", font=("helvetica", 8)).place(
@@ -224,8 +216,6 @@ class GUI:
             increment=0.01,
             command=self._set_air_res,
         )
-        self.air_res_entry.delete(0, tk.END)
-        self.air_res_entry.insert(0, str(self.sim.air_res))
         self.air_res_entry.place(x=100, y=50)
 
         tk.Label(self.tab1, text="Ground Friction:", font=("helvetica", 8)).place(
@@ -239,8 +229,6 @@ class GUI:
             increment=0.01,
             command=self._set_ground_friction,
         )
-        self.friction_entry.delete(0, tk.END)
-        self.friction_entry.insert(0, str(self.sim.ground_friction))
         self.friction_entry.place(x=100, y=80)
 
         self.temp_sc = tk.Scale(
@@ -257,7 +245,6 @@ class GUI:
             cursor="hand2",
             command=self._set_temperature,
         )
-        self.temp_sc.set(self.sim.temperature)
         self.temp_sc.place(x=100, y=153, anchor="center")
         tk.Label(self.tab1, text="Temperature:", font=("helvetica", 8)).place(
             x=7, y=110, anchor="nw"
@@ -277,13 +264,12 @@ class GUI:
             cursor="hand2",
             command=self._set_speed,
         )
-        self.speed_sc.set(self.sim.speed)
         self.speed_sc.place(x=100, y=233, anchor="center")
         tk.Label(self.tab1, text="Simulation Speed:", font=("helvetica", 8)).place(
             x=7, y=190, anchor="nw"
         )
 
-        self.show_fps = tk.BooleanVar(self.tk, self.sim.show_fps)
+        self.show_fps = tk.BooleanVar(self.tk)
         self.fps_chk = tk.Checkbutton(
             self.tab1,
             text="Display FPS",
@@ -293,7 +279,7 @@ class GUI:
         )
         self.fps_chk.place(x=10, y=260, anchor="nw")
 
-        self.show_num = tk.BooleanVar(self.tk, self.sim.show_num)
+        self.show_num = tk.BooleanVar(self.tk)
         self.num_chk = tk.Checkbutton(
             self.tab1,
             text="Display # Particles",
@@ -303,7 +289,7 @@ class GUI:
         )
         self.num_chk.place(x=10, y=280, anchor="nw")
 
-        self.show_links = tk.BooleanVar(self.tk, self.sim.show_links)
+        self.show_links = tk.BooleanVar(self.tk)
         self.links_chk = tk.Checkbutton(
             self.tab1,
             text="Display links",
@@ -318,7 +304,7 @@ class GUI:
         )
         self.tab1_canvas.create_line(10, 345, 190, 345, fill="grey50")
 
-        self.top_bool = tk.BooleanVar(self.tk, self.sim.top)
+        self.top_bool = tk.BooleanVar(self.tk)
         self.top_chk = tk.Checkbutton(
             self.tab1,
             text="top",
@@ -328,7 +314,7 @@ class GUI:
         )
         self.top_chk.place(x=30, y=350, anchor="nw")
 
-        self.bottom_bool = tk.BooleanVar(self.tk, self.sim.bottom)
+        self.bottom_bool = tk.BooleanVar(self.tk)
         self.bottom_chk = tk.Checkbutton(
             self.tab1,
             text="bottom",
@@ -338,7 +324,7 @@ class GUI:
         )
         self.bottom_chk.place(x=110, y=350, anchor="nw")
 
-        self.left_bool = tk.BooleanVar(self.tk, self.sim.left)
+        self.left_bool = tk.BooleanVar(self.tk)
         self.left_chk = tk.Checkbutton(
             self.tab1,
             text="left",
@@ -348,7 +334,7 @@ class GUI:
         )
         self.left_chk.place(x=30, y=370, anchor="nw")
 
-        self.right_bool = tk.BooleanVar(self.tk, self.sim.right)
+        self.right_bool = tk.BooleanVar(self.tk)
         self.right_chk = tk.Checkbutton(
             self.tab1,
             text="right",
@@ -420,8 +406,6 @@ class GUI:
             increment=0.01,
             command=self._set_min_spawn_delay,
         )
-        self.delay_entry.delete(0, tk.END)
-        self.delay_entry.insert(0, str(self.sim.min_spawn_delay))
         self.delay_entry.place(x=100, y=533)
 
         self.calculate_radii_diff_bool = tk.BooleanVar(self.tk, False)
@@ -449,7 +433,7 @@ class GUI:
         self.extra_btn.place(x=7, y=580)
 
         # layout tab2
-        self.tab2_canvas = tk.Canvas(self.tab2, width=200, height=self.sim.height)
+        self.tab2_canvas = tk.Canvas(self.tab2, width=200, height=height)
         self.tab2_canvas.pack()
 
         tk.Label(self.tab2, text="Radius:", font=("helvetica", 8)).place(
@@ -473,7 +457,7 @@ class GUI:
             48,
             180,
             68,
-            fill=self.sim.bg_color[1],
+            fill="#ffffff",
             activeoutline="red",
             tags="part_color_rect",
         )
@@ -623,7 +607,6 @@ class GUI:
         self.groups_entry = ttk.Combobox(self.tab2, width=10, values=["group1"])
         self.groups_entry.current(0)
         self.groups_entry.place(x=10, y=470, anchor="nw")
-        self.sim.add_group_callbacks.append(self.create_group)
 
         self.group_add_btn = tk.Button(
             self.tab2,
@@ -649,7 +632,6 @@ class GUI:
             bg="#F0F0F0",
             activebackground="#F0F0F0",
             relief="flat",
-            command=lambda: self.sim.select_group(self.groups_entry.get()),
         )
         self.group_select_btn.place(x=123, y=480, anchor="center")
 
@@ -668,15 +650,51 @@ class GUI:
             bg="light coral",
             command=self._copy_from_selected,
         )
-        self.copy_selected_btn.place(x=15, y=self.sim.height - 65)
+        self.copy_selected_btn.place(x=15, y=height - 65)
         self.set_selected_btn = tk.Button(
             self.tab2,
             text="Set Selected",
             bg="light green",
         )
-        self.set_selected_btn.place(x=15, y=self.sim.height - 30)
+        self.set_selected_btn.place(x=15, y=height - 30)
         self.set_all_btn = tk.Button(self.tab2, text="Set All", bg="light blue")
-        self.set_all_btn.place(x=95, y=self.sim.height - 30)
+        self.set_all_btn.place(x=95, y=height - 30)
+
+        self._register_sim(sim)
+        self.sim = sim
+
+    def _register_sim(self, sim: SimulationState) -> None:
+        self.pause_button.configure(
+            image=self.play_photo if sim.paused else self.pause_photo,
+            command=sim.toggle_paused,
+        )
+        self.load_btn.configure(command=sim.link_selection)
+        self.unlink_btn.configure(command=sim.unlink_selection)
+        self.gravity_entry.delete(0, tk.END)
+        self.gravity_entry.insert(0, str(sim.g))
+        self.air_res_entry.delete(0, tk.END)
+        self.air_res_entry.insert(0, str(sim.air_res))
+        self.friction_entry.delete(0, tk.END)
+        self.friction_entry.insert(0, str(sim.ground_friction))
+        self.temp_sc.set(sim.temperature)
+        self.speed_sc.set(sim.speed)
+        self.show_fps.set(sim.show_fps)
+        self.show_num.set(sim.show_num)
+        self.show_links.set(sim.show_links)
+        self.top_bool.set(sim.top)
+        self.bottom_bool.set(sim.bottom)
+        self.left_bool.set(sim.left)
+        self.right_bool.set(sim.right)
+        self.delay_entry.delete(0, tk.END)
+        self.delay_entry.insert(0, str(sim.min_spawn_delay))
+        self._set_color(sim.bg_color[1])
+        self.group_select_btn.configure(
+            command=lambda: sim.select_group(self.groups_entry.get())
+        )
+
+    def register_sim(self, sim: SimulationState) -> None:
+        self._register_sim(sim)
+        self.sim = sim
 
     def _set_air_res(self) -> None:
         self.sim.air_res = float(self.air_res_entry.get())
@@ -898,15 +916,17 @@ class GUI:
                 else:
                     raise NotImplementedError(f"Unexpected widget: {type(widget)}")
 
+    def _set_color(self, color: str) -> None:
+        self.tab2_canvas.itemconfig(self.part_color_rect, fill=color)
+
     def change_color_entry(self, *event):
         try:
             color = eval(self.color_var.get())
-            self.tab2_canvas.itemconfig(
-                self.part_color_rect, fill="#%02x%02x%02x" % tuple(color)
-            )
+            color_str = "#%02x%02x%02x" % tuple(color)
+            self._set_color(color_str)
         except:
             if self.color_var.get() == "random" or self.color_var.get() == "":
-                self.tab2_canvas.itemconfig(self.part_color_rect, fill="#ffffff")
+                self._set_color("#ffffff")
 
     def _update(self):
         if self.code_window is not None:

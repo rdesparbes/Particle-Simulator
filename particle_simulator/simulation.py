@@ -67,6 +67,7 @@ class Simulation:
         self.pasting = False
 
         self.gui = GUI(self.state, title, gridres)
+        self.state.add_group_callbacks.append(self.gui.create_group)
 
         self.gui.save_btn.configure(command=self.save)
         self.gui.load_btn.configure(command=self.load)
@@ -297,6 +298,9 @@ class Simulation:
 
     def from_dict(self, data: SimPickle) -> None:
         controller_state = sim_pickle.from_dict(data)
+        self.state = controller_state.sim_state
+        self.gui.register_sim(self.state)
+        self.state.add_group_callbacks = [self.gui.create_group]
         self.gui.set_particle_settings(controller_state.gui_particle_state)
 
         self.gui.group_indices = []
