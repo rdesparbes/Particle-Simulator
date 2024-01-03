@@ -89,7 +89,7 @@ class SimulationState:
         return (1 - self.air_res) ** self.speed
 
     @staticmethod
-    def _rotate_2d(
+    def rotate_2d(
         x: float, y: float, cx: float, cy: float, angle: float
     ) -> Tuple[float, float]:
         angle_rad = -np.radians(angle)
@@ -114,7 +114,7 @@ class SimulationState:
         self.unlink(self.selection)
         self.selection = []
 
-    def _select_particle(self, particle: Particle) -> None:
+    def select_particle(self, particle: Particle) -> None:
         if particle in self.selection:
             return
         self.selection.append(particle)
@@ -168,7 +168,7 @@ class SimulationState:
         self._get_group(particle.group).append(particle)
         self.particles.append(particle)
 
-    def _replace_particle(
+    def replace_particle(
         self, p: Particle, particle_settings: ParticleFactory
     ) -> Particle:
         temp_link_lengths = p.link_lengths.copy()

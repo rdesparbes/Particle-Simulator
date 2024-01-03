@@ -125,7 +125,7 @@ class Simulation:
     def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:
         if particle.distance(x, y) <= max(self.mr, particle.radius):
             if self.state.mouse_mode == "SELECT":
-                self.state._select_particle(particle)
+                self.state.select_particle(particle)
                 return True
 
             particle.mouse = True
@@ -182,7 +182,7 @@ class Simulation:
     def _on_scroll(self, event: tk.Event) -> None:
         if self.rotate_mode:
             for p in self.state.selection:
-                p.x, p.y = self.state._rotate_2d(
+                p.x, p.y = self.state.rotate_2d(
                     p.x, p.y, event.x, event.y, event.delta / 500 * self.mr
                 )
         else:
@@ -204,7 +204,7 @@ class Simulation:
         # CTRL + A to select all
         elif KeyCode.from_char(str(key)).char == r"'\x01'":
             for p in self.state.particles:
-                self.state._select_particle(p)
+                self.state.select_particle(p)
         # CTRL + C to copy
         elif KeyCode.from_char(str(key)).char == r"'\x03'":
             self._copy_selected()
@@ -275,7 +275,7 @@ class Simulation:
             return
         temp = self.state.selection.copy()
         for p in temp:
-            p = self.state._replace_particle(p, particle_settings)
+            p = self.state.replace_particle(p, particle_settings)
             self.state.selection.append(p)
 
     def set_all(self) -> None:
@@ -285,7 +285,7 @@ class Simulation:
                 self._get_particle_settings()
             )  # Update for each particle in case of 'random'
             if particle_settings is not None:
-                self.state._replace_particle(p, particle_settings)
+                self.state.replace_particle(p, particle_settings)
 
     def to_dict(self) -> SimPickle:
         controller_state = ControllerState(
