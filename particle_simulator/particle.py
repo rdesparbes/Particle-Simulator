@@ -17,8 +17,7 @@ import numpy as np
 import numpy.typing as npt
 
 from .particle_data import ParticleData
-
-_SimulationState = Any
+from .simulation_data import SimulationData
 
 
 class Link(NamedTuple):
@@ -35,7 +34,7 @@ ComputeMagnitudeStrategy = Callable[
 class Particle(ParticleData):
     def __init__(
         self,
-        sim: _SimulationState,
+        sim: SimulationData,
         x: float,
         y: float,
         radius: float = 4.0,
@@ -223,16 +222,15 @@ class Particle(ParticleData):
             self.velocity *= [1 - self._sim.ground_friction, -self.bounciness]
             self.y = self.radius
 
-        if self._sim.void_edges and (
+        self._collisions = {}
+
+    def is_out_of_bounds(self) -> bool:
+        return self._sim.void_edges and (
             self.x - self.radius >= self._sim.width
             or self.x + self.radius <= 0
             or self.y - self.radius >= self._sim.height
             or self.y + self.radius <= 0
-        ):
-            self._sim.remove_particle(self)
-            return
-
-        self._collisions = {}
+        )
 
     def _compute_interactions(
         self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy

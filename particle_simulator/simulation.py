@@ -121,6 +121,8 @@ class Simulation:
             else:
                 near_particles = self.state.particles
             particle.update(near_particles)
+            if particle.is_out_of_bounds():
+                self.state.remove_particle(particle)
 
     def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:
         if particle.distance(x, y) <= max(self.mr, particle.radius):
