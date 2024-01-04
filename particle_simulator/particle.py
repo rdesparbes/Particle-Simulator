@@ -267,14 +267,15 @@ class Particle(ParticleData):
 
             # Visual overlap fix
             translate_vector = direction * (distance - (self.radius + p.radius))
-            if not self.mouse:
-                delta_pos = translate_vector * (self.mass / (self.mass + p.mass))
-                self.x += delta_pos[0]
-                self.y += delta_pos[1]
-            if not p.mouse and not p.locked:
-                delta_pos = translate_vector * (p.mass / (self.mass + p.mass))
-                p.x -= delta_pos[0]
-                p.y -= delta_pos[1]
+            self._collide(translate_vector, p.mass)
+            if not p.locked:
+                p._collide(-translate_vector, self.mass)
+
+    def _collide(self, translate_vector: npt.NDArray[np.float_], mass: float) -> None:
+        if not self.mouse:
+            delta_pos = translate_vector * (self.mass / (self.mass + mass))
+            self.x += delta_pos[0]
+            self.y += delta_pos[1]
 
     def _compute_default_force(
         self,
