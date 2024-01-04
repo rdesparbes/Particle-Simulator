@@ -93,7 +93,7 @@ class ParticleData:
     def _apply_force(self, force: npt.NDArray[np.float_]) -> None:
         self.acceleration += force / abs(self.mass)
 
-    def _compute_magnitude(
+    def calculate_magnitude(
         self,
         part: Self,
         attr: float,
@@ -149,7 +149,7 @@ class ParticleData:
             if other not in particles
         }
 
-    def _reaches(self, distance: float) -> bool:
+    def reaches(self, distance: float) -> bool:
         return (self.attraction_strength != 0.0 or self.repulsion_strength != 0.0) and (
             self.attract_r < 0 or distance < self.attract_r
         )

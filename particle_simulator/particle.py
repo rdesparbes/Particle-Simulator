@@ -111,7 +111,7 @@ class Particle(ParticleData):
 
     def _compute_link(self, part: Self, magnitude: float, max_force: float) -> Link:
         if max_force > 0.0:
-            percentage: float = min(abs(magnitude) / max_force, 1.0)
+            percentage: float = abs(magnitude) / max_force
         else:
             percentage = 1.0 if max_force == 0.0 else 0.0
         return Link(
@@ -126,34 +126,6 @@ class Particle(ParticleData):
             self.link_attr_breaking_force if attract else self.link_repel_breaking_force
         )
         return max_force
-
-    def _calc_magnitude(
-        self,
-        part: Self,
-        distance: float,
-        repel_r: float,
-        attr: float,
-        repel: float,
-        gravity: bool,
-    ) -> float:
-        magnitude = self._compute_magnitude(
-            part,
-            attr,
-            distance,
-            gravity,
-            repel,
-            repel_r,
-        )
-        if self._is_linked_to(part):
-            max_force = part._compute_max_force(distance, repel_r)
-            if self._sim.stress_visualization:
-                self._sim.link_colors.append(
-                    self._compute_link(part, magnitude, max_force)
-                )
-            if 0.0 <= max_force <= abs(magnitude):
-                Particle.unlink([self, part])
-
-        return magnitude
 
     @staticmethod
     def link(
@@ -186,9 +158,14 @@ class Particle(ParticleData):
                 else:
                     compute_magnitude_strategy = default_compute_magnitude_strategy
                 for near_particle in near_particles:
-                    self._compute_interactions(
+                    link = self._compute_interactions(
                         near_particle, compute_magnitude_strategy
                     )
+                    if link is not None:
+                        if self._sim.stress_visualization:
+                            self._sim.link_colors.append(link)
+                        if link.percentage > 1.0:
+                            Particle.unlink([self, near_particle])
 
                 if not self.mouse:
                     self.velocity += np.clip(self.acceleration, -2, 2) * self._sim.speed
@@ -234,28 +211,33 @@ class Particle(ParticleData):
 
     def _compute_interactions(
         self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
-    ) -> None:
+    ) -> Optional[Link]:
         if p == self:
-            return
+            return None
 
         if (
             not self.linked_group_particles
             and not self._is_linked_to(p)
             and self._is_in_same_group(p)
         ) or p in self._collisions:
-            return
+            return None
 
         direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
         distance: float = np.linalg.norm(direction)
+        link: Optional[Link] = None
         if distance != 0:
             direction = direction / distance
-        if p._reaches(distance) or self._reaches(distance):
+        if p.reaches(distance) or self.reaches(distance):
             if distance == 0.0:
                 force = self._compute_default_force(p)
             else:
                 repel_r: Optional[float] = self._compute_repel_r(p)
                 magnitude = compute_magnitude_strategy(self, p, distance, repel_r)
-
+                if repel_r is None:
+                    repel_r = max(self.repel_r, p.repel_r)
+                if self._is_linked_to(p):
+                    max_force = p._compute_max_force(distance, repel_r)
+                    link = self._compute_link(p, magnitude, max_force)
                 force = direction * magnitude
             self._apply_force(force)
             p._collisions[self] = -force
@@ -270,6 +252,8 @@ class Particle(ParticleData):
             self._collide(translate_vector, p.mass)
             if not p.locked:
                 p._collide(-translate_vector, self.mass)
+
+        return link
 
     def _collide(self, translate_vector: npt.NDArray[np.float_], mass: float) -> None:
         if not self.mouse:
@@ -286,21 +270,6 @@ class Particle(ParticleData):
         force = np.random.uniform(-10, 10, 2)
         return force / np.linalg.norm(force) * -self.repulsion_strength
 
-    def _calculate_magnitude(
-        self,
-        p: Self,
-        distance: float,
-        repel_r: Optional[float],
-    ) -> float:
-        return self._calc_magnitude(
-            part=p,
-            distance=distance,
-            repel_r=p.repel_r if repel_r is None else repel_r,
-            attr=p.attraction_strength,
-            repel=p.repulsion_strength,
-            gravity=p.gravity_mode,
-        )
-
     def _compute_repel_r(self, p: Self) -> Optional[float]:
         repel_radius = self.link_lengths.get(p)
         if repel_radius == "repel":
@@ -311,13 +280,12 @@ class Particle(ParticleData):
 def default_compute_magnitude_strategy(
     part_a: Particle, part_b: Particle, distance: float, repel_r: Optional[float]
 ) -> float:
-    repel_r_: float = (
-        max(part_a.repel_r, part_b.repel_r) if repel_r is None else repel_r
-    )
-    magnitude = part_a._calc_magnitude(
+    if repel_r is None:
+        repel_r = max(part_a.repel_r, part_b.repel_r)
+    magnitude = part_a.calculate_magnitude(
         part=part_b,
         distance=distance,
-        repel_r=repel_r_,
+        repel_r=repel_r,
         attr=part_b.attraction_strength + part_a.attraction_strength,
         repel=part_b.repulsion_strength + part_a.repulsion_strength,
         gravity=part_a.gravity_mode or part_b.gravity_mode,
@@ -332,12 +300,22 @@ def radii_compute_magnitude_strategy(
     repel_r: Optional[float],
 ) -> float:
     magnitude = 0.0
-    if part_b._reaches(distance):
-        magnitude += part_a._calculate_magnitude(
-            p=part_b, distance=distance, repel_r=repel_r
+    if part_b.reaches(distance):
+        magnitude += part_a.calculate_magnitude(
+            part=part_b,
+            distance=distance,
+            repel_r=part_b.repel_r if repel_r is None else repel_r,
+            attr=part_b.attraction_strength,
+            repel=part_b.repulsion_strength,
+            gravity=part_b.gravity_mode,
         )
-    if part_a._reaches(distance):
-        magnitude += part_b._calculate_magnitude(
-            p=part_a, distance=distance, repel_r=repel_r
+    if part_a.reaches(distance):
+        magnitude += part_b.calculate_magnitude(
+            part=part_a,
+            distance=distance,
+            repel_r=part_a.repel_r if repel_r is None else repel_r,
+            attr=part_a.attraction_strength,
+            repel=part_a.repulsion_strength,
+            gravity=part_a.gravity_mode,
         )
     return magnitude
