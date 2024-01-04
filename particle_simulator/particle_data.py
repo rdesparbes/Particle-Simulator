@@ -49,6 +49,22 @@ class ParticleData:
         return math.dist((x, y), (self.x, self.y))
 
     @property
+    def x_min(self) -> float:
+        return self.x - self.radius
+
+    @property
+    def y_min(self) -> float:
+        return self.y - self.radius
+
+    @property
+    def x_max(self) -> float:
+        return self.x + self.radius
+
+    @property
+    def y_max(self) -> float:
+        return self.y + self.radius
+
+    @property
     def interacts_with_all(self) -> bool:
         return self.attraction_strength != 0.0 and self.attract_r < 0
 

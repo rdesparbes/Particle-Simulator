@@ -209,16 +209,16 @@ class Particle(ParticleData):
             if not self._sim.paused:
                 self.velocity = np.divide([delta_mx, delta_my], self._sim.speed)
 
-        if self._sim.right and self.x + self.radius >= self._sim.width:
+        if self._sim.right and self.x_max >= self._sim.width:
             self.velocity *= [-self.bounciness, 1 - self._sim.ground_friction]
             self.x = self._sim.width - self.radius
-        if self._sim.left and self.x - self.radius <= 0:
+        if self._sim.left and self.x_min <= 0:
             self.velocity *= [-self.bounciness, 1 - self._sim.ground_friction]
             self.x = self.radius
-        if self._sim.bottom and self.y + self.radius >= self._sim.height:
+        if self._sim.bottom and self.y_max >= self._sim.height:
             self.velocity *= [1 - self._sim.ground_friction, -self.bounciness]
             self.y = self._sim.height - self.radius
-        if self._sim.top and self.y - self.radius <= 0:
+        if self._sim.top and self.y_min <= 0:
             self.velocity *= [1 - self._sim.ground_friction, -self.bounciness]
             self.y = self.radius
 
@@ -226,10 +226,10 @@ class Particle(ParticleData):
 
     def is_out_of_bounds(self) -> bool:
         return self._sim.void_edges and (
-            self.x - self.radius >= self._sim.width
-            or self.x + self.radius <= 0
-            or self.y - self.radius >= self._sim.height
-            or self.y + self.radius <= 0
+            self.x_min >= self._sim.width
+            or self.x_max <= 0
+            or self.y_min >= self._sim.height
+            or self.y_max <= 0
         )
 
     def _compute_interactions(
