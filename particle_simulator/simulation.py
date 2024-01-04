@@ -114,7 +114,7 @@ class Simulation:
         for particle in self.state.particles:
             if not particle.interacts:
                 near_particles = []
-            elif particle.interacts_will_all:
+            elif particle.interacts_with_all:
                 near_particles = self.state.particles
             elif self.state.use_grid:
                 near_particles = self.grid.return_particles(particle)

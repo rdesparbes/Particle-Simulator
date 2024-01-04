@@ -49,7 +49,7 @@ class ParticleData:
         return math.dist((x, y), (self.x, self.y))
 
     @property
-    def interacts_will_all(self) -> bool:
+    def interacts_with_all(self) -> bool:
         return self.attraction_strength != 0.0 and self.attract_r < 0
 
     @property
