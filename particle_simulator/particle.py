@@ -109,16 +109,11 @@ class Particle(ParticleData):
         }
         return dictionary
 
-    def _compute_link(self, part: Self, magnitude: float, max_force: float) -> Link:
+    @staticmethod
+    def _compute_link_percentage(magnitude: float, max_force: float) -> float:
         if max_force > 0.0:
-            percentage: float = abs(magnitude) / max_force
-        else:
-            percentage = 1.0 if max_force == 0.0 else 0.0
-        return Link(
-            particle_a=self,
-            particle_b=part,
-            percentage=percentage,
-        )
+            return abs(magnitude) / max_force
+        return 1.0 if max_force == 0.0 else 0.0
 
     def _compute_max_force(self, distance: float, repel_r: float) -> float:
         attract = distance >= repel_r
@@ -158,13 +153,14 @@ class Particle(ParticleData):
                 else:
                     compute_magnitude_strategy = default_compute_magnitude_strategy
                 for near_particle in near_particles:
-                    link = self._compute_interactions(
+                    link_percentage = self._compute_interactions(
                         near_particle, compute_magnitude_strategy
                     )
-                    if link is not None:
+                    if link_percentage is not None:
                         if self._sim.stress_visualization:
+                            link = Link(self, near_particle, link_percentage)
                             self._sim.link_colors.append(link)
-                        if link.percentage > 1.0:
+                        if link_percentage > 1.0:
                             Particle.unlink([self, near_particle])
 
                 if not self.mouse:
@@ -211,7 +207,7 @@ class Particle(ParticleData):
 
     def _compute_interactions(
         self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
-    ) -> Optional[Link]:
+    ) -> Optional[float]:
         if p == self:
             return None
 
@@ -224,7 +220,7 @@ class Particle(ParticleData):
 
         direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
         distance: float = np.linalg.norm(direction)
-        link: Optional[Link] = None
+        link_percentage: Optional[float] = None
         if distance != 0:
             direction = direction / distance
         if p.reaches(distance) or self.reaches(distance):
@@ -237,7 +233,9 @@ class Particle(ParticleData):
                     repel_r = max(self.repel_r, p.repel_r)
                 if self._is_linked_to(p):
                     max_force = p._compute_max_force(distance, repel_r)
-                    link = self._compute_link(p, magnitude, max_force)
+                    link_percentage = self._compute_link_percentage(
+                        magnitude, max_force
+                    )
                 force = direction * magnitude
             self._apply_force(force)
             p._collisions[self] = -force
@@ -253,7 +251,7 @@ class Particle(ParticleData):
             if not p.locked:
                 p._collide(-translate_vector, self.mass)
 
-        return link
+        return link_percentage
 
     def _collide(self, translate_vector: npt.NDArray[np.float_], mass: float) -> None:
         if not self.mouse:
