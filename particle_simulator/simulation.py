@@ -358,23 +358,6 @@ class Simulation:
             particle.mouse = True
         self.state.selection = temp_particles
 
-    def _update_attributes(self) -> None:
-        # Should be handled on the GUI side with callbacks
-        self.state.g = float(self.gui.gravity_entry.get())
-        self.state.air_res = float(self.gui.air_res_entry.get())
-        self.state.ground_friction = float(self.gui.friction_entry.get())
-        self.state.min_spawn_delay = float(self.gui.delay_entry.get())
-
-        self.state.temperature = self.gui.temp_sc.get()
-        self.state.speed = self.gui.speed_sc.get()
-
-        self.state.use_grid = self.gui.grid_bool.get()
-        self.state.calculate_radii_diff = self.gui.calculate_radii_diff_bool.get()
-        self.state.top = self.gui.top_bool.get()
-        self.state.bottom = self.gui.bottom_bool.get()
-        self.state.left = self.gui.left_bool.get()
-        self.state.right = self.gui.right_bool.get()
-
     def _draw_image(self, show_links: bool) -> npt.NDArray[np.uint8]:
         image = np.full(
             (self.state.height, self.state.width, 3),
@@ -474,7 +457,6 @@ class Simulation:
 
     def simulate(self) -> None:
         while self.state.running:
-            self._update_attributes()
             self._update_focus()
             self._handle_save_manager()
             self._simulate_step()
