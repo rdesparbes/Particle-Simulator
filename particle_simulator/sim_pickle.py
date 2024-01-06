@@ -18,6 +18,7 @@ from particle_simulator.particle_data import ParticleData
 from particle_simulator.particle_factory import ParticleFactory
 from particle_simulator.sim_gui_settings import SimGUISettings
 from particle_simulator.simulation_state import SimulationState
+from particle_simulator.simulation_data import SimulationData
 
 ParticlesPickle = List[Dict[str, Any]]
 PickleSettings = Dict[str, Tuple[Any]]
@@ -31,8 +32,8 @@ SimPickle = TypedDict(
 )
 
 
-def _sim_settings_to_dict(sim_state: SimulationState) -> PickleSettings:
-    s = sim_state
+def _sim_settings_to_dict(sim_data: SimulationData) -> PickleSettings:
+    s = sim_data
     return {
         "gravity_entry": (s.g,),
         "air_res_entry": (s.air_res,),
