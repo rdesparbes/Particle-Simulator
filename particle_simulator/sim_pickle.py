@@ -17,7 +17,6 @@ from particle_simulator.controller_state import ControllerState
 from particle_simulator.particle_data import ParticleData
 from particle_simulator.particle_factory import ParticleFactory
 from particle_simulator.sim_gui_settings import SimGUISettings
-from particle_simulator.simulation_state import SimulationState
 from particle_simulator.simulation_data import SimulationData
 
 ParticlesPickle = List[Dict[str, Any]]
@@ -126,7 +125,7 @@ def _particles_to_dict(particles: Sequence[ParticleData]) -> ParticlesPickle:
 
 
 def to_dict(controller_state: ControllerState) -> SimPickle:
-    sim_settings = _sim_settings_to_dict(controller_state.sim_state)
+    sim_settings = _sim_settings_to_dict(controller_state.sim_data)
     gui_settings = _gui_settings_to_dict(controller_state.gui_settings)
     particle_settings = _particle_settings_to_dict(controller_state.gui_particle_state)
     particles = _particles_to_dict(controller_state.particles)
@@ -199,12 +198,12 @@ def _extract_sim_gui_settings(sim_settings: PickleSettings) -> SimGUISettings:
     )
 
 
-def _extract_sim_settings(sim_pickle: PickleSettings) -> SimulationState:
+def _extract_sim_settings(sim_pickle: PickleSettings) -> SimulationData:
     s = sim_pickle
     g_dir_x, g_dir_y = s["g_dir"][0]
     wind_dir_x, wind_dir_y = s["wind_force"][0]
     bg_color, bg_hexa = s["bg_color"][0]
-    return SimulationState(
+    return SimulationData(
         g=float(s["gravity_entry"][0]),
         air_res=float(s["air_res_entry"][0]),
         ground_friction=float(s["friction_entry"][0]),
@@ -261,7 +260,7 @@ def from_dict(controller_pickle: SimPickle) -> ControllerState:
     particles = _parse_particles(controller_pickle["particles"])
 
     return ControllerState(
-        sim_state=sim_settings,
+        sim_data=sim_settings,
         gui_settings=sim_gui_settings,
         gui_particle_state=particle_settings,
         particles=particles,

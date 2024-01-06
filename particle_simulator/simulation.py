@@ -290,7 +290,7 @@ class Simulation:
 
     def to_dict(self) -> SimPickle:
         controller_state = ControllerState(
-            sim_state=self.state,
+            sim_data=self.state,
             gui_settings=self.gui.get_sim_settings(),
             gui_particle_state=self.gui.get_particle_settings(),
             particles=self.state.particles,
@@ -299,7 +299,7 @@ class Simulation:
 
     def from_dict(self, data: SimPickle) -> None:
         controller_state = sim_pickle.from_dict(data)
-        self.state = controller_state.sim_state
+        self.state = SimulationState(**asdict(controller_state.sim_data))
         self.gui.register_sim(self.state)
         self.state.add_group_callbacks = [self.gui.create_group]
         self.gui.set_particle_settings(controller_state.gui_particle_state)
