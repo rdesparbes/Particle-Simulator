@@ -18,7 +18,7 @@ from . import sim_pickle
 from .controller_state import ControllerState
 from .error import Error
 from .grid import Grid
-from .gui import GUI, CANVAS_X, CANVAS_Y
+from .gui import GUI
 from .particle import Particle
 from .particle_factory import ParticleFactory
 from .sim_pickle import (
@@ -444,12 +444,7 @@ class Simulation:
 
     def _update_mouse_position(self):
         self.state.prev_mx, self.state.prev_my = self.state.mx, self.state.my
-        self.state.mx = (
-            self.gui.tk.winfo_pointerx() - self.gui.tk.winfo_rootx() - CANVAS_X
-        )
-        self.state.my = (
-            self.gui.tk.winfo_pointery() - self.gui.tk.winfo_rooty() - CANVAS_Y
-        )
+        self.state.mx, self.state.my = self.gui.get_mouse_pos()
 
     def simulate(self) -> None:
         while self.state.running:
