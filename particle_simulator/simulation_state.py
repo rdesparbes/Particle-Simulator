@@ -24,7 +24,6 @@ Mode = Literal["SELECT", "MOVE", "ADD"]
 
 @dataclass(kw_only=True)
 class SimulationState(SimulationData):
-    code: str = 'print("Hello World")'
     particles: List[Particle] = field(default_factory=list)
     groups: Dict[str, List[Particle]] = field(default_factory=lambda: {"group1": []})
 
@@ -99,9 +98,6 @@ class SimulationState(SimulationData):
             for link, value in p.link_lengths.items():
                 if value != "repel":
                     self.link([p, link], fit_link=True, distance=value + amount)
-
-    def set_code(self, code) -> None:
-        self.code = code
 
     def execute(self, code: str) -> None:
         try:

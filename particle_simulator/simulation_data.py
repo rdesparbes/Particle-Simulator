@@ -28,6 +28,7 @@ class SimulationData:
     height: int = 600
     width: int = 650
 
+    code: str = 'print("Hello World")'
     paused: bool = True
     mr: float = 5.0
     mx: int = 0
@@ -42,3 +43,6 @@ class SimulationData:
     @property
     def air_res_calc(self) -> float:
         return (1 - self.air_res) ** self.speed
+
+    def set_code(self, code) -> None:
+        self.code = code
