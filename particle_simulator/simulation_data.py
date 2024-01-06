@@ -7,6 +7,7 @@ from numpy import typing as npt
 
 @dataclass(kw_only=True)
 class SimulationData:
+    # Data that must be saved and loaded
     stress_visualization: bool = False
     bg_color: Tuple[Tuple[int, int, int], str] = ((255, 255, 255), "#ffffff")
     void_edges: bool = False
@@ -25,16 +26,19 @@ class SimulationData:
     g_dir: npt.NDArray[np.float_] = field(default_factory=lambda: np.array([0.0, 1.0]))
     g: float = 0.1
     temperature: float = 0.0
+    code: str = 'print("Hello World")'
+
+    # Data needed by particles
     height: int = 600
     width: int = 650
-
-    code: str = 'print("Hello World")'
     paused: bool = True
-    mr: float = 5.0
     mx: int = 0
     my: int = 0
     prev_mx: int = 0
     prev_my: int = 0
+
+    # Not needed by particles, but closely related to mx/my:
+    mr: float = 5.0
 
     @property
     def g_vector(self) -> npt.NDArray[np.float_]:
