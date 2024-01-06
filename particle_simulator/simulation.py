@@ -61,8 +61,8 @@ class Simulation:
         self.start_load = False
         self.focus = True
         self.grid = Grid(*gridres, height=height, width=width)
-        self.start_time = time.time()
-        self.prev_time = self.start_time
+        self.prev_fps_update_time = time.time()
+        self.prev_time = self.prev_fps_update_time
         self.clipboard: List[Dict[str, Any]] = []
         self.pasting = False
 
@@ -404,12 +404,11 @@ class Simulation:
         cv2.circle(image, (self.state.mx, self.state.my), int(self.mr), [127] * 3)
         return image
 
-    def _update_focus(self):
+    def _get_focus(self):
         try:
-            self.focus = isinstance(self.gui.tk.focus_displayof(), (tk.Canvas, tk.Tk))
+            return isinstance(self.gui.tk.focus_displayof(), (tk.Canvas, tk.Tk))
         except KeyError:
-            # Combobox
-            self.focus = False
+            return False
 
     def save(self, filename: Optional[str] = None) -> None:
         try:
@@ -437,14 +436,18 @@ class Simulation:
             self.load()
             self.start_load = False
 
-    def _update_timings(self):
-        if time.time() - self.start_time >= self.fps_update_delay:
+    @property
+    def _fps_update_time(self) -> float:
+        return self.prev_fps_update_time + self.fps_update_delay
+
+    def _update_timings(self, new_time: float):
+        if new_time >= self._fps_update_time:
             try:
-                self.fps = 1 / (time.time() - self.prev_time)
+                self.fps = 1.0 / (new_time - self.prev_time)
             except ZeroDivisionError:
                 pass
-            self.start_time = time.time()
-        self.prev_time = time.time()
+            self.prev_fps_update_time = new_time
+        self.prev_time = new_time
 
     def _update_mouse_position(self):
         self.state.prev_mx, self.state.prev_my = self.state.mx, self.state.my
@@ -457,10 +460,10 @@ class Simulation:
 
     def simulate(self) -> None:
         while self.state.running:
-            self._update_focus()
+            self.focus = self._get_focus()
             self._handle_save_manager()
             self._simulate_step()
-            self._update_timings()
+            self._update_timings(new_time=time.time())
             self._update_mouse_position()
             image = self._draw_image(self.gui.show_links.get())
             self.gui.update(
