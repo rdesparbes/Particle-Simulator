@@ -70,7 +70,6 @@ class GUI:
             relief=tk.FLAT,
             bg="#1f3333",
             activebackground="#1f3333",
-            command=self._set_select_mode,
         )
         self.select_btn.place(x=x, y=16, anchor="center")
         self.select_rect = self.gui_canvas.create_rectangle(
@@ -88,7 +87,6 @@ class GUI:
             relief=tk.FLAT,
             bg="#1f3333",
             activebackground="#1f3333",
-            command=self._set_move_mode,
         )
         self.move_btn.place(x=x, y=16, anchor="center")
         self.move_rect = self.gui_canvas.create_rectangle(
@@ -106,7 +104,6 @@ class GUI:
             relief=tk.FLAT,
             bg="#1f3333",
             activebackground="#1f3333",
-            command=self._set_add_mode,
         )
         self.add_btn.place(x=x, y=15, anchor="center")
         self.add_rect = self.gui_canvas.create_rectangle(
@@ -174,7 +171,6 @@ class GUI:
             relief=tk.FLAT,
             bg="#1f3333",
             activebackground="#1f3333",
-            command=self._create_code_window,
         )
         self.code_btn.place(x=width - 25, y=16, anchor="center")
 
@@ -201,7 +197,6 @@ class GUI:
             from_=0,
             to=1,
             increment=0.1,
-            command=self._set_gravity,
         )
         self.gravity_entry.place(x=100, y=20)
 
@@ -214,7 +209,6 @@ class GUI:
             from_=0,
             to=1,
             increment=0.01,
-            command=self._set_air_res,
         )
         self.air_res_entry.place(x=100, y=50)
 
@@ -227,7 +221,6 @@ class GUI:
             from_=0,
             to=1,
             increment=0.01,
-            command=self._set_ground_friction,
         )
         self.friction_entry.place(x=100, y=80)
 
@@ -243,7 +236,6 @@ class GUI:
             fg="gray65",
             activebackground="midnight blue",
             cursor="hand2",
-            command=self._set_temperature,
         )
         self.temp_sc.place(x=100, y=153, anchor="center")
         tk.Label(self.tab1, text="Temperature:", font=("helvetica", 8)).place(
@@ -262,7 +254,6 @@ class GUI:
             fg="gray65",
             activebackground="midnight blue",
             cursor="hand2",
-            command=self._set_speed,
         )
         self.speed_sc.place(x=100, y=233, anchor="center")
         tk.Label(self.tab1, text="Simulation Speed:", font=("helvetica", 8)).place(
@@ -275,7 +266,6 @@ class GUI:
             text="Display FPS",
             font=("helvetica", 8),
             variable=self.show_fps,
-            command=self._set_show_fps,
         )
         self.fps_chk.place(x=10, y=260, anchor="nw")
 
@@ -285,7 +275,6 @@ class GUI:
             text="Display # Particles",
             font=("helvetica", 8),
             variable=self.show_num,
-            command=self._set_show_num,
         )
         self.num_chk.place(x=10, y=280, anchor="nw")
 
@@ -295,7 +284,6 @@ class GUI:
             text="Display links",
             font=("helvetica", 8),
             variable=self.show_links,
-            command=self._set_show_links,
         )
         self.links_chk.place(x=10, y=300, anchor="nw")
 
@@ -310,7 +298,6 @@ class GUI:
             text="top",
             font=("helvetica", 8),
             variable=self.top_bool,
-            command=self._set_top,
         )
         self.top_chk.place(x=30, y=350, anchor="nw")
 
@@ -320,7 +307,6 @@ class GUI:
             text="bottom",
             font=("helvetica", 8),
             variable=self.bottom_bool,
-            command=self._set_bottom,
         )
         self.bottom_chk.place(x=110, y=350, anchor="nw")
 
@@ -330,7 +316,6 @@ class GUI:
             text="left",
             font=("helvetica", 8),
             variable=self.left_bool,
-            command=self._set_left,
         )
         self.left_chk.place(x=30, y=370, anchor="nw")
 
@@ -340,7 +325,6 @@ class GUI:
             text="right",
             font=("helvetica", 8),
             variable=self.right_bool,
-            command=self._set_right,
         )
         self.right_chk.place(x=110, y=370, anchor="nw")
 
@@ -355,7 +339,6 @@ class GUI:
             text="Use Grid",
             font=("helvetica", 8),
             variable=self.grid_bool,
-            command=self._set_use_grid,
         )
         self.grid_chk.place(x=10, y=425, anchor="nw")
 
@@ -404,7 +387,6 @@ class GUI:
             from_=0,
             to=1,
             increment=0.01,
-            command=self._set_min_spawn_delay,
         )
         self.delay_entry.place(x=100, y=533)
 
@@ -414,7 +396,6 @@ class GUI:
             text="Better Radii-Calculation",
             font=("helvetica", 8),
             variable=self.calculate_radii_diff_bool,
-            command=self._set_calculate_radii_diff,
         )
         self.calculate_radii_diff_chk.place(x=7, y=553, anchor="nw")
 
@@ -428,7 +409,6 @@ class GUI:
             bg="#F0F0F0",
             activebackground="#F0F0F0",
             relief="flat",
-            command=self._create_extra_window,
         )
         self.extra_btn.place(x=7, y=580)
 
@@ -618,7 +598,6 @@ class GUI:
             activebackground="#F0F0F0",
             relief="flat",
             width=1,
-            command=self.add_group,
         )
         self.group_add_btn.place(x=105, y=480, anchor="center")
 
@@ -648,7 +627,6 @@ class GUI:
             self.tab2,
             text="Copy from selected",
             bg="light coral",
-            command=self._copy_from_selected,
         )
         self.copy_selected_btn.place(x=15, y=height - 65)
         self.set_selected_btn = tk.Button(
@@ -661,7 +639,32 @@ class GUI:
         self.set_all_btn.place(x=95, y=height - 30)
 
         self._register_sim(sim)
+        self._set_callbacks()
         self.sim = sim
+
+    def _set_callbacks(self) -> None:
+        self.select_btn.configure(command=self._set_select_mode)
+        self.move_btn.configure(command=self._set_move_mode)
+        self.add_btn.configure(command=self._set_add_mode)
+        self.code_btn.configure(command=self._create_code_window)
+        self.gravity_entry.configure(command=self._set_gravity)
+        self.air_res_entry.configure(command=self._set_air_res)
+        self.friction_entry.configure(command=self._set_ground_friction)
+        self.temp_sc.configure(command=self._set_temperature)
+        self.speed_sc.configure(command=self._set_speed)
+        self.fps_chk.configure(command=self._set_show_fps)
+        self.num_chk.configure(command=self._set_show_num)
+        self.links_chk.configure(command=self._set_show_links)
+        self.top_chk.configure(command=self._set_top)
+        self.bottom_chk.configure(command=self._set_bottom)
+        self.left_chk.configure(command=self._set_left)
+        self.right_chk.configure(command=self._set_right)
+        self.grid_chk.configure(command=self._set_use_grid)
+        self.delay_entry.configure(command=self._set_min_spawn_delay)
+        self.calculate_radii_diff_chk.configure(command=self._set_calculate_radii_diff)
+        self.extra_btn.configure(command=self._create_extra_window)
+        self.group_add_btn.configure(command=self.add_group)
+        self.copy_selected_btn.configure(command=self._copy_from_selected)
 
     def _register_sim(self, sim: SimulationState) -> None:
         self.pause_button.configure(
