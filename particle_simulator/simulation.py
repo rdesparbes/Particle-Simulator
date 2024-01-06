@@ -53,7 +53,6 @@ class Simulation:
         self.fps_update_delay = fps_update_delay
         self.rotate_mode = False
         self.last_particle_added_time = 0.0
-        self.mr = 5.0
         self.mouse_down = False
         self.mouse_down_start: Optional[float] = None
         self.shift = False
@@ -125,7 +124,7 @@ class Simulation:
                 self.state.remove_particle(particle)
 
     def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:
-        if particle.distance(x, y) <= max(self.mr, particle.radius):
+        if particle.distance(x, y) <= max(self.state.mr, particle.radius):
             if self.state.mouse_mode == "SELECT":
                 self.state.select_particle(particle)
                 return True
@@ -177,7 +176,7 @@ class Simulation:
         temp = self.state.particles.copy()
         for p in temp:
             if np.sqrt((event.x - p.x) ** 2 + (event.y - p.y) ** 2) <= max(
-                self.mr, p.radius
+                self.state.mr, p.radius
             ):
                 self.state.remove_particle(p)
 
@@ -185,10 +184,10 @@ class Simulation:
         if self.rotate_mode:
             for p in self.state.selection:
                 p.x, p.y = self.state.rotate_2d(
-                    p.x, p.y, event.x, event.y, event.delta / 500 * self.mr
+                    p.x, p.y, event.x, event.y, event.delta / 500 * self.state.mr
                 )
         else:
-            self.mr = max(self.mr * 2 ** (event.delta / 500), 1)
+            self.state.mr = max(self.state.mr * 2 ** (event.delta / 500), 1)
 
     def _on_press(self, key: Key) -> None:
         if not self.focus:
@@ -265,7 +264,7 @@ class Simulation:
         try:
             particle_settings = self.gui.get_particle_settings()
             if particle_settings.radius is None:
-                particle_settings.radius = self.mr
+                particle_settings.radius = self.state.mr
             return particle_settings
         except Exception as error:
             self.state.error = Error("Input-Error", error)
@@ -358,13 +357,13 @@ class Simulation:
             particle.mouse = True
         self.state.selection = temp_particles
 
-    def _draw_image(self, show_links: bool) -> npt.NDArray[np.uint8]:
+    def _draw_image(self) -> npt.NDArray[np.uint8]:
         image = np.full(
             (self.state.height, self.state.width, 3),
             self.state.bg_color[0],
             dtype=np.uint8,
         )
-        if show_links:
+        if self.state.show_links:
             if self.state.stress_visualization and not self.state.paused:
                 for p1, p2, percentage in self.state.link_colors:
                     color = [max(255 * percentage, 235)] + [235 * (1 - percentage)] * 2
@@ -401,14 +400,8 @@ class Simulation:
                 [0, 0, 255],
                 2,
             )
-        cv2.circle(image, (self.state.mx, self.state.my), int(self.mr), [127] * 3)
+        cv2.circle(image, (self.state.mx, self.state.my), int(self.state.mr), [127] * 3)
         return image
-
-    def _get_focus(self):
-        try:
-            return isinstance(self.gui.tk.focus_displayof(), (tk.Canvas, tk.Tk))
-        except KeyError:
-            return False
 
     def save(self, filename: Optional[str] = None) -> None:
         try:
@@ -460,12 +453,12 @@ class Simulation:
 
     def simulate(self) -> None:
         while self.state.running:
-            self.focus = self._get_focus()
+            self.focus = self.gui.get_focus()
             self._handle_save_manager()
             self._simulate_step()
             self._update_timings(new_time=time.time())
             self._update_mouse_position()
-            image = self._draw_image(self.gui.show_links.get())
+            image = self._draw_image()
             self.gui.update(
                 image,
                 paused=self.state.paused,

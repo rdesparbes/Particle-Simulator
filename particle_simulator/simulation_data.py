@@ -29,6 +29,7 @@ class SimulationData:
     width: int = 650
 
     paused: bool = True
+    mr: float = 5.0
     mx: int = 0
     my: int = 0
     prev_mx: int = 0

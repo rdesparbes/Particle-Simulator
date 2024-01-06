@@ -13,7 +13,6 @@ from typing import (
 )
 
 import numpy as np
-from numpy import typing as npt
 
 from particle_simulator.error import Error
 from particle_simulator.particle import Particle, Link

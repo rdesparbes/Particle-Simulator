@@ -789,6 +789,12 @@ class GUI:
             self.color_entry.insert(0, str(list(color)))
             self.tab2_canvas.itemconfig(self.part_color_rect, fill=color_exa)
 
+    def get_focus(self):
+        try:
+            return isinstance(self.tk.focus_displayof(), (tk.Canvas, tk.Tk))
+        except KeyError:
+            return False
+
     def get_sim_settings(self) -> SimGUISettings:
         return SimGUISettings(
             show_fps=self.show_fps.get(),
