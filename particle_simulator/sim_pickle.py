@@ -95,7 +95,6 @@ def _particles_to_dict(particles: Sequence[ParticleData]) -> ParticlesPickle:
             "x": p.x,
             "y": p.y,
             "v": p.velocity,
-            "a": p.acceleration,
             "r": p.radius,
             "color": p.color,
             "m": p.mass,

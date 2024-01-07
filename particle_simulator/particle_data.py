@@ -18,7 +18,6 @@ class ParticleData:
     x: float
     y: float
     velocity: npt.NDArray[np.float_] = field(default_factory=lambda: np.zeros(2))
-    acceleration: npt.NDArray[np.float_] = field(default_factory=lambda: np.zeros(2))
     radius: float = 4.0
     color: Tuple[int, int, int] = (0, 0, 0)
     mass: float = 1.0
@@ -84,8 +83,8 @@ class ParticleData:
             return self.repel_r
         return self.radius
 
-    def _apply_force(self, force: npt.NDArray[np.float_]) -> None:
-        self.acceleration += force / abs(self.mass)
+    def _apply_force(self, force: npt.NDArray[np.float_]) -> npt.NDArray[np.float_]:
+        return force / abs(self.mass)
 
     def calculate_magnitude(
         self,

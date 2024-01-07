@@ -8,6 +8,7 @@ from typing import (
     Dict,
     Iterable,
     Callable,
+    Tuple,
 )
 
 import numpy as np
@@ -37,7 +38,6 @@ class Particle(ParticleData):
         radius: float = 4.0,
         color: Optional[Sequence[int]] = None,
         mass: float = 1.0,
-        acceleration: Optional[npt.NDArray[np.float_]] = None,
         velocity: Optional[npt.NDArray[np.float_]] = None,
         bounciness: float = 0.7,
         locked: bool = False,
@@ -65,8 +65,6 @@ class Particle(ParticleData):
             raise ValueError(f"Expected 3 color channels, found {len(color)}")
         else:
             color = (color[0], color[1], color[2])
-        if acceleration is None:
-            acceleration = np.zeros(2)
         if velocity is None:
             velocity = np.zeros(2)
         if link_lengths is None:
@@ -80,7 +78,6 @@ class Particle(ParticleData):
             color=color,
             mass=mass,
             velocity=velocity,
-            acceleration=acceleration,
             bounciness=bounciness,
             locked=locked,
             collisions=collisions,
@@ -127,12 +124,12 @@ class Particle(ParticleData):
 
     def update(self, near_particles: Iterable[Self]) -> None:
         if not self._sim.paused:
-            self.acceleration = np.zeros(2)
-            self._apply_force(self._sim.g_vector * self.mass)  # Gravity
-            self._apply_force(self._sim.wind_force * self.radius)
+            acceleration = np.zeros(2)
+            acceleration += self._apply_force(self._sim.g_vector * self.mass)  # Gravity
+            acceleration += self._apply_force(self._sim.wind_force * self.radius)
 
             for force in self._collisions.values():
-                self._apply_force(force)
+                acceleration += self._apply_force(force)
 
             if not self.locked:
                 if self._sim.calculate_radii_diff:
@@ -142,9 +139,10 @@ class Particle(ParticleData):
                 else:
                     compute_magnitude_strategy = default_compute_magnitude_strategy
                 for near_particle in near_particles:
-                    link_percentage = self._compute_interactions(
+                    acc, link_percentage = self._compute_interactions(
                         near_particle, compute_magnitude_strategy
                     )
+                    acceleration += acc
                     if link_percentage is not None:
                         if self._sim.stress_visualization:
                             link = Link(self, near_particle, link_percentage)
@@ -153,7 +151,7 @@ class Particle(ParticleData):
                             Particle.unlink([self, near_particle])
 
                 if not self.mouse:
-                    self.velocity += np.clip(self.acceleration, -2, 2) * self._sim.speed
+                    self.velocity += np.clip(acceleration, -2, 2) * self._sim.speed
                     self.velocity += (
                         np.random.uniform(-1, 1, 2)
                         * self._sim.temperature
@@ -196,16 +194,17 @@ class Particle(ParticleData):
 
     def _compute_interactions(
         self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
-    ) -> Optional[float]:
+    ) -> Tuple[npt.NDArray[np.float_], Optional[float]]:
+        acceleration: npt.NDArray[np.float_] = np.zeros(2)
         if p == self:
-            return None
+            return acceleration, None
 
         if (
             not self.linked_group_particles
             and not self._is_linked_to(p)
             and self._is_in_same_group(p)
         ) or p in self._collisions:
-            return None
+            return acceleration, None
 
         direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
         distance: float = float(np.linalg.norm(direction))
@@ -226,7 +225,7 @@ class Particle(ParticleData):
                         magnitude, max_force
                     )
                 force = direction * magnitude
-            self._apply_force(force)
+            acceleration += self._apply_force(force)
             p._collisions[self] = -force
 
         if self.collisions and distance < self.radius + p.radius:
@@ -240,7 +239,7 @@ class Particle(ParticleData):
             if not p.locked:
                 p._collide(-translate_vector, self.mass)
 
-        return link_percentage
+        return acceleration, link_percentage
 
     def _collide(self, translate_vector: npt.NDArray[np.float_], mass: float) -> None:
         if not self.mouse:
