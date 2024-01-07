@@ -329,29 +329,22 @@ class Simulation:
 
     def _paste(self) -> None:
         self.pasting = True
-        temp_particles: List[Particle] = []
-        for data in self.clipboard:
-            p = Particle(self.state, x=0, y=0, group=data["group"])
-            self.state.register_particle(p)
-            temp_particles.append(p)
+        particles: List[Particle] = []
+        for particle_dict in self.clipboard:
+            dict_copy = particle_dict.copy()
+            dict_copy["x"] += self.state.mx
+            dict_copy["y"] += self.state.my
+            del dict_copy["link_lengths"]
+            particles.append(Particle(sim=self.state, **dict_copy))
 
-        for i, data in enumerate(self.clipboard):
-            d = data.copy()
-            particle = temp_particles[i]
-            d["x"] += self.state.mx
-            d["y"] += self.state.my
-            for key, value in d.items():
-                try:
-                    vars(particle)[key] = value.copy()
-                except AttributeError:
-                    vars(particle)[key] = value
-
+        for particle, particle_dict in zip(particles, self.clipboard):
             particle.link_lengths = {
-                temp_particles[index]: value
-                for index, value in particle.link_lengths.items()
+                particles[index]: length
+                for index, length in particle_dict["link_lengths"].items()
             }
             particle.mouse = True
-        self.state.selection = temp_particles
+            self.state.register_particle(particle)
+        self.state.selection = particles
 
     def _draw_image(self) -> npt.NDArray[np.uint8]:
         image = np.full(

@@ -4,11 +4,9 @@ from typing import (
     Any,
     Optional,
     NamedTuple,
-    List,
     Sequence,
     Dict,
     Iterable,
-    Collection,
     Callable,
 )
 
