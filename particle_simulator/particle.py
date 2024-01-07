@@ -108,7 +108,7 @@ class Particle(ParticleData):
         self._collisions: Dict[Particle, npt.NDArray[np.float_]] = {}
 
     def return_dict(self, index_source: Sequence[Self]) -> Dict[str, Any]:
-        dictionary: Dict[str, Any] = super().__dict__.copy()
+        dictionary: Dict[str, Any] = self.__dict__.copy()
         del dictionary["_sim"]
         del dictionary["_collisions"]
         dictionary["link_lengths"] = {

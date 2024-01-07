@@ -196,7 +196,7 @@ class Simulation:
             temp = self.state.selection.copy()
             for p in temp:
                 self.state.remove_particle(p)
-        elif key == Key.shift_l or key == Key.shift_r:
+        elif key in {Key.shift_l, Key.shift_r}:
             self.shift = True
         # CTRL + A to select all
         elif KeyCode.from_char(str(key)).char == r"'\x01'":

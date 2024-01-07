@@ -302,9 +302,6 @@ class GUI(GUIWidgets):
                 else:
                     raise NotImplementedError(f"Unexpected widget: {type(widget)}")
 
-    def _set_color(self, color: str) -> None:
-        self.tab2_canvas.itemconfig(self.part_color_rect, fill=color)
-
     def _update(self):
         if self.code_window is not None:
             self.code_window.tk.update()
