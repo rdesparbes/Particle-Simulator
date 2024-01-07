@@ -242,7 +242,7 @@ class Particle(ParticleData):
 
         if self.collisions and distance < self.radius + p.radius:
             new_speed = self._compute_collision_speed(p)
-            p.v = p._compute_collision_speed(self)
+            p.velocity = p._compute_collision_speed(self)
             self.velocity = new_speed
 
             # Visual overlap fix
