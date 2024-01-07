@@ -211,7 +211,7 @@ class GUI(GUIWidgets):
 
         color_str: str = self.color_entry.get()
         if color_str == "random":
-            color: Union[Tuple[int, int, int], Literal["random"]] = color_str
+            color: Union[Tuple[int, int, int], Literal["random"]] = "random"
         else:
             color = tuple(map(int, eval(color_str)))
 

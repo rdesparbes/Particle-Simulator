@@ -1,3 +1,4 @@
+import random
 from typing import (
     Self,
     Any,
@@ -38,7 +39,7 @@ class Particle(ParticleData):
         x: float,
         y: float,
         radius: float = 4.0,
-        color: Union[List[int], Literal["random"]] = "random",
+        color: Union[Sequence[int], Literal["random"]] = "random",
         mass: float = 1.0,
         acceleration: Optional[npt.NDArray[np.float_]] = None,
         velocity: Optional[npt.NDArray[np.float_]] = None,
@@ -61,7 +62,11 @@ class Particle(ParticleData):
         ] = None,
     ) -> None:
         if color == "random":
-            color = tuple(np.random.randint(0, 255, 3))
+            color = tuple(random.randint(0, 255) for _ in range(3))
+        elif len(color) != 3:
+            raise ValueError(f"Expected 3 color channels, found {len(color)}")
+        else:
+            color = tuple(color)
         if acceleration is None:
             acceleration = np.zeros(2)
         if velocity is None:
@@ -219,7 +224,7 @@ class Particle(ParticleData):
             return None
 
         direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
-        distance: float = np.linalg.norm(direction)
+        distance: float = float(np.linalg.norm(direction))
         link_percentage: Optional[float] = None
         if distance != 0:
             direction = direction / distance

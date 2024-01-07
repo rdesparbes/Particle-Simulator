@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import Sequence
 
 from particle_simulator.particle_data import ParticleData
 from particle_simulator.particle_factory import ParticleFactory
@@ -12,4 +12,4 @@ class ControllerState:
     sim_data: SimulationData
     gui_settings: SimGUISettings
     gui_particle_state: ParticleFactory
-    particles: List[ParticleData] = field(default_factory=list)
+    particles: Sequence[ParticleData] = field(default_factory=list)

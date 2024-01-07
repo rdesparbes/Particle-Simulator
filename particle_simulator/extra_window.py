@@ -65,7 +65,7 @@ class ExtraWindow:
             x=25, y=85, anchor="nw"
         )
         self.wind_strength = tk.DoubleVar(
-            self.tk, value=np.linalg.norm(self.sim.wind_force) * 10
+            self.tk, value=10.0 * float(np.linalg.norm(self.sim.wind_force))
         )
         self.wind_strength_entry = tk.Spinbox(
             self.tk,

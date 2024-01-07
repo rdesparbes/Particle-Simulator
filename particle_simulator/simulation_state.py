@@ -120,7 +120,7 @@ class SimulationState(SimulationData):
         try:
             return self.groups[name]
         except KeyError:
-            new_group = []
+            new_group: List[Particle] = []
             self.groups[name] = new_group
             for callback in self.add_group_callbacks:
                 callback(name)

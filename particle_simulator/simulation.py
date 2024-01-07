@@ -7,6 +7,7 @@ from typing import (
     Dict,
     Tuple,
     List,
+    Union,
 )
 
 import cv2
@@ -189,7 +190,7 @@ class Simulation:
         else:
             self.state.mr = max(self.state.mr * 2 ** (event.delta / 500), 1)
 
-    def _on_press(self, key: Key) -> None:
+    def _on_press(self, key: Union[Key, KeyCode, None]) -> None:
         if not self.focus:
             return
         # SPACE to pause
@@ -239,7 +240,7 @@ class Simulation:
         elif KeyCode.from_char(str(key)).char == r"'\x0f'":
             self.start_load = True
 
-    def _on_release(self, key: Key) -> None:
+    def _on_release(self, key: Union[Key, KeyCode, None]) -> None:
         if key in {Key.shift_l, Key.shift_r}:
             self.shift = False
         elif KeyCode.from_char(str(key)).char == "'r'":
@@ -333,7 +334,7 @@ class Simulation:
 
     def _paste(self) -> None:
         self.pasting = True
-        temp_particles = []
+        temp_particles: List[Particle] = []
         for data in self.clipboard:
             p = Particle(self.state, x=0, y=0, group=data["group"])
             self.state.register_particle(p)

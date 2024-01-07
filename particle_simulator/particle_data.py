@@ -130,15 +130,18 @@ class ParticleData:
         position: Optional[npt.NDArray[np.float_]] = (
             np.array([self.x, self.y]) if fit_link else None
         )
-        for particle in particles:
+
+        def _compute_link_length(p: ParticleData) -> Union[float, Literal["repel"]]:
             if position is not None:
-                self.link_lengths[particle] = (
-                    np.linalg.norm(position - np.array([particle.x, particle.y]))
-                    if distance is None
-                    else distance
-                )
+                if distance is None:
+                    return float(np.linalg.norm(position - np.array([p.x, p.y])))
+                else:
+                    return distance
             else:
-                self.link_lengths[particle] = "repel"
+                return "repel"
+
+        for particle in particles:
+            self.link_lengths[particle] = _compute_link_length(particle)
 
         del self.link_lengths[self]
 
