@@ -6,7 +6,6 @@ from typing import (
     List,
     TypedDict,
     Union,
-    Literal,
     Optional,
     Sequence,
 )
@@ -155,10 +154,13 @@ def _parse_color(
     return int(color_any[0]), int(color_any[1]), int(color_any[2])
 
 
-def _parse_radius(radius_any: Union[float, None, Literal["scroll"]]) -> Optional[float]:
-    if radius_any == "scroll" or radius_any is None:
+def _parse_radius(radius_any: Union[float, None, str]) -> Optional[float]:
+    if radius_any is None:
         return None
-    return float(radius_any)
+    try:
+        return float(radius_any)
+    except ValueError:
+        return None
 
 
 def _parse_particle_settings(particle_settings: PickleSettings) -> ParticleFactory:
