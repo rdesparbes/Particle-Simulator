@@ -417,8 +417,8 @@ class GUIWidgets:
             x=7, y=50, anchor="nw"
         )
         self.color_var = tk.StringVar(self.tk, "random")
-        self.color_entry = tk.Entry(self.tab2, width=8, textvariable=self.color_var)
-        self.color_entry.place(x=100, y=50)
+        self._color_entry = tk.Entry(self.tab2, width=8, textvariable=self.color_var)
+        self._color_entry.place(x=100, y=50)
         self.color_var.trace("w", self._change_color_entry)
 
         self.part_color_rect = self.tab2_canvas.create_rectangle(
@@ -632,8 +632,8 @@ class GUIWidgets:
     def _ask_color_entry(self, *_event):
         color, color_exa = colorchooser.askcolor(title="Choose color")
         if color is not None:
-            self.color_entry.delete(0, tk.END)
-            self.color_entry.insert(0, str(list(color)))
+            self._color_entry.delete(0, tk.END)
+            self._color_entry.insert(0, str(list(color)))
             self.tab2_canvas.itemconfig(self.part_color_rect, fill=color_exa)
 
     def _set_color(self, color: str) -> None:
