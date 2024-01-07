@@ -39,7 +39,7 @@ class Particle(ParticleData):
         x: float,
         y: float,
         radius: float = 4.0,
-        color: Union[Sequence[int], Literal["random"]] = "random",
+        color: Optional[Sequence[int]] = None,
         mass: float = 1.0,
         acceleration: Optional[npt.NDArray[np.float_]] = None,
         velocity: Optional[npt.NDArray[np.float_]] = None,
@@ -61,7 +61,7 @@ class Particle(ParticleData):
             Dict[int, Union[Literal["repel"], float]]
         ] = None,
     ) -> None:
-        if color == "random":
+        if color is None:
             color = (
                 random.randint(0, 255),
                 random.randint(0, 255),

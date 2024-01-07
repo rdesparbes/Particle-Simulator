@@ -63,7 +63,7 @@ def test_simulation_write_then_load_generates_identical_file(
     [
         ([0, 1, 2], (0, 1, 2)),
         ([0, 1, 2, 3], (0, 1, 2)),
-        ("random", "random"),
+        ("random", None),
         ("[0, 1, 2]", (0, 1, 2)),
         ("(0, 1, 2)", (0, 1, 2)),
         ("(0, 1,   2)", (0, 1, 2)),

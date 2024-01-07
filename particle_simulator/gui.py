@@ -202,14 +202,8 @@ class GUI(GUIWidgets):
         else:
             radius = float(self.radius_entry.get())
 
-        color_str: str = self.color_var.get()
-        if color_str == "random":
-            color: Union[Tuple[int, int, int], Literal["random"]] = "random"
-        else:
-            color = tuple(map(int, eval(color_str)))
-
         return ParticleFactory(
-            color=color,
+            color=self._parse_color(),
             mass=float(self.mass_entry.get()),
             velocity=(
                 float(self.velocity_x_entry.get()),
@@ -238,7 +232,7 @@ class GUI(GUIWidgets):
 
     def set_particle_settings(self, particle_settings: ParticleFactory) -> None:
         p = particle_settings
-        self.color_var.set(str(p.color))
+        self.color_var.set(str(p.color or "random"))
         self._set_entry(self.mass_entry, str(p.mass))
         self._set_entry(self.velocity_x_entry, str(p.velocity[0]))
         self._set_entry(self.velocity_y_entry, str(p.velocity[1]))

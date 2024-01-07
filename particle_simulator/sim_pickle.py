@@ -70,7 +70,7 @@ def _particle_settings_to_dict(particle_factory: ParticleFactory) -> PickleSetti
     p = particle_factory
     return {
         "radius_entry": (p.radius,),
-        "color_entry": (p.color,),
+        "color_entry": (p.color or "random",),
         "mass_entry": (p.mass,),
         "velocity_x_entry": (p.velocity[0],),
         "velocity_y_entry": (p.velocity[1],),
@@ -139,9 +139,9 @@ def to_dict(controller_state: ControllerState) -> SimPickle:
 
 def _parse_color(
     color_any: Union[Sequence[float], str]
-) -> Union[Tuple[int, int, int], Literal["random"]]:
+) -> Optional[Tuple[int, int, int]]:
     if color_any == "random":
-        return "random"
+        return None
 
     if isinstance(color_any, str):
         match = re.search(r"(?P<blue>\d+), *(?P<green>\d+), *(?P<red>\d+)", color_any)

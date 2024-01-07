@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import Tuple, Literal, Union, Optional
+from typing import Tuple, Optional
 
 
 @dataclass
 class ParticleFactory:
-    color: Union[Tuple[int, int, int], Literal["random"]]
+    color: Optional[Tuple[int, int, int]]
     mass: float
     velocity: Tuple[float, float]
     bounciness: float
