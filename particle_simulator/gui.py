@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from typing import Literal, Sequence, Dict, Any, Optional, Union, Tuple
+from typing import Sequence, Dict, Any, Optional, Union, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -169,7 +169,7 @@ class GUI(GUIWidgets):
         self.group_indices.sort()
         self.groups_entry["values"] = [f"group{i}" for i in self.group_indices]
 
-    def get_focus(self):
+    def get_focus(self) -> bool:
         try:
             return isinstance(self.tk.focus_displayof(), (tk.Canvas, tk.Tk))
         except KeyError:
@@ -197,10 +197,10 @@ class GUI(GUIWidgets):
 
     def get_particle_settings(self) -> ParticleFactory:
         radius_str: str = self.radius_entry.get()
-        if radius_str == "scroll":
-            radius: Optional[float] = None
-        else:
-            radius = float(self.radius_entry.get())
+        try:
+            radius: Optional[float] = float(radius_str)
+        except ValueError:
+            radius = None
 
         return ParticleFactory(
             color=self._parse_color(),
@@ -224,11 +224,6 @@ class GUI(GUIWidgets):
             gravity_mode=self.gravity_mode_bool.get(),
             radius=radius,
         )
-
-    @staticmethod
-    def _set_entry(entry: Union[tk.Entry, tk.Spinbox], text: str) -> None:
-        entry.delete(0, tk.END)
-        entry.insert(0, text)
 
     def set_particle_settings(self, particle_settings: ParticleFactory) -> None:
         p = particle_settings

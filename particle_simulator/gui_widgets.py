@@ -2,7 +2,7 @@ import os
 import re
 import tkinter as tk
 from tkinter import ttk, colorchooser
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from .code_window import CodeWindow
 from .extra_window import ExtraWindow
@@ -409,8 +409,7 @@ class GUIWidgets:
             x=7, y=20, anchor="nw"
         )
         self.radius_entry = tk.Spinbox(self.tab2, width=7, from_=1, to=300, increment=1)
-        self.radius_entry.delete(0, tk.END)
-        self.radius_entry.insert(0, "scroll")
+        self._set_entry(self.radius_entry, "scroll")
         self.radius_entry.place(x=100, y=20)
 
         tk.Label(self.tab2, text="Color:", font=("helvetica", 8)).place(
@@ -440,8 +439,7 @@ class GUIWidgets:
         self.mass_entry = tk.Spinbox(
             self.tab2, width=7, from_=0.1, to=100, increment=0.1
         )
-        self.mass_entry.delete(0, tk.END)
-        self.mass_entry.insert(0, "1")
+        self._set_entry(self.mass_entry, "1")
         self.mass_entry.place(x=100, y=80)
 
         tk.Label(self.tab2, text="Bounciness:", font=("helvetica", 8)).place(
@@ -450,8 +448,7 @@ class GUIWidgets:
         self.bounciness_entry = tk.Spinbox(
             self.tab2, width=7, from_=0, to=1, increment=0.1
         )
-        self.bounciness_entry.delete(0, tk.END)
-        self.bounciness_entry.insert(0, "0.7")
+        self._set_entry(self.bounciness_entry, "0.7")
         self.bounciness_entry.place(x=100, y=110)
 
         tk.Label(self.tab2, text="Velocity:", font=("helvetica", 8)).place(
@@ -463,8 +460,7 @@ class GUIWidgets:
         self.velocity_x_entry = tk.Spinbox(
             self.tab2, width=7, from_=0, to=1, increment=0.1
         )
-        self.velocity_x_entry.delete(0, tk.END)
-        self.velocity_x_entry.insert(0, "0")
+        self._set_entry(self.velocity_x_entry, "0")
         self.velocity_x_entry.place(x=100, y=140)
         tk.Label(self.tab2, text="Y:", font=("helvetica", 8)).place(
             x=60, y=162, anchor="nw"
@@ -472,8 +468,7 @@ class GUIWidgets:
         self.velocity_y_entry = tk.Spinbox(
             self.tab2, width=7, from_=-5, to=5, increment=0.1
         )
-        self.velocity_y_entry.delete(0, tk.END)
-        self.velocity_y_entry.insert(0, "0")
+        self._set_entry(self.velocity_y_entry, "0")
         self.velocity_y_entry.place(x=100, y=162)
 
         self.locked_bool = tk.BooleanVar(self.tk, False)
@@ -497,8 +492,7 @@ class GUIWidgets:
         self.attr_r_entry = tk.Spinbox(
             self.tab2, width=7, from_=-1, to=500, increment=1
         )
-        self.attr_r_entry.delete(0, tk.END)
-        self.attr_r_entry.insert(0, "-1")
+        self._set_entry(self.attr_r_entry, "-1")
         self.attr_r_entry.place(x=100, y=250)
 
         tk.Label(self.tab2, text="Attr-strength:", font=("helvetica", 8)).place(
@@ -507,8 +501,7 @@ class GUIWidgets:
         self.attr_strength_entry = tk.Spinbox(
             self.tab2, width=7, from_=0, to=50, increment=0.1
         )
-        self.attr_strength_entry.delete(0, tk.END)
-        self.attr_strength_entry.insert(0, "0.5")
+        self._set_entry(self.attr_strength_entry, "0.5")
         self.attr_strength_entry.place(x=100, y=273)
 
         self.gravity_mode_bool = tk.BooleanVar(self.tk, False)
@@ -526,8 +519,7 @@ class GUIWidgets:
         self.repel_r_entry = tk.Spinbox(
             self.tab2, width=7, from_=0, to=500, increment=1
         )
-        self.repel_r_entry.delete(0, tk.END)
-        self.repel_r_entry.insert(0, "10")
+        self._set_entry(self.repel_r_entry, "10")
         self.repel_r_entry.place(x=100, y=323)
 
         tk.Label(self.tab2, text="Repel-strength:", font=("helvetica", 8)).place(
@@ -536,8 +528,7 @@ class GUIWidgets:
         self.repel_strength_entry = tk.Spinbox(
             self.tab2, width=7, from_=0, to=50, increment=0.1
         )
-        self.repel_strength_entry.delete(0, tk.END)
-        self.repel_strength_entry.insert(0, "1")
+        self._set_entry(self.repel_strength_entry, "1")
         self.repel_strength_entry.place(x=100, y=346)
 
         self.linked_group_bool = tk.BooleanVar(self.tk, True)
@@ -558,8 +549,7 @@ class GUIWidgets:
         self.link_attr_break_entry = tk.Spinbox(
             self.tab2, width=5, from_=0, to=5000, increment=0.1
         )
-        self.link_attr_break_entry.delete(0, tk.END)
-        self.link_attr_break_entry.insert(0, "-1")
+        self._set_entry(self.link_attr_break_entry, "-1")
         self.link_attr_break_entry.place(x=40, y=420)
         tk.Label(self.tab2, text="Repel:", font=("helvetica", 8)).place(
             x=100, y=420, anchor="nw"
@@ -567,8 +557,7 @@ class GUIWidgets:
         self.link_repel_break_entry = tk.Spinbox(
             self.tab2, width=5, from_=0, to=5000, increment=0.1
         )
-        self.link_repel_break_entry.delete(0, tk.END)
-        self.link_repel_break_entry.insert(0, "-1")
+        self._set_entry(self.link_repel_break_entry, "-1")
         self.link_repel_break_entry.place(x=140, y=420)
 
         tk.Label(self.tab2, text="Particle-group:", font=("helvetica", 8)).place(
@@ -629,11 +618,15 @@ class GUIWidgets:
         self.set_all_btn = tk.Button(self.tab2, text="Set All", bg="light blue")
         self.set_all_btn.place(x=95, y=height - 30)
 
+    @staticmethod
+    def _set_entry(entry: Union[tk.Entry, tk.Spinbox], text: str) -> None:
+        entry.delete(0, tk.END)
+        entry.insert(0, text)
+
     def _ask_color_entry(self, *_event):
         color, color_exa = colorchooser.askcolor(title="Choose color")
         if color is not None:
-            self._color_entry.delete(0, tk.END)
-            self._color_entry.insert(0, str(list(color)))
+            self._set_entry(self._color_entry, str(list(color)))
             self.tab2_canvas.itemconfig(self.part_color_rect, fill=color_exa)
 
     def _set_color(self, color: str) -> None:
