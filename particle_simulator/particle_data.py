@@ -120,7 +120,7 @@ class ParticleData:
         fit_link: bool = False,
         distance: Optional[float] = None,
     ) -> None:
-        def _compute_link_length(p: ParticleData) -> Optional[float]:
+        def _compute_link_length(p: Self) -> Optional[float]:
             if not fit_link:
                 return None
             if distance is None:
@@ -128,9 +128,8 @@ class ParticleData:
             return distance
 
         for particle in particles:
-            self.link_lengths[particle] = _compute_link_length(particle)
-
-        del self.link_lengths[self]
+            if particle is not self:
+                self.link_lengths[particle] = _compute_link_length(particle)
 
     def _unlink(self, particles: Collection[Self]) -> None:
         self.link_lengths = {
