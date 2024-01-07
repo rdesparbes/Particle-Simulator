@@ -55,7 +55,7 @@ class GUI(GUIWidgets):
             image=self.play_photo if sim.paused else self.pause_photo,
             command=sim.toggle_paused,
         )
-        self.load_btn.configure(command=sim.link_selection)
+        self.link_btn.configure(command=sim.link_selection)
         self.unlink_btn.configure(command=sim.unlink_selection)
         self.gravity_entry.delete(0, tk.END)
         self.gravity_entry.insert(0, str(sim.g))
