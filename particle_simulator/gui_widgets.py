@@ -639,14 +639,19 @@ class GUIWidgets:
     def _set_color(self, color: str) -> None:
         self.tab2_canvas.itemconfig(self.part_color_rect, fill=color)
 
-    def _change_color_entry(self, *_event) -> None:
+    def _parse_color(self) -> Optional[Tuple[int, int, int]]:
         color_regex = r"(?P<red>\d+)\s*,\s*(?P<green>\d+)\s*,\s*(?P<blue>\d+)"
         m = re.search(color_regex, self.color_var.get())
         if m is None:
+            return None
+        return int(m.group("red")), int(m.group("green")), int(m.group("blue"))
+
+    def _change_color_entry(self, *_event) -> None:
+        color = self._parse_color()
+        if color is None:
             self._set_color("#ffffff")
-            return
-        color_str = f"#{int(m.group('red')):02x}{int(m.group('green')):02x}{int(m.group('blue')):02x}"
-        self._set_color(color_str)
+        else:
+            self._set_color(f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}")
 
     def get_mouse_pos(self) -> Tuple[int, int]:
         return (
