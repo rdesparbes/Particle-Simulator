@@ -1,4 +1,5 @@
 import os
+import re
 import tkinter as tk
 from tkinter import ttk, colorchooser
 from typing import Optional, Tuple
@@ -638,14 +639,14 @@ class GUIWidgets:
     def _set_color(self, color: str) -> None:
         self.tab2_canvas.itemconfig(self.part_color_rect, fill=color)
 
-    def _change_color_entry(self, *event):
-        try:
-            color = eval(self.color_var.get())
-            color_str = "#%02x%02x%02x" % tuple(color)
-            self._set_color(color_str)
-        except:
-            if self.color_var.get() == "random" or self.color_var.get() == "":
-                self._set_color("#ffffff")
+    def _change_color_entry(self, *_event) -> None:
+        color_regex = r"(?P<red>\d+)\s*,\s*(?P<green>\d+)\s*,\s*(?P<blue>\d+)"
+        m = re.search(color_regex, self.color_var.get())
+        if m is None:
+            self._set_color("#ffffff")
+            return
+        color_str = f"#{int(m.group('red')):02x}{int(m.group('green')):02x}{int(m.group('blue')):02x}"
+        self._set_color(color_str)
 
     def get_mouse_pos(self) -> Tuple[int, int]:
         return (
