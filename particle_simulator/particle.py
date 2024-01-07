@@ -127,20 +127,6 @@ class Particle(ParticleData):
         )
         return max_force
 
-    @staticmethod
-    def link(
-        particles: List["Particle"],
-        fit_link: bool = False,
-        distance: Optional[float] = None,
-    ) -> None:
-        for p in particles:
-            p._link(particles, fit_link=fit_link, distance=distance)
-
-    @staticmethod
-    def unlink(particles: Collection["Particle"]) -> None:
-        for p in particles:
-            p._unlink(particles)
-
     def update(self, near_particles: Iterable[Self]) -> None:
         if not self._sim.paused:
             self.acceleration = np.zeros(2)

@@ -147,3 +147,17 @@ class ParticleData:
         return (self.mass - other.mass) / (
             self.mass + other.mass
         ) * self.velocity + 2 * other.mass / (self.mass + other.mass) * other.velocity
+
+    @staticmethod
+    def link(
+        particles: Sequence["ParticleData"],
+        fit_link: bool = False,
+        distance: Optional[float] = None,
+    ) -> None:
+        for p in particles:
+            p._link(particles, fit_link=fit_link, distance=distance)
+
+    @staticmethod
+    def unlink(particles: Collection["ParticleData"]) -> None:
+        for p in particles:
+            p._unlink(particles)
