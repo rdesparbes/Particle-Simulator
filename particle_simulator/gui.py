@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import colorchooser, messagebox
+from tkinter import messagebox
 from typing import Literal, Sequence, Dict, Any, Optional, Union, Tuple
 
 import numpy as np
@@ -169,13 +169,6 @@ class GUI(GUIWidgets):
         self.group_indices.sort()
         self.groups_entry["values"] = [f"group{i}" for i in self.group_indices]
 
-    def ask_color_entry(self, *_event):
-        color, color_exa = colorchooser.askcolor(title="Choose color")
-        if color is not None:
-            self.color_entry.delete(0, tk.END)
-            self.color_entry.insert(0, str(list(color)))
-            self.tab2_canvas.itemconfig(self.part_color_rect, fill=color_exa)
-
     def get_focus(self):
         try:
             return isinstance(self.tk.focus_displayof(), (tk.Canvas, tk.Tk))
@@ -311,15 +304,6 @@ class GUI(GUIWidgets):
 
     def _set_color(self, color: str) -> None:
         self.tab2_canvas.itemconfig(self.part_color_rect, fill=color)
-
-    def change_color_entry(self, *event):
-        try:
-            color = eval(self.color_var.get())
-            color_str = "#%02x%02x%02x" % tuple(color)
-            self._set_color(color_str)
-        except:
-            if self.color_var.get() == "random" or self.color_var.get() == "":
-                self._set_color("#ffffff")
 
     def _update(self):
         if self.code_window is not None:

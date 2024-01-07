@@ -54,8 +54,6 @@ class Simulation:
         self.fps_update_delay = fps_update_delay
         self.rotate_mode = False
         self.last_particle_added_time = 0.0
-        self.mouse_down = False
-        self.mouse_down_start: Optional[float] = None
         self.shift = False
         self.start_save = False
         self.start_load = False
@@ -137,8 +135,6 @@ class Simulation:
 
     def _mouse_p(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
-        self.mouse_down_start = time.time()
-        self.mouse_down = True
         if self.state.mouse_mode in {"SELECT", "MOVE"}:
             selected = any(
                 self._mouse_p_part(p, event.x, event.y) for p in self.state.particles
@@ -166,7 +162,6 @@ class Simulation:
             self.add_particle(event.x, event.y)
 
     def _mouse_r(self, _event: tk.Event) -> None:
-        self.mouse_down = False
         if self.state.mouse_mode == "MOVE" or self.pasting:
             for p in self.state.particles:
                 p.mouse = False

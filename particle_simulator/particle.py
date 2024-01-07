@@ -62,11 +62,15 @@ class Particle(ParticleData):
         ] = None,
     ) -> None:
         if color == "random":
-            color = tuple(random.randint(0, 255) for _ in range(3))
+            color = (
+                random.randint(0, 255),
+                random.randint(0, 255),
+                random.randint(0, 255),
+            )
         elif len(color) != 3:
             raise ValueError(f"Expected 3 color channels, found {len(color)}")
         else:
-            color = tuple(color)
+            color = (color[0], color[1], color[2])
         if acceleration is None:
             acceleration = np.zeros(2)
         if velocity is None:

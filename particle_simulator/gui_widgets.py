@@ -28,7 +28,7 @@ class GUIWidgets:
         self.code_window: Optional[CodeWindow] = None
         self.extra_window: Optional[ExtraWindow] = None
 
-        self.toolbar = self.gui_canvas.create_rectangle(0, 0, width, 30, fill="#1f3333")
+        self.gui_canvas.create_rectangle(0, 0, width, 30, fill="#1f3333")
         self.gui_canvas.create_line(80, 0, 80, 30, fill="grey30")
 
         self.play_photo = tk.PhotoImage(

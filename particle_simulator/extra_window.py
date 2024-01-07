@@ -131,7 +131,6 @@ class ExtraWindow:
         self.stress_visualization_chk.place(x=25, y=220, anchor="nw")
         self.stress_visualization_bool.trace("w", self.update_stress)
 
-        self.min_hold_change = 1
         self.min_delta_change = 0.25
         self.changing_length_last_time = 0
         self.changing_length_plus = False
