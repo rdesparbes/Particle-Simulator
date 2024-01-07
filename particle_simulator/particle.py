@@ -7,8 +7,6 @@ from typing import (
     List,
     Sequence,
     Dict,
-    Union,
-    Literal,
     Iterable,
     Collection,
     Callable,
@@ -56,10 +54,8 @@ class Particle(ParticleData):
         group: str = "group1",
         separate_group: bool = False,
         gravity_mode: bool = False,
-        link_lengths: Optional[Dict[Self, Union[Literal["repel"], float]]] = None,
-        link_indices_lengths: Optional[
-            Dict[int, Union[Literal["repel"], float]]
-        ] = None,
+        link_lengths: Optional[Dict[Self, Optional[float]]] = None,
+        link_indices_lengths: Optional[Dict[int, Optional[float]]] = None,
     ) -> None:
         if color is None:
             color = (
@@ -135,7 +131,7 @@ class Particle(ParticleData):
     def link(
         particles: List["Particle"],
         fit_link: bool = False,
-        distance: Union[None, float, Literal["repel"]] = None,
+        distance: Optional[float] = None,
     ) -> None:
         for p in particles:
             p._link(particles, fit_link=fit_link, distance=distance)
@@ -236,7 +232,7 @@ class Particle(ParticleData):
             if distance == 0.0:
                 force = self._compute_default_force(p)
             else:
-                repel_r: Optional[float] = self._compute_repel_r(p)
+                repel_r: Optional[float] = self.link_lengths.get(p)
                 magnitude = compute_magnitude_strategy(self, p, distance, repel_r)
                 if repel_r is None:
                     repel_r = max(self.repel_r, p.repel_r)
@@ -276,12 +272,6 @@ class Particle(ParticleData):
             return np.zeros(2)
         force = np.random.uniform(-10, 10, 2)
         return force / np.linalg.norm(force) * -self.repulsion_strength
-
-    def _compute_repel_r(self, p: Self) -> Optional[float]:
-        repel_radius = self.link_lengths.get(p)
-        if repel_radius == "repel":
-            return None
-        return repel_radius
 
 
 def default_compute_magnitude_strategy(

@@ -3,8 +3,6 @@ from dataclasses import dataclass, field
 from typing import (
     Self,
     Tuple,
-    Union,
-    Literal,
     Dict,
     Collection,
     Optional,
@@ -38,12 +36,8 @@ class ParticleData:
     separate_group: bool = False
     gravity_mode: bool = False
     mouse = False
-    link_lengths: Dict[Self, Union[Literal["repel"], float]] = field(
-        default_factory=dict
-    )
-    link_indices_lengths: Dict[int, Union[Literal["repel"], float]] = field(
-        default_factory=dict
-    )
+    link_lengths: Dict[Self, Optional[float]] = field(default_factory=dict)
+    link_indices_lengths: Dict[int, Optional[float]] = field(default_factory=dict)
 
     def distance(self, x: float, y: float) -> float:
         return math.dist((x, y), (self.x, self.y))
@@ -124,20 +118,14 @@ class ParticleData:
         self,
         particles: Sequence[Self],
         fit_link: bool = False,
-        distance: Union[None, float, Literal["repel"]] = None,
+        distance: Optional[float] = None,
     ) -> None:
-        position: Optional[npt.NDArray[np.float_]] = (
-            np.array([self.x, self.y]) if fit_link else None
-        )
-
-        def _compute_link_length(p: ParticleData) -> Union[float, Literal["repel"]]:
-            if position is not None:
-                if distance is None:
-                    return float(np.linalg.norm(position - np.array([p.x, p.y])))
-                else:
-                    return distance
-            else:
-                return "repel"
+        def _compute_link_length(p: ParticleData) -> Optional[float]:
+            if not fit_link:
+                return None
+            if distance is None:
+                return self.distance(p.x, p.y)
+            return distance
 
         for particle in particles:
             self.link_lengths[particle] = _compute_link_length(particle)

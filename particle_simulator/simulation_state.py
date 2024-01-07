@@ -5,7 +5,6 @@ from typing import (
     List,
     Dict,
     Literal,
-    Union,
     Collection,
     Iterable,
     Optional,
@@ -45,7 +44,7 @@ class SimulationState(SimulationData):
     def link(
         particles: List[Particle],
         fit_link: bool = False,
-        distance: Union[None, float, Literal["repel"]] = None,
+        distance: Optional[float] = None,
     ) -> None:
         Particle.link(particles, fit_link, distance)
 
@@ -95,9 +94,9 @@ class SimulationState(SimulationData):
 
     def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
         for p in particles:
-            for link, value in p.link_lengths.items():
-                if value != "repel":
-                    self.link([p, link], fit_link=True, distance=value + amount)
+            for link, length in p.link_lengths.items():
+                if length is not None:
+                    self.link([p, link], fit_link=True, distance=length + amount)
 
     def execute(self, code: str) -> None:
         try:
@@ -139,5 +138,5 @@ class SimulationState(SimulationData):
         p = Particle(self, px, py, **asdict(particle_settings))
         self.register_particle(p)
         for link, length in temp_link_lengths.items():
-            self.link([link, p], fit_link=length != "repel", distance=length)
+            self.link([link, p], fit_link=length is not None, distance=length)
         return p
