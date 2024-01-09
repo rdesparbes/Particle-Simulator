@@ -107,6 +107,11 @@ class ParticleData:
     def __hash__(self) -> int:
         return id(self)
 
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, ParticleData):
+            return self is other
+        raise NotImplemented
+
     def _is_linked_to(self, p: Self) -> bool:
         return p in self.link_lengths
 
