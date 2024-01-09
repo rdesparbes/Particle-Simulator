@@ -9,6 +9,7 @@ from typing import (
     Iterable,
     Callable,
     Tuple,
+    Iterator,
 )
 
 import numpy as np
@@ -122,44 +123,44 @@ class Particle(ParticleData):
         )
         return max_force
 
-    def update(self, near_particles: Iterable[Self]) -> None:
+    def iter_interactions(
+        self, near_particles: Iterable[Self]
+    ) -> Iterator[Tuple[npt.NDArray[np.float_], Optional[Link]]]:
+        if self._sim.paused or self.locked:
+            return
+        if self._sim.calculate_radii_diff:
+            compute_magnitude_strategy: ComputeMagnitudeStrategy = (
+                radii_compute_magnitude_strategy
+            )
+        else:
+            compute_magnitude_strategy = default_compute_magnitude_strategy
+        for near_particle in near_particles:
+            acceleration, link_percentage = self._compute_interactions(
+                near_particle, compute_magnitude_strategy
+            )
+            link: Optional[Link] = None
+            if link_percentage is not None:
+                link = Link(self, near_particle, link_percentage)
+            yield acceleration, link
+
+    def update(self, acceleration: npt.NDArray[np.float_]) -> None:
         if not self._sim.paused:
-            acceleration = np.zeros(2)
             acceleration += self._apply_force(self._sim.g_vector * self.mass)  # Gravity
             acceleration += self._apply_force(self._sim.wind_force * self.radius)
 
             for force in self._collisions.values():
                 acceleration += self._apply_force(force)
 
-            if not self.locked:
-                if self._sim.calculate_radii_diff:
-                    compute_magnitude_strategy: ComputeMagnitudeStrategy = (
-                        radii_compute_magnitude_strategy
-                    )
-                else:
-                    compute_magnitude_strategy = default_compute_magnitude_strategy
-                for near_particle in near_particles:
-                    acc, link_percentage = self._compute_interactions(
-                        near_particle, compute_magnitude_strategy
-                    )
-                    acceleration += acc
-                    if link_percentage is not None:
-                        if self._sim.stress_visualization:
-                            link = Link(self, near_particle, link_percentage)
-                            self._sim.link_colors.append(link)
-                        if link_percentage > 1.0:
-                            Particle.unlink([self, near_particle])
-
-                if not self.mouse:
-                    self.velocity += np.clip(acceleration, -2, 2) * self._sim.speed
-                    self.velocity += (
-                        np.random.uniform(-1, 1, 2)
-                        * self._sim.temperature
-                        * self._sim.speed
-                    )
-                    self.velocity *= self._sim.air_res_calc
-                    self.x += self.velocity[0] * self._sim.speed
-                    self.y += self.velocity[1] * self._sim.speed
+            if not self.locked and not self.mouse:
+                self.velocity += np.clip(acceleration, -2, 2) * self._sim.speed
+                self.velocity += (
+                    np.random.uniform(-1, 1, 2)
+                    * self._sim.temperature
+                    * self._sim.speed
+                )
+                self.velocity *= self._sim.air_res_calc
+                self.x += self.velocity[0] * self._sim.speed
+                self.y += self.velocity[1] * self._sim.speed
 
         if self.mouse:
             delta_mx = self._sim.mx - self._sim.prev_mx

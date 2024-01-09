@@ -8,6 +8,7 @@ from typing import (
     Tuple,
     List,
     Union,
+    Iterable,
 )
 
 import cv2
@@ -99,6 +100,19 @@ class Simulation:
         for p in temp:
             self.state.remove_particle(p)
 
+    def _compute_acceleration(
+        self, particle: Particle, near_particles: Iterable[Particle]
+    ) -> npt.NDArray[np.float_]:
+        acceleration = np.zeros(2)
+        for acc, link in particle.iter_interactions(near_particles):
+            acceleration += acc
+            if link is not None:
+                if self.state.stress_visualization:
+                    self.state.link_colors.append(link)
+                if link.percentage > 1.0:
+                    Particle.unlink([link.particle_a, link.particle_b])
+        return acceleration
+
     def _simulate_step(self):
         self.state.link_colors = []
         if self.state.use_grid:
@@ -118,7 +132,8 @@ class Simulation:
                 near_particles = self.grid.return_particles(particle)
             else:
                 near_particles = self.state.particles
-            particle.update(near_particles)
+            acceleration = self._compute_acceleration(particle, near_particles)
+            particle.update(acceleration)
             if particle.is_out_of_bounds():
                 self.state.remove_particle(particle)
 
