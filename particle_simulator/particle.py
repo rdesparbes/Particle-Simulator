@@ -269,6 +269,7 @@ def default_compute_magnitude_strategy(
         repel_r=repel_r,
         attr=part_b.attraction_strength + part_a.attraction_strength,
         repel=part_b.repulsion_strength + part_a.repulsion_strength,
+        is_in_group=part_a._is_in_same_group(part_b),
         gravity=part_a.gravity_mode or part_b.gravity_mode,
     )
     return magnitude
@@ -281,6 +282,7 @@ def radii_compute_magnitude_strategy(
     repel_r: Optional[float],
 ) -> float:
     magnitude = 0.0
+    is_in_group = part_a._is_in_same_group(part_b)
     if part_b.reaches(distance):
         magnitude += part_a.calculate_magnitude(
             part=part_b,
@@ -288,6 +290,7 @@ def radii_compute_magnitude_strategy(
             repel_r=part_b.repel_r if repel_r is None else repel_r,
             attr=part_b.attraction_strength,
             repel=part_b.repulsion_strength,
+            is_in_group=is_in_group,
             gravity=part_b.gravity_mode,
         )
     if part_a.reaches(distance):
@@ -297,6 +300,7 @@ def radii_compute_magnitude_strategy(
             repel_r=part_a.repel_r if repel_r is None else repel_r,
             attr=part_a.attraction_strength,
             repel=part_a.repulsion_strength,
+            is_in_group=is_in_group,
             gravity=part_a.gravity_mode,
         )
     return magnitude

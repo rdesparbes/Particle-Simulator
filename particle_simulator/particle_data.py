@@ -93,12 +93,13 @@ class ParticleData:
         distance: float,
         gravity: bool,
         repel: float,
+        is_in_group: bool,
         repel_r: float,
     ) -> float:
         rest_distance = abs(distance - repel_r)
         if distance < repel_r:
             return -repel * rest_distance / 10.0
-        if self._is_in_same_group(part) or self._is_linked_to(part):
+        if is_in_group or self._is_linked_to(part):
             if gravity:
                 return 10.0 * attr * self.mass * part.mass / distance**2
             return attr * rest_distance / 3000.0
