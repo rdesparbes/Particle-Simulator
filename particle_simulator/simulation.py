@@ -100,19 +100,19 @@ class Simulation:
         for p in temp:
             self.state.remove_particle(p)
 
-    def _compute_acceleration(
+    def _compute_force(
         self, particle: Particle, near_particles: Iterable[Particle]
     ) -> npt.NDArray[np.float_]:
-        acceleration = np.zeros(2)
+        force = np.zeros(2)
         for near_particle, interaction in particle.iter_interactions(near_particles):
-            acceleration += interaction.acceleration
+            force += interaction.force
             if interaction.link_percentage is not None:
                 link = Link(particle, near_particle, interaction.link_percentage)
                 if self.state.stress_visualization:
                     self.state.link_colors.append(link)
                 if link.percentage > 1.0:
                     Particle.unlink([link.particle_a, link.particle_b])
-        return acceleration
+        return force
 
     def _simulate_step(self):
         self.state.link_colors = []
@@ -133,8 +133,8 @@ class Simulation:
                 near_particles = self.grid.return_particles(particle)
             else:
                 near_particles = self.state.particles
-            acceleration = self._compute_acceleration(particle, near_particles)
-            particle.update(acceleration)
+            force = self._compute_force(particle, near_particles)
+            particle.update(force)
             if particle.is_out_of_bounds():
                 self.state.remove_particle(particle)
 

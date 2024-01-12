@@ -135,8 +135,9 @@ class Particle(ParticleData):
                 yield near_particle, interaction
 
     def _compute_delta_velocity(
-        self, acceleration: npt.NDArray[np.float_]
+        self, force: npt.NDArray[np.float_]
     ) -> npt.NDArray[np.float_]:
+        acceleration = self._apply_force(force)
         acceleration += self._apply_force(self._sim.g_vector * self.mass)
         acceleration += self._apply_force(self._sim.wind_force * self.radius)
 
@@ -147,7 +148,7 @@ class Particle(ParticleData):
         delta_v += np.random.uniform(-1, 1, 2) * self._sim.temperature * self._sim.speed
         return delta_v
 
-    def update(self, acceleration: npt.NDArray[np.float_]) -> None:
+    def update(self, force: npt.NDArray[np.float_]) -> None:
         if self.mouse:
             delta_mouse_pos = self._sim.delta_mouse_pos
             if not self._sim.paused:
@@ -156,7 +157,7 @@ class Particle(ParticleData):
             self.x += delta_mx
             self.y += delta_my
         elif not self._sim.paused and not self.locked:
-            self.velocity += self._compute_delta_velocity(acceleration)
+            self.velocity += self._compute_delta_velocity(force)
             self.velocity *= self._sim.air_res_calc
             dx, dy = self.velocity * self._sim.speed
             self.x += dx
@@ -205,9 +206,8 @@ class Particle(ParticleData):
                 max_force = p._compute_max_force(distance, repel_r)
                 link_percentage = self._compute_link_percentage(magnitude, max_force)
             force = direction * magnitude
-        acceleration = self._apply_force(force)
         p._collisions[self] = -force
-        return ParticleInteraction(acceleration, link_percentage)
+        return ParticleInteraction(force, link_percentage)
 
     def _compute_interactions(
         self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy

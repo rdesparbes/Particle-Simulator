@@ -7,5 +7,5 @@ import numpy.typing as npt
 
 @dataclass
 class ParticleInteraction:
-    acceleration: npt.NDArray[np.float_] = field(default_factory=lambda: np.zeros(2))
+    force: npt.NDArray[np.float_] = field(default_factory=lambda: np.zeros(2))
     link_percentage: Optional[float] = None
