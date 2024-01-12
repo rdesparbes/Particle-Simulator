@@ -150,10 +150,10 @@ class Particle(ParticleData):
     def update(self, acceleration: npt.NDArray[np.float_]) -> None:
         if not any((self._sim.paused, self.locked, self.mouse)):
             self.velocity += self._compute_delta_velocity(acceleration)
-        self.velocity *= self._sim.air_res_calc
-        dx, dy = self.velocity * self._sim.speed
-        self.x += dx
-        self.y += dy
+            self.velocity *= self._sim.air_res_calc
+            dx, dy = self.velocity * self._sim.speed
+            self.x += dx
+            self.y += dy
 
         if self.mouse:
             delta_mx = self._sim.mx - self._sim.prev_mx
