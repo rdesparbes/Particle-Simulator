@@ -106,6 +106,7 @@ class Simulation:
         force = np.zeros(2)
         for near_particle, interaction in particle.iter_interactions(near_particles):
             force += interaction.force
+            near_particle._collisions[particle] = -interaction.force
             if interaction.link_percentage is not None:
                 link = Link(particle, near_particle, interaction.link_percentage)
                 if self.state.stress_visualization:

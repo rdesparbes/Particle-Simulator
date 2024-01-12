@@ -206,7 +206,6 @@ class Particle(ParticleData):
                 max_force = p._compute_max_force(distance, repel_r)
                 link_percentage = self._compute_link_percentage(magnitude, max_force)
             force = direction * magnitude
-        p._collisions[self] = -force
         return ParticleInteraction(force, link_percentage)
 
     def _compute_interactions(
