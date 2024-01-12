@@ -149,9 +149,11 @@ class ParticleData:
         )
 
     def _compute_collision_speed(self, other: Self) -> npt.NDArray[np.float_]:
-        return (self.mass - other.mass) / (
-            self.mass + other.mass
-        ) * self.velocity + 2 * other.mass / (self.mass + other.mass) * other.velocity
+        total_mass = self.mass + other.mass
+        return (
+            (self.mass - other.mass) / total_mass * self.velocity
+            + 2.0 * other.mass / total_mass * other.velocity
+        )
 
     @staticmethod
     def link(

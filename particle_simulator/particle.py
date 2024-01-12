@@ -143,24 +143,27 @@ class Particle(ParticleData):
                 link = Link(self, near_particle, link_percentage)
             yield acceleration, link
 
+    def _compute_delta_velocity(
+        self, acceleration: npt.NDArray[np.float_]
+    ) -> npt.NDArray[np.float_]:
+        if self._sim.paused or self.locked or self.mouse:
+            return np.zeros(2)
+        acceleration += self._apply_force(self._sim.g_vector * self.mass)
+        acceleration += self._apply_force(self._sim.wind_force * self.radius)
+
+        for force in self._collisions.values():
+            acceleration += self._apply_force(force)
+
+        delta_v = np.clip(acceleration, -2, 2) * self._sim.speed
+        delta_v += np.random.uniform(-1, 1, 2) * self._sim.temperature * self._sim.speed
+        return delta_v
+
     def update(self, acceleration: npt.NDArray[np.float_]) -> None:
-        if not self._sim.paused:
-            acceleration += self._apply_force(self._sim.g_vector * self.mass)  # Gravity
-            acceleration += self._apply_force(self._sim.wind_force * self.radius)
-
-            for force in self._collisions.values():
-                acceleration += self._apply_force(force)
-
-            if not self.locked and not self.mouse:
-                self.velocity += np.clip(acceleration, -2, 2) * self._sim.speed
-                self.velocity += (
-                    np.random.uniform(-1, 1, 2)
-                    * self._sim.temperature
-                    * self._sim.speed
-                )
-                self.velocity *= self._sim.air_res_calc
-                self.x += self.velocity[0] * self._sim.speed
-                self.y += self.velocity[1] * self._sim.speed
+        self.velocity += self._compute_delta_velocity(acceleration)
+        self.velocity *= self._sim.air_res_calc
+        vx, vy = self.velocity * self._sim.speed
+        self.x += vx
+        self.y += vy
 
         if self.mouse:
             delta_mx = self._sim.mx - self._sim.prev_mx
@@ -197,19 +200,19 @@ class Particle(ParticleData):
         self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
     ) -> Tuple[npt.NDArray[np.float_], Optional[float]]:
         acceleration: npt.NDArray[np.float_] = np.zeros(2)
+        link_percentage: Optional[float] = None
         if p == self:
-            return acceleration, None
+            return acceleration, link_percentage
 
         if (
             not self.linked_group_particles
             and not self._is_linked_to(p)
             and self._is_in_same_group(p)
         ) or p in self._collisions:
-            return acceleration, None
+            return acceleration, link_percentage
 
         direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
         distance: float = float(np.linalg.norm(direction))
-        link_percentage: Optional[float] = None
         if distance != 0:
             direction = direction / distance
         if p.reaches(distance) or self.reaches(distance):
@@ -229,24 +232,30 @@ class Particle(ParticleData):
             acceleration += self._apply_force(force)
             p._collisions[self] = -force
 
-        if self.collisions and distance < self.radius + p.radius:
+        overlap = self.radius + p.radius - distance
+        if self.collisions and overlap > 0.0:
             new_speed = self._compute_collision_speed(p)
             p.velocity = p._compute_collision_speed(self)
             self.velocity = new_speed
 
             # Visual overlap fix
-            translate_vector = direction * (distance - (self.radius + p.radius))
-            self._collide(translate_vector, p.mass)
+            translate_vector = overlap * direction
+            dx, dy = self._compute_collision_delta_pos(-translate_vector, p.mass)
+            self.x += dx
+            self.y += dy
             if not p.locked:
-                p._collide(-translate_vector, self.mass)
+                p_dx, p_dy = p._compute_collision_delta_pos(translate_vector, self.mass)
+                p.x += p_dx
+                p.y += p_dy
 
         return acceleration, link_percentage
 
-    def _collide(self, translate_vector: npt.NDArray[np.float_], mass: float) -> None:
-        if not self.mouse:
-            delta_pos = translate_vector * (self.mass / (self.mass + mass))
-            self.x += delta_pos[0]
-            self.y += delta_pos[1]
+    def _compute_collision_delta_pos(
+        self, translate_vector: npt.NDArray[np.float_], mass: float
+    ) -> npt.NDArray[np.float_]:
+        if self.mouse:
+            return np.zeros(2)
+        return translate_vector * (self.mass / (self.mass + mass))
 
     def _compute_default_force(
         self,
