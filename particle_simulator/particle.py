@@ -191,27 +191,24 @@ class Particle(ParticleData):
     ) -> Optional[ParticleInteraction]:
         direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
         distance: float = float(np.linalg.norm(direction))
-        if distance != 0:
+        if not (p.reaches(distance) or self.reaches(distance)):
+            return None
+        link_percentage: Optional[float] = None
+        if distance == 0.0:
+            force = self._compute_default_force(p)
+        else:
             direction = direction / distance
-        if p.reaches(distance) or self.reaches(distance):
-            link_percentage: Optional[float] = None
-            if distance == 0.0:
-                force = self._compute_default_force(p)
-            else:
-                repel_r: Optional[float] = self.link_lengths.get(p)
-                magnitude = compute_magnitude_strategy(self, p, distance, repel_r)
-                if repel_r is None:
-                    repel_r = max(self.repel_r, p.repel_r)
-                if self._is_linked_to(p):
-                    max_force = p._compute_max_force(distance, repel_r)
-                    link_percentage = self._compute_link_percentage(
-                        magnitude, max_force
-                    )
-                force = direction * magnitude
-            acceleration = self._apply_force(force)
-            p._collisions[self] = -force
-            return ParticleInteraction(acceleration, link_percentage)
-        return None
+            repel_r: Optional[float] = self.link_lengths.get(p)
+            magnitude = compute_magnitude_strategy(self, p, distance, repel_r)
+            if repel_r is None:
+                repel_r = max(self.repel_r, p.repel_r)
+            if self._is_linked_to(p):
+                max_force = p._compute_max_force(distance, repel_r)
+                link_percentage = self._compute_link_percentage(magnitude, max_force)
+            force = direction * magnitude
+        acceleration = self._apply_force(force)
+        p._collisions[self] = -force
+        return ParticleInteraction(acceleration, link_percentage)
 
     def _compute_interactions(
         self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
