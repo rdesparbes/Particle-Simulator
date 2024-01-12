@@ -83,8 +83,8 @@ class ParticleData:
             return self.repel_r
         return self.radius
 
-    def _apply_force(self, force: npt.NDArray[np.float_]) -> npt.NDArray[np.float_]:
-        return force / abs(self.mass)
+    def _to_acceleration(self, force: npt.NDArray[np.float_]) -> npt.NDArray[np.float_]:
+        return force / self.mass
 
     def calculate_magnitude(
         self,

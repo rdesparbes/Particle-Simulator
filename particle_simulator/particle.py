@@ -128,7 +128,7 @@ class Particle(ParticleData):
         else:
             compute_magnitude_strategy = default_compute_magnitude_strategy
         for near_particle in near_particles:
-            interaction = self._compute_interactions(
+            interaction = self._compute_interaction(
                 near_particle, compute_magnitude_strategy
             )
             if interaction is not None:
@@ -137,16 +137,17 @@ class Particle(ParticleData):
     def _compute_delta_velocity(
         self, force: npt.NDArray[np.float_]
     ) -> npt.NDArray[np.float_]:
-        acceleration = self._apply_force(force)
-        acceleration += self._apply_force(self._sim.g_vector * self.mass)
-        acceleration += self._apply_force(self._sim.wind_force * self.radius)
+        acceleration = self._to_acceleration(force)
+        acceleration += self._sim.g_vector
+        acceleration += self._to_acceleration(self._sim.wind_force * self.radius)
 
-        for force in self._collisions.values():
-            acceleration += self._apply_force(force)
+        for collision_force in self._collisions.values():
+            acceleration += self._to_acceleration(collision_force)
 
-        delta_v = np.clip(acceleration, -2, 2) * self._sim.speed
-        delta_v += np.random.uniform(-1, 1, 2) * self._sim.temperature * self._sim.speed
-        return delta_v
+        return (
+            np.clip(acceleration, -2, 2)
+            + np.random.uniform(-1, 1, 2) * self._sim.temperature
+        ) * self._sim.speed
 
     def update(self, force: npt.NDArray[np.float_]) -> None:
         if self.mouse:
@@ -208,7 +209,7 @@ class Particle(ParticleData):
             force = direction * magnitude
         return ParticleInteraction(force, link_percentage)
 
-    def _compute_interactions(
+    def _compute_interaction(
         self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
     ) -> Optional[ParticleInteraction]:
         if p == self:
@@ -223,7 +224,7 @@ class Particle(ParticleData):
 
         interaction = self._compute_force(p, compute_magnitude_strategy)
 
-        direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
+        direction: npt.NDArray[np.float_] = np.subtract([p.x, p.y], [self.x, self.y])
         distance: float = float(np.linalg.norm(direction))
         overlap = self.radius + p.radius - distance
         if self.collisions and overlap > 0.0:
