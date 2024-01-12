@@ -21,7 +21,7 @@ from .controller_state import ControllerState
 from .error import Error
 from .grid import Grid
 from .gui import GUI
-from .particle import Particle
+from .particle import Particle, Link
 from .particle_factory import ParticleFactory
 from .sim_pickle import (
     SimPickle,
@@ -104,9 +104,10 @@ class Simulation:
         self, particle: Particle, near_particles: Iterable[Particle]
     ) -> npt.NDArray[np.float_]:
         acceleration = np.zeros(2)
-        for acc, link in particle.iter_interactions(near_particles):
-            acceleration += acc
-            if link is not None:
+        for near_particle, interaction in particle.iter_interactions(near_particles):
+            acceleration += interaction.acceleration
+            if interaction.link_percentage is not None:
+                link = Link(particle, near_particle, interaction.link_percentage)
                 if self.state.stress_visualization:
                     self.state.link_colors.append(link)
                 if link.percentage > 1.0:

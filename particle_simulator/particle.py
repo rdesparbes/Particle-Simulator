@@ -8,14 +8,15 @@ from typing import (
     Dict,
     Iterable,
     Callable,
-    Tuple,
     Iterator,
+    Tuple,
 )
 
 import numpy as np
 import numpy.typing as npt
 
 from .particle_data import ParticleData
+from .particle_interaction import ParticleInteraction
 from .simulation_data import SimulationData
 
 
@@ -125,7 +126,7 @@ class Particle(ParticleData):
 
     def iter_interactions(
         self, near_particles: Iterable[Self]
-    ) -> Iterator[Tuple[npt.NDArray[np.float_], Optional[Link]]]:
+    ) -> Iterator[Tuple[Self, ParticleInteraction]]:
         if self._sim.paused or self.locked:
             return
         if self._sim.calculate_radii_diff:
@@ -135,13 +136,11 @@ class Particle(ParticleData):
         else:
             compute_magnitude_strategy = default_compute_magnitude_strategy
         for near_particle in near_particles:
-            acceleration, link_percentage = self._compute_interactions(
+            interaction = self._compute_interactions(
                 near_particle, compute_magnitude_strategy
             )
-            link: Optional[Link] = None
-            if link_percentage is not None:
-                link = Link(self, near_particle, link_percentage)
-            yield acceleration, link
+            if interaction is not None:
+                yield near_particle, interaction
 
     def _compute_delta_velocity(
         self, acceleration: npt.NDArray[np.float_]
@@ -195,26 +194,15 @@ class Particle(ParticleData):
             or self.y_max <= 0
         )
 
-    def _compute_interactions(
+    def _compute_force(
         self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
-    ) -> Tuple[npt.NDArray[np.float_], Optional[float]]:
-        acceleration: npt.NDArray[np.float_] = np.zeros(2)
-        link_percentage: Optional[float] = None
-        if p == self:
-            return acceleration, link_percentage
-
-        if (
-            not self.linked_group_particles
-            and not self._is_linked_to(p)
-            and self._is_in_same_group(p)
-        ) or p in self._collisions:
-            return acceleration, link_percentage
-
+    ) -> Optional[ParticleInteraction]:
         direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
         distance: float = float(np.linalg.norm(direction))
         if distance != 0:
             direction = direction / distance
         if p.reaches(distance) or self.reaches(distance):
+            link_percentage: Optional[float] = None
             if distance == 0.0:
                 force = self._compute_default_force(p)
             else:
@@ -228,9 +216,28 @@ class Particle(ParticleData):
                         magnitude, max_force
                     )
                 force = direction * magnitude
-            acceleration += self._apply_force(force)
+            acceleration = self._apply_force(force)
             p._collisions[self] = -force
+            return ParticleInteraction(acceleration, link_percentage)
+        return None
 
+    def _compute_interactions(
+        self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
+    ) -> Optional[ParticleInteraction]:
+        if p == self:
+            return None
+
+        if (
+            not self.linked_group_particles
+            and not self._is_linked_to(p)
+            and self._is_in_same_group(p)
+        ) or p in self._collisions:
+            return None
+
+        interaction = self._compute_force(p, compute_magnitude_strategy)
+
+        direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
+        distance: float = float(np.linalg.norm(direction))
         overlap = self.radius + p.radius - distance
         if self.collisions and overlap > 0.0:
             new_speed = self._compute_collision_speed(p)
@@ -247,7 +254,7 @@ class Particle(ParticleData):
                 p.x += p_dx
                 p.y += p_dy
 
-        return acceleration, link_percentage
+        return interaction
 
     def _compute_collision_delta_pos(
         self, translate_vector: npt.NDArray[np.float_], mass: float
