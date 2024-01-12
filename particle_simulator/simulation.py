@@ -108,11 +108,13 @@ class Simulation:
             force += interaction.force
             near_particle._collisions[particle] = -interaction.force
             if interaction.link_percentage is not None:
-                link = Link(particle, near_particle, interaction.link_percentage)
-                if self.state.stress_visualization:
-                    self.state.link_colors.append(link)
-                if link.percentage > 1.0:
-                    Particle.unlink([link.particle_a, link.particle_b])
+                if interaction.link_percentage > 1.0:
+                    Particle.unlink([particle, near_particle])
+                elif self.state.stress_visualization:
+                    self.state.link_colors.append(
+                        Link(particle, near_particle, interaction.link_percentage)
+                    )
+
         return force
 
     def _simulate_step(self):
