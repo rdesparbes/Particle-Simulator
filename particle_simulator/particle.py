@@ -146,8 +146,6 @@ class Particle(ParticleData):
     def _compute_delta_velocity(
         self, acceleration: npt.NDArray[np.float_]
     ) -> npt.NDArray[np.float_]:
-        if self._sim.paused or self.locked or self.mouse:
-            return np.zeros(2)
         acceleration += self._apply_force(self._sim.g_vector * self.mass)
         acceleration += self._apply_force(self._sim.wind_force * self.radius)
 
@@ -159,19 +157,20 @@ class Particle(ParticleData):
         return delta_v
 
     def update(self, acceleration: npt.NDArray[np.float_]) -> None:
-        self.velocity += self._compute_delta_velocity(acceleration)
+        if not any((self._sim.paused, self.locked, self.mouse)):
+            self.velocity += self._compute_delta_velocity(acceleration)
         self.velocity *= self._sim.air_res_calc
-        vx, vy = self.velocity * self._sim.speed
-        self.x += vx
-        self.y += vy
+        dx, dy = self.velocity * self._sim.speed
+        self.x += dx
+        self.y += dy
 
         if self.mouse:
             delta_mx = self._sim.mx - self._sim.prev_mx
             delta_my = self._sim.my - self._sim.prev_my
-            self.x += delta_mx
-            self.y += delta_my
             if not self._sim.paused:
                 self.velocity = np.divide([delta_mx, delta_my], self._sim.speed)
+            self.x += delta_mx
+            self.y += delta_my
 
         if self._sim.right and self.x_max >= self._sim.width:
             self.velocity *= [-self.bounciness, 1 - self._sim.ground_friction]
