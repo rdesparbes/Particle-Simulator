@@ -148,20 +148,19 @@ class Particle(ParticleData):
         return delta_v
 
     def update(self, acceleration: npt.NDArray[np.float_]) -> None:
-        if not any((self._sim.paused, self.locked, self.mouse)):
+        if self.mouse:
+            delta_mouse_pos = self._sim.delta_mouse_pos
+            if not self._sim.paused:
+                self.velocity = delta_mouse_pos / self._sim.speed
+            delta_mx, delta_my = delta_mouse_pos
+            self.x += delta_mx
+            self.y += delta_my
+        elif not self._sim.paused and not self.locked:
             self.velocity += self._compute_delta_velocity(acceleration)
             self.velocity *= self._sim.air_res_calc
             dx, dy = self.velocity * self._sim.speed
             self.x += dx
             self.y += dy
-
-        if self.mouse:
-            delta_mx = self._sim.mx - self._sim.prev_mx
-            delta_my = self._sim.my - self._sim.prev_my
-            if not self._sim.paused:
-                self.velocity = np.divide([delta_mx, delta_my], self._sim.speed)
-            self.x += delta_mx
-            self.y += delta_my
 
         if self._sim.right and self.x_max >= self._sim.width:
             self.velocity *= [-self.bounciness, 1 - self._sim.ground_friction]

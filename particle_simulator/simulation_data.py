@@ -50,3 +50,7 @@ class SimulationData:
 
     def set_code(self, code) -> None:
         self.code = code
+
+    @property
+    def delta_mouse_pos(self) -> npt.NDArray[np.float_]:
+        return np.subtract([self.mx, self.my], [self.prev_mx, self.prev_my])
