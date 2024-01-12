@@ -21,12 +21,12 @@ from .controller_state import ControllerState
 from .error import Error
 from .grid import Grid
 from .gui import GUI
-from .particle import Particle, Link
+from .particle import Particle
 from .particle_factory import ParticleFactory
 from .sim_pickle import (
     SimPickle,
 )
-from .simulation_state import SimulationState
+from .simulation_state import SimulationState, Link
 
 
 class Simulation:

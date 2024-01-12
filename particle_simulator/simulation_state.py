@@ -9,16 +9,23 @@ from typing import (
     Iterable,
     Optional,
     Callable,
+    NamedTuple,
 )
 
 import numpy as np
 
 from particle_simulator.error import Error
-from particle_simulator.particle import Particle, Link
+from particle_simulator.particle import Particle
 from particle_simulator.particle_factory import ParticleFactory
 from particle_simulator.simulation_data import SimulationData
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
+
+
+class Link(NamedTuple):
+    particle_a: Particle
+    particle_b: Particle
+    percentage: float
 
 
 @dataclass(kw_only=True)

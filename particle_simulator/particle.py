@@ -3,7 +3,6 @@ from typing import (
     Self,
     Any,
     Optional,
-    NamedTuple,
     Sequence,
     Dict,
     Iterable,
@@ -18,13 +17,6 @@ import numpy.typing as npt
 from .particle_data import ParticleData
 from .particle_interaction import ParticleInteraction
 from .simulation_data import SimulationData
-
-
-class Link(NamedTuple):
-    particle_a: "Particle"
-    particle_b: "Particle"
-    percentage: float
-
 
 ComputeMagnitudeStrategy = Callable[
     ["Particle", "Particle", float, Optional[float]], float
