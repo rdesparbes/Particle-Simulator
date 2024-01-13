@@ -170,18 +170,14 @@ class Simulation:
         self.gui.canvas.focus_set()
         if self.state.mouse_mode == "SELECT":
             selected = False
-            for p in self.state.particles:
-                if not self._is_in_range(p, event.x, event.y):
-                    continue
+            for p in self._iter_in_range(event.x, event.y):
                 self.state.select_particle(p)
                 selected = True
             if not selected:
                 self.state.selection = []
         elif self.state.mouse_mode == "MOVE":
             selected = False
-            for p in self.state.particles:
-                if not self._is_in_range(p, event.x, event.y):
-                    continue
+            for p in self._iter_in_range(event.x, event.y):
                 p.mouse = True
                 if p in self.state.selection:
                     selected = True
