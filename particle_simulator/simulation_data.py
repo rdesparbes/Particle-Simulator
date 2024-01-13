@@ -55,7 +55,9 @@ class SimulationData:
 
     @property
     def delta_mouse_pos(self) -> npt.NDArray[np.float_]:
-        return np.subtract([self.mx, self.my], [self.prev_mx, self.prev_my])
+        return np.subtract([self.mx, self.my], [self.prev_mx, self.prev_my]).astype(
+            np.float_
+        )
 
     @property
     def rectangle(self) -> Rectangle:

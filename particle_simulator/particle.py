@@ -191,12 +191,10 @@ class Particle(ParticleData):
 
     def update(self, force: Optional[npt.NDArray[np.float_]] = None) -> None:
         if self.mouse:
-            delta_mouse_pos = self._sim.delta_mouse_pos
-            if not self._sim.paused:
-                self.velocity = delta_mouse_pos * self._sim.speed
-            delta_mx, delta_my = delta_mouse_pos
-            self.x += delta_mx
-            self.y += delta_my
+            self.velocity = self._sim.delta_mouse_pos
+            dx, dy = self.velocity
+            self.x += dx
+            self.y += dy
         elif force is not None and not self.locked:
             self.velocity += self._compute_delta_velocity(force)
             self.velocity *= self._sim.air_res_calc
