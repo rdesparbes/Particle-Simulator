@@ -131,7 +131,7 @@ class Simulation:
         force += np.sum(list(particle._collisions.values()), axis=0)
         return force
 
-    def _simulate_step(self):
+    def _simulate_step(self) -> None:
         self.state.link_colors = []
         if self.state.use_grid:
             self.grid.init_grid(self.state.particles)
@@ -143,7 +143,7 @@ class Simulation:
             self.state.toggle_pause = False
         for particle in self.state.particles:
             if not particle.interacts:
-                near_particles = []
+                near_particles: Iterable[Particle] = []
             elif particle.interacts_with_all:
                 near_particles = self.state.particles
             elif self.state.use_grid:
@@ -299,7 +299,7 @@ class Simulation:
             width=self.state.width,
         )
 
-    def _update_grid(self, *_event) -> None:
+    def _update_grid(self, *_event: tk.Event) -> None:
         row_count = self.gui.grid_res_x_value.get()
         col_count = self.gui.grid_res_y_value.get()
         self.update_grid(row_count, col_count)
@@ -458,7 +458,7 @@ class Simulation:
         except Exception as error:
             self.state.error = Error("Loading-Error", error)
 
-    def _handle_save_manager(self):
+    def _handle_save_manager(self) -> None:
         if self.start_save:
             self.save()
             self.start_save = False
@@ -470,7 +470,7 @@ class Simulation:
     def _fps_update_time(self) -> float:
         return self.prev_fps_update_time + self.fps_update_delay
 
-    def _update_timings(self, new_time: float):
+    def _update_timings(self, new_time: float) -> None:
         if new_time >= self._fps_update_time:
             try:
                 self.fps = 1.0 / (new_time - self.prev_time)
@@ -479,7 +479,7 @@ class Simulation:
             self.prev_fps_update_time = new_time
         self.prev_time = new_time
 
-    def _update_mouse_position(self):
+    def _update_mouse_position(self) -> None:
         self.state.prev_mx, self.state.prev_my = self.state.mx, self.state.my
         self.state.mx, self.state.my = self.gui.get_mouse_pos()
 

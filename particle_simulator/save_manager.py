@@ -11,7 +11,7 @@ class SaveManager:
         self.file_location = file_location
         self.filename = "simulation"
 
-    def save(self, data: SimPickle, filename: Optional[str] = None):
+    def save(self, data: SimPickle, filename: Optional[str] = None) -> None:
         if filename is None:
             filename = asksaveasfilename(
                 initialdir=self.file_location,

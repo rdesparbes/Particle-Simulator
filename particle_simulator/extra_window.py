@@ -2,6 +2,7 @@ import os
 import time
 import tkinter as tk
 from tkinter import colorchooser
+from typing import Optional
 
 import numpy as np
 
@@ -133,8 +134,8 @@ class ExtraWindow:
 
         self.min_delta_change = 0.25
         self.changing_length_last_time = 0
-        self.changing_length_plus = False
-        self.changing_length_minus = False
+        self.changing_length_plus: Optional[float] = None
+        self.changing_length_minus: Optional[float] = None
         tk.Label(
             self.tk, text="Change selected fit-link-length:", font=("helvetica", 8)
         ).place(x=25, y=245, anchor="nw")
@@ -183,7 +184,7 @@ class ExtraWindow:
         )
         self.link_shorter_button.place(x=125, y=275, anchor="center")
 
-    def update_gravity(self, *event):
+    def update_gravity(self, *_event: tk.Event) -> None:
         try:
             rads = np.radians(self.gravity_dir.get())
             self.sim.g_dir = np.array([np.sin(rads), np.cos(rads)])
@@ -191,10 +192,10 @@ class ExtraWindow:
             self.g_dir_line = self.gui_canvas.create_line(
                 200, 40, *(self.sim.g_dir * 15 + np.array([200, 40]))
             )
-        except:
+        except Exception:
             pass
 
-    def update_wind(self, *event):
+    def update_wind(self, *_event: tk.Event) -> None:
         try:
             rads = np.radians(self.wind_dir.get())
             self.sim.wind_force = (
@@ -204,22 +205,22 @@ class ExtraWindow:
             self.wind_line = self.gui_canvas.create_line(
                 200, 75, *(self.sim.wind_force * 100 + np.array([200, 75]))
             )
-        except:
+        except Exception:
             pass
 
-    def update_stress(self, *event):
+    def update_stress(self, *_event: tk.Event) -> None:
         self.sim.stress_visualization = self.stress_visualization_bool.get()
 
-    def change_bg_color(self, *event):
+    def change_bg_color(self, *_event: tk.Event) -> None:
         color = colorchooser.askcolor(title="Choose color")
         if color[0] is not None:
             self.sim.bg_color = color
             self.gui_canvas.itemconfig(self.bg_color_rect, fill=color[1])
 
-    def void_edges_toggle(self, *event):
+    def void_edges_toggle(self, *_event: tk.Event) -> None:
         self.sim.void_edges = self.void_edges_bool.get()
 
-    def change_length(self, sign):
+    def change_length(self, sign: float) -> None:
         try:
             self.sim.change_link_lengths(
                 self.sim.selection, float(self.delta_length_entry.get()) * sign
@@ -227,26 +228,23 @@ class ExtraWindow:
         except Exception as e:
             self.sim.error = Error("Input-Error", e)
 
-    def toggle_link_change_plus(self, state):
-        self.changing_length_plus = time.time() if state else False
+    def toggle_link_change_plus(self, state: bool) -> None:
+        self.changing_length_plus = time.time() if state else None
 
-    def toggle_link_change_minus(self, state):
-        self.changing_length_minus = time.time() if state else False
+    def toggle_link_change_minus(self, state: bool) -> None:
+        self.changing_length_minus = time.time() if state else None
 
-    def update(self):
+    def update(self) -> None:
         self.tk.update()
-        delta_condition = (
-            time.time() - self.changing_length_last_time >= self.min_delta_change
-        )
-        if (
-            self.changing_length_plus
-            and time.time() - self.changing_length_plus >= 1
-            and delta_condition
-        ):
-            self.change_length(1)
-        if (
-            self.changing_length_minus
-            and time.time() - self.changing_length_minus >= 1
-            and delta_condition
-        ):
-            self.change_length(-1)
+        current_time = time.time()
+        if current_time - self.changing_length_last_time >= self.min_delta_change:
+            if (
+                self.changing_length_plus is not None
+                and current_time - self.changing_length_plus >= 1
+            ):
+                self.change_length(1)
+            if (
+                self.changing_length_minus is not None
+                and current_time - self.changing_length_minus >= 1
+            ):
+                self.change_length(-1)

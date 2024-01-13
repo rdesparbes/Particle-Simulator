@@ -58,7 +58,7 @@ class CodeWindow:
     def set_exec_callback(self, callback: Callable[[str], None]) -> None:
         self.exec_callback = callback
 
-    def execute(self):
+    def execute(self) -> None:
         if self.exec_callback is None:
             return
         code = self.code_box.get("1.0", tk.END)
@@ -70,7 +70,7 @@ class CodeWindow:
         else:
             self.exec_callback(code)
 
-    def destroy(self):
+    def destroy(self) -> None:
         if self.save_callback is not None:
             self.save_callback(self.code_box.get("1.0", tk.END))
         self.tk.destroy()

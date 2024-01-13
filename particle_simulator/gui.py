@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from typing import Sequence, Dict, Any, Optional, Union, Tuple
+from typing import Sequence, Dict, Any, Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -291,7 +291,7 @@ class GUI(GUIWidgets):
                 else:
                     raise NotImplementedError(f"Unexpected widget: {type(widget)}")
 
-    def _update(self):
+    def _update(self) -> None:
         if self.code_window is not None:
             self.code_window.tk.update()
         if self.extra_window is not None:
@@ -333,7 +333,7 @@ class GUI(GUIWidgets):
 
         self._update()
 
-    def destroy(self):
+    def destroy(self) -> None:
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
             self.sim.running = False
             self.tk.destroy()

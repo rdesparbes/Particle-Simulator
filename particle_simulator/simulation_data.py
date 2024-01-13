@@ -48,9 +48,9 @@ class SimulationData:
 
     @property
     def air_res_calc(self) -> float:
-        return (1 - self.air_res) ** self.speed
+        return (1.0 - self.air_res) ** self.speed
 
-    def set_code(self, code) -> None:
+    def set_code(self, code: str) -> None:
         self.code = code
 
     @property

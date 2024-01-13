@@ -623,7 +623,7 @@ class GUIWidgets:
         entry.delete(0, tk.END)
         entry.insert(0, text)
 
-    def _ask_color_entry(self, *_event):
+    def _ask_color_entry(self, *_event: tk.Event) -> None:
         color, color_exa = colorchooser.askcolor(title="Choose color")
         if color is not None:
             self._set_entry(self._color_entry, str(list(color)))
@@ -639,7 +639,7 @@ class GUIWidgets:
             return None
         return int(m.group("red")), int(m.group("green")), int(m.group("blue"))
 
-    def _change_color_entry(self, *_event) -> None:
+    def _change_color_entry(self, *_event: tk.Event) -> None:
         color = self._parse_color()
         if color is None:
             self._set_color("#ffffff")
