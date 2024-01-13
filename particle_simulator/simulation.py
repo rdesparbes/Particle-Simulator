@@ -21,7 +21,12 @@ from .controller_state import ControllerState
 from .error import Error
 from .grid import Grid
 from .gui import GUI
-from .particle import Particle
+from .particle import (
+    Particle,
+    default_compute_magnitude_strategy,
+    ComputeMagnitudeStrategy,
+    radii_compute_magnitude_strategy,
+)
 from .particle_factory import ParticleFactory
 from .sim_pickle import (
     SimPickle,
@@ -104,7 +109,16 @@ class Simulation:
         self, particle: Particle, near_particles: Iterable[Particle]
     ) -> npt.NDArray[np.float_]:
         force = np.zeros(2)
-        for near_particle, interaction in particle.iter_interactions(near_particles):
+
+        if self.state.calculate_radii_diff:
+            compute_magnitude_strategy: ComputeMagnitudeStrategy = (
+                radii_compute_magnitude_strategy
+            )
+        else:
+            compute_magnitude_strategy = default_compute_magnitude_strategy
+        for near_particle, interaction in particle.iter_interactions(
+            near_particles, compute_magnitude_strategy
+        ):
             force += interaction.force
             particle.fix_overlap(near_particle)
             near_particle._collisions[particle] = -interaction.force

@@ -23,6 +23,54 @@ ComputeMagnitudeStrategy = Callable[
 ]
 
 
+def default_compute_magnitude_strategy(
+    part_a: "Particle", part_b: "Particle", distance: float, repel_r: Optional[float]
+) -> float:
+    if repel_r is None:
+        repel_r = max(part_a.repel_r, part_b.repel_r)
+    magnitude = part_a.calculate_magnitude(
+        part=part_b,
+        distance=distance,
+        repel_r=repel_r,
+        attr=part_b.attraction_strength + part_a.attraction_strength,
+        repel=part_b.repulsion_strength + part_a.repulsion_strength,
+        is_in_group=part_a._is_in_same_group(part_b),
+        gravity=part_a.gravity_mode or part_b.gravity_mode,
+    )
+    return magnitude
+
+
+def radii_compute_magnitude_strategy(
+    part_a: "Particle",
+    part_b: "Particle",
+    distance: float,
+    repel_r: Optional[float],
+) -> float:
+    magnitude = 0.0
+    is_in_group = part_a._is_in_same_group(part_b)
+    if part_b.reaches(distance):
+        magnitude += part_a.calculate_magnitude(
+            part=part_b,
+            distance=distance,
+            repel_r=part_b.repel_r if repel_r is None else repel_r,
+            attr=part_b.attraction_strength,
+            repel=part_b.repulsion_strength,
+            is_in_group=is_in_group,
+            gravity=part_b.gravity_mode,
+        )
+    if part_a.reaches(distance):
+        magnitude += part_b.calculate_magnitude(
+            part=part_a,
+            distance=distance,
+            repel_r=part_a.repel_r if repel_r is None else repel_r,
+            attr=part_a.attraction_strength,
+            repel=part_a.repulsion_strength,
+            is_in_group=is_in_group,
+            gravity=part_a.gravity_mode,
+        )
+    return magnitude
+
+
 class Particle(ParticleData):
     def __init__(
         self,
@@ -117,16 +165,12 @@ class Particle(ParticleData):
         return max_force
 
     def iter_interactions(
-        self, near_particles: Iterable[Self]
+        self,
+        near_particles: Iterable[Self],
+        compute_magnitude_strategy: ComputeMagnitudeStrategy = default_compute_magnitude_strategy,
     ) -> Iterator[Tuple[Self, ParticleInteraction]]:
         if self._sim.paused or self.locked:
             return
-        if self._sim.calculate_radii_diff:
-            compute_magnitude_strategy: ComputeMagnitudeStrategy = (
-                radii_compute_magnitude_strategy
-            )
-        else:
-            compute_magnitude_strategy = default_compute_magnitude_strategy
         for near_particle in near_particles:
             interaction = self._compute_interaction(
                 near_particle, compute_magnitude_strategy
@@ -243,51 +287,3 @@ class Particle(ParticleData):
             return np.zeros(2)
         force = np.random.uniform(-10, 10, 2)
         return force / np.linalg.norm(force) * -self.repulsion_strength
-
-
-def default_compute_magnitude_strategy(
-    part_a: Particle, part_b: Particle, distance: float, repel_r: Optional[float]
-) -> float:
-    if repel_r is None:
-        repel_r = max(part_a.repel_r, part_b.repel_r)
-    magnitude = part_a.calculate_magnitude(
-        part=part_b,
-        distance=distance,
-        repel_r=repel_r,
-        attr=part_b.attraction_strength + part_a.attraction_strength,
-        repel=part_b.repulsion_strength + part_a.repulsion_strength,
-        is_in_group=part_a._is_in_same_group(part_b),
-        gravity=part_a.gravity_mode or part_b.gravity_mode,
-    )
-    return magnitude
-
-
-def radii_compute_magnitude_strategy(
-    part_a: Particle,
-    part_b: Particle,
-    distance: float,
-    repel_r: Optional[float],
-) -> float:
-    magnitude = 0.0
-    is_in_group = part_a._is_in_same_group(part_b)
-    if part_b.reaches(distance):
-        magnitude += part_a.calculate_magnitude(
-            part=part_b,
-            distance=distance,
-            repel_r=part_b.repel_r if repel_r is None else repel_r,
-            attr=part_b.attraction_strength,
-            repel=part_b.repulsion_strength,
-            is_in_group=is_in_group,
-            gravity=part_b.gravity_mode,
-        )
-    if part_a.reaches(distance):
-        magnitude += part_b.calculate_magnitude(
-            part=part_a,
-            distance=distance,
-            repel_r=part_a.repel_r if repel_r is None else repel_r,
-            attr=part_a.attraction_strength,
-            repel=part_a.repulsion_strength,
-            is_in_group=is_in_group,
-            gravity=part_a.gravity_mode,
-        )
-    return magnitude
