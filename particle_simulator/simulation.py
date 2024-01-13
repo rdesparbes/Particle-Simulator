@@ -172,19 +172,15 @@ class Simulation:
         particle.mouse = True
         return particle in self.state.selection
 
-    def _mouse_p_select(self, particle: Particle, event: tk.Event) -> bool:
-        if not self._is_in_range(particle, event.x, event.y):
-            return False
-        self.state.select_particle(particle)
-        return True
-
     def _mouse_p(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
         if self.state.mouse_mode == "SELECT":
             selected = False
             for p in self.state.particles:
-                if self._mouse_p_select(p, event):
-                    selected = True
+                if not self._is_in_range(p, event.x, event.y):
+                    continue
+                self.state.select_particle(p)
+                selected = True
             if not selected:
                 self.state.selection = []
         elif self.state.mouse_mode == "MOVE":
@@ -202,7 +198,8 @@ class Simulation:
     def _mouse_m(self, event: tk.Event) -> None:
         if self.state.mouse_mode == "SELECT":
             for p in self.state.particles:
-                self._mouse_p_select(p, event)
+                if self._is_in_range(p, event.x, event.y):
+                    self.state.select_particle(p)
         elif (
             self.state.mouse_mode == "ADD"
             and time.time() - self.last_particle_added_time
