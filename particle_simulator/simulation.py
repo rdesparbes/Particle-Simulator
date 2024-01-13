@@ -158,24 +158,38 @@ class Simulation:
             if self.state.is_out_of_bounds(particle.rectangle):
                 self.state.remove_particle(particle)
 
-    def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:
-        if particle.distance(x, y) > max(self.state.mr, particle.radius):
+    def _is_in_range(self, particle: Particle, x: int, y: int) -> bool:
+        return particle.distance(x, y) > max(self.state.mr, particle.radius)
+
+    def _mouse_p_part_select(self, particle: Particle, x: int, y: int) -> bool:
+        if self._is_in_range(particle, x, y):
             return False
-        if self.state.mouse_mode == "SELECT":
-            self.state.select_particle(particle)
-            return True
+        self.state.select_particle(particle)
+        return True
+
+    def _mouse_p_part_move(self, particle: Particle, x: int, y: int) -> bool:
+        if self._is_in_range(particle, x, y):
+            return False
         particle.mouse = True
         return particle in self.state.selection
 
     def _mouse_p(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
-        if self.state.mouse_mode in {"SELECT", "MOVE"}:
+        if self.state.mouse_mode == "SELECT":
             selected = any(
-                self._mouse_p_part(p, event.x, event.y) for p in self.state.particles
+                self._mouse_p_part_select(p, event.x, event.y)
+                for p in self.state.particles
             )
             if not selected:
                 self.state.selection = []
-            elif self.state.mouse_mode == "MOVE":
+        elif self.state.mouse_mode == "MOVE":
+            selected = any(
+                self._mouse_p_part_move(p, event.x, event.y)
+                for p in self.state.particles
+            )
+            if not selected:
+                self.state.selection = []
+            else:
                 for particle in self.state.selection:
                     particle.mouse = True
         elif self.state.mouse_mode == "ADD":
@@ -185,7 +199,7 @@ class Simulation:
     def _mouse_m(self, event: tk.Event) -> None:
         if self.state.mouse_mode == "SELECT":
             for p in self.state.particles:
-                self._mouse_p_part(p, event.x, event.y)
+                self._mouse_p_part_select(p, event.x, event.y)
         elif (
             self.state.mouse_mode == "ADD"
             and time.time() - self.last_particle_added_time
