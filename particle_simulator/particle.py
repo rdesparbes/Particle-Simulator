@@ -193,7 +193,7 @@ class Particle(ParticleData):
         if self.mouse:
             delta_mouse_pos = self._sim.delta_mouse_pos
             if not self._sim.paused:
-                self.velocity = delta_mouse_pos / self._sim.speed
+                self.velocity = delta_mouse_pos * self._sim.speed
             delta_mx, delta_my = delta_mouse_pos
             self.x += delta_mx
             self.y += delta_my
