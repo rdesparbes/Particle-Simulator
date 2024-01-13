@@ -4,7 +4,7 @@ from typing import Tuple
 import numpy as np
 from numpy import typing as npt
 
-from particle_simulator.rectangle import Rectangle
+from particle_simulator.geometry import Rectangle
 
 
 @dataclass(kw_only=True)

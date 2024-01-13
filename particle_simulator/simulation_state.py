@@ -17,7 +17,7 @@ import numpy as np
 from particle_simulator.error import Error
 from particle_simulator.particle import Particle
 from particle_simulator.particle_factory import ParticleFactory
-from particle_simulator.rectangle import Rectangle
+from particle_simulator.geometry import Rectangle
 from particle_simulator.simulation_data import SimulationData
 
 Mode = Literal["SELECT", "MOVE", "ADD"]

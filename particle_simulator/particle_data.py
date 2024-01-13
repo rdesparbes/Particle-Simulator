@@ -12,7 +12,7 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
-from particle_simulator.rectangle import Rectangle
+from particle_simulator.geometry import Circle, Rectangle
 
 
 @dataclass
@@ -62,6 +62,10 @@ class ParticleData:
     @property
     def rectangle(self) -> Rectangle:
         return Rectangle(self.x_min, self.y_min, self.x_max, self.y_max)
+
+    @property
+    def circle(self) -> Circle:
+        return Circle(self.x, self.y, self.radius)
 
     @property
     def interacts_with_all(self) -> bool:

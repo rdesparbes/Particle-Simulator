@@ -19,6 +19,7 @@ from pynput.keyboard import Listener, Key, KeyCode
 from . import sim_pickle
 from .controller_state import ControllerState
 from .error import Error
+from .geometry import Circle
 from .grid import Grid
 from .gui import GUI
 from .particle import (
@@ -158,26 +159,24 @@ class Simulation:
             if self.state.is_out_of_bounds(particle.rectangle):
                 self.state.remove_particle(particle)
 
-    def _is_in_range(self, particle: Particle, x: int, y: int) -> bool:
-        return particle.distance(x, y) <= max(self.state.mr, particle.radius)
-
-    def _iter_in_range(self, x: int, y: int) -> Iterable[Particle]:
+    def _iter_in_range(self, circle: Circle) -> Iterable[Particle]:
         for particle in self.state.particles:
-            if self._is_in_range(particle, x, y):
+            if particle.circle.is_in_range(circle):
                 yield particle
 
     def _mouse_p(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
+        mouse_circle = Circle(event.x, event.y, self.state.mr)
         if self.state.mouse_mode == "SELECT":
             selected = False
-            for p in self._iter_in_range(event.x, event.y):
+            for p in self._iter_in_range(mouse_circle):
                 self.state.select_particle(p)
                 selected = True
             if not selected:
                 self.state.selection = []
         elif self.state.mouse_mode == "MOVE":
             selected = False
-            for p in self._iter_in_range(event.x, event.y):
+            for p in self._iter_in_range(mouse_circle):
                 p.mouse = True
                 if p in self.state.selection:
                     selected = True
@@ -190,9 +189,9 @@ class Simulation:
 
     def _mouse_m(self, event: tk.Event) -> None:
         if self.state.mouse_mode == "SELECT":
-            for p in self.state.particles:
-                if self._is_in_range(p, event.x, event.y):
-                    self.state.select_particle(p)
+            mouse_circle = Circle(event.x, event.y, self.state.mr)
+            for p in self._iter_in_range(mouse_circle):
+                self.state.select_particle(p)
         elif (
             self.state.mouse_mode == "ADD"
             and time.time() - self.last_particle_added_time
@@ -209,17 +208,16 @@ class Simulation:
     def _right_mouse(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
         temp = self.state.particles.copy()
+        mouse_circle = Circle(event.x, event.y, self.state.mr)
         for p in temp:
-            if np.sqrt((event.x - p.x) ** 2 + (event.y - p.y) ** 2) <= max(
-                self.state.mr, p.radius
-            ):
+            if p.circle.is_in_range(mouse_circle):
                 self.state.remove_particle(p)
 
     def _on_scroll(self, event: tk.Event) -> None:
         if self.rotate_mode:
             for p in self.state.selection:
                 p.x, p.y = self.state.rotate_2d(
-                    p.x, p.y, event.x, event.y, event.delta / 500 * self.state.mr
+                    p.x, p.y, event.x, event.y, angle=event.delta / 500 * self.state.mr
                 )
         else:
             self.state.mr = max(self.state.mr * 2 ** (event.delta / 500), 1)
