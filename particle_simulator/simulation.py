@@ -159,47 +159,48 @@ class Simulation:
                 self.state.remove_particle(particle)
 
     def _is_in_range(self, particle: Particle, x: int, y: int) -> bool:
-        return particle.distance(x, y) > max(self.state.mr, particle.radius)
+        return particle.distance(x, y) <= max(self.state.mr, particle.radius)
 
-    def _mouse_p_part_select(self, particle: Particle, x: int, y: int) -> bool:
-        if self._is_in_range(particle, x, y):
-            return False
-        self.state.select_particle(particle)
-        return True
-
-    def _mouse_p_part_move(self, particle: Particle, x: int, y: int) -> bool:
-        if self._is_in_range(particle, x, y):
-            return False
-        particle.mouse = True
-        return particle in self.state.selection
+    def _iter_in_range(self, x: int, y: int) -> Iterable[Particle]:
+        for particle in self.state.particles:
+            if self._is_in_range(particle, x, y):
+                yield particle
 
     def _mouse_p(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
-        if self.state.mouse_mode == "SELECT":
-            selected = any(
-                self._mouse_p_part_select(p, event.x, event.y)
-                for p in self.state.particles
-            )
+        self.mouse_down_start = time.time()
+        self.mouse_down = True
+        if self.state.mouse_mode == "SELECT" or self.state.mouse_mode == "MOVE":
+            selected = False
+            for p in self.state.particles:
+                if self._mouse_p_old(p, event):
+                    selected = True
             if not selected:
                 self.state.selection = []
-        elif self.state.mouse_mode == "MOVE":
-            selected = any(
-                self._mouse_p_part_move(p, event.x, event.y)
-                for p in self.state.particles
-            )
-            if not selected:
-                self.state.selection = []
-            else:
+            elif self.state.mouse_mode == "MOVE":
                 for particle in self.state.selection:
                     particle.mouse = True
         elif self.state.mouse_mode == "ADD":
             self.state.selection = []
             self.add_particle(event.x, event.y)
 
+    def _mouse_p_old(self, particle: Particle, event: tk.Event) -> bool:
+        if np.sqrt((event.x - particle.x) ** 2 + (event.y - particle.y) ** 2) <= max(
+            self.state.mr, particle.radius
+        ):
+            if self.state.mouse_mode == "SELECT":
+                self.state.select_particle(particle)
+                return True
+
+            particle.mouse = True
+            if particle in self.state.selection:
+                return True
+        return False
+
     def _mouse_m(self, event: tk.Event) -> None:
         if self.state.mouse_mode == "SELECT":
             for p in self.state.particles:
-                self._mouse_p_part_select(p, event.x, event.y)
+                self._mouse_p_old(p, event)
         elif (
             self.state.mouse_mode == "ADD"
             and time.time() - self.last_particle_added_time
