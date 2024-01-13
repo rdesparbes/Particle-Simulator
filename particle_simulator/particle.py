@@ -187,7 +187,7 @@ class Particle(ParticleData):
         return (
             np.clip(acceleration, -2, 2)
             + np.random.uniform(-1, 1, 2) * self._sim.temperature
-        ) * self._sim.speed
+        )
 
     def update(self, force: Optional[npt.NDArray[np.float_]] = None) -> None:
         if self.mouse:
