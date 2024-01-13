@@ -159,15 +159,13 @@ class Simulation:
                 self.state.remove_particle(particle)
 
     def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:
-        if particle.distance(x, y) <= max(self.state.mr, particle.radius):
-            if self.state.mouse_mode == "SELECT":
-                self.state.select_particle(particle)
-                return True
-
-            particle.mouse = True
-            if particle in self.state.selection:
-                return True
-        return False
+        if particle.distance(x, y) > max(self.state.mr, particle.radius):
+            return False
+        if self.state.mouse_mode == "SELECT":
+            self.state.select_particle(particle)
+            return True
+        particle.mouse = True
+        return particle in self.state.selection
 
     def _mouse_p(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
@@ -181,9 +179,7 @@ class Simulation:
                 for particle in self.state.selection:
                     particle.mouse = True
         elif self.state.mouse_mode == "ADD":
-            if len(self.state.selection) > 0:
-                self.state.selection = []
-
+            self.state.selection = []
             self.add_particle(event.x, event.y)
 
     def _mouse_m(self, event: tk.Event) -> None:
