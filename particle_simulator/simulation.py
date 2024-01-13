@@ -109,6 +109,8 @@ class Simulation:
         self, particle: Particle, near_particles: Iterable[Particle]
     ) -> npt.NDArray[np.float_]:
         force = np.zeros(2)
+        if self.state.paused:
+            return force
 
         if self.state.calculate_radii_diff:
             compute_magnitude_strategy: ComputeMagnitudeStrategy = (

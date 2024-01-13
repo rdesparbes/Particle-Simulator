@@ -169,7 +169,7 @@ class Particle(ParticleData):
         near_particles: Iterable[Self],
         compute_magnitude_strategy: ComputeMagnitudeStrategy = default_compute_magnitude_strategy,
     ) -> Iterator[Tuple[Self, ParticleInteraction]]:
-        if self._sim.paused or self.locked:
+        if self.locked:
             return
         for near_particle in near_particles:
             interaction = self._compute_interaction(
