@@ -137,7 +137,7 @@ class Particle(ParticleData):
     def _compute_delta_velocity(
         self, force: npt.NDArray[np.float_]
     ) -> npt.NDArray[np.float_]:
-        forces = [force, self._sim.wind_force * self.radius, *self._collisions.values()]
+        forces = [force, self._sim.wind_force * self.radius]
         acceleration = np.sum(forces, axis=0) / self.mass + self._sim.g_vector
 
         return (

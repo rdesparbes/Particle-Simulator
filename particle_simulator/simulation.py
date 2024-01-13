@@ -114,7 +114,7 @@ class Simulation:
                     self.state.link_colors.append(
                         Link(particle, near_particle, interaction.link_percentage)
                     )
-
+        force += np.sum(list(particle._collisions.values()), axis=0)
         return force
 
     def _simulate_step(self):
