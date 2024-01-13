@@ -109,9 +109,6 @@ class Simulation:
         self, particle: Particle, near_particles: Iterable[Particle]
     ) -> npt.NDArray[np.float_]:
         force = np.zeros(2)
-        if self.state.paused:
-            return force
-
         if self.state.calculate_radii_diff:
             compute_magnitude_strategy: ComputeMagnitudeStrategy = (
                 radii_compute_magnitude_strategy
@@ -153,7 +150,10 @@ class Simulation:
                 near_particles = self.grid.return_particles(particle)
             else:
                 near_particles = self.state.particles
-            force = self._compute_force(particle, near_particles)
+            if self.state.paused:
+                force: Optional[npt.NDArray[np.float_]] = None
+            else:
+                force = self._compute_force(particle, near_particles)
             particle.update(force)
             if self.state.is_out_of_bounds(particle.rectangle):
                 self.state.remove_particle(particle)
