@@ -168,16 +168,19 @@ class Simulation:
 
     def _mouse_p(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
-        self.mouse_down_start = time.time()
-        self.mouse_down = True
-        if self.state.mouse_mode == "SELECT" or self.state.mouse_mode == "MOVE":
+        if self.state.mouse_mode == "SELECT":
             selected = False
             for p in self.state.particles:
                 if self._mouse_p_old(p, event):
                     selected = True
             if not selected:
                 self.state.selection = []
-            elif self.state.mouse_mode == "MOVE":
+        elif self.state.mouse_mode == "MOVE":
+            selected = False
+            for p in self.state.particles:
+                if self._mouse_p_old(p, event):
+                    selected = True
+            if selected:
                 for particle in self.state.selection:
                     particle.mouse = True
         elif self.state.mouse_mode == "ADD":
@@ -185,9 +188,7 @@ class Simulation:
             self.add_particle(event.x, event.y)
 
     def _mouse_p_old(self, particle: Particle, event: tk.Event) -> bool:
-        if np.sqrt((event.x - particle.x) ** 2 + (event.y - particle.y) ** 2) <= max(
-            self.state.mr, particle.radius
-        ):
+        if self._is_in_range(particle, event.x, event.y):
             if self.state.mouse_mode == "SELECT":
                 self.state.select_particle(particle)
                 return True
