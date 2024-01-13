@@ -166,12 +166,6 @@ class Simulation:
             if self._is_in_range(particle, x, y):
                 yield particle
 
-    def _mouse_p_move(self, particle: Particle, event: tk.Event) -> bool:
-        if not self._is_in_range(particle, event.x, event.y):
-            return False
-        particle.mouse = True
-        return particle in self.state.selection
-
     def _mouse_p(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
         if self.state.mouse_mode == "SELECT":
@@ -186,7 +180,10 @@ class Simulation:
         elif self.state.mouse_mode == "MOVE":
             selected = False
             for p in self.state.particles:
-                if self._mouse_p_move(p, event):
+                if not self._is_in_range(p, event.x, event.y):
+                    continue
+                p.mouse = True
+                if p in self.state.selection:
                     selected = True
             if selected:
                 for particle in self.state.selection:
