@@ -167,17 +167,16 @@ class Simulation:
                 yield particle
 
     def _mouse_p_move(self, particle: Particle, event: tk.Event) -> bool:
-        if self._is_in_range(particle, event.x, event.y):
-            particle.mouse = True
-            if particle in self.state.selection:
-                return True
-        return False
+        if not self._is_in_range(particle, event.x, event.y):
+            return False
+        particle.mouse = True
+        return particle in self.state.selection
 
     def _mouse_p_select(self, particle: Particle, event: tk.Event) -> bool:
-        if self._is_in_range(particle, event.x, event.y):
-            self.state.select_particle(particle)
-            return True
-        return False
+        if not self._is_in_range(particle, event.x, event.y):
+            return False
+        self.state.select_particle(particle)
+        return True
 
     def _mouse_p(self, event: tk.Event) -> None:
         self.gui.canvas.focus_set()
