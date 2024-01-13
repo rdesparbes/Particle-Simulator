@@ -105,8 +105,8 @@ class Simulation:
     ) -> npt.NDArray[np.float_]:
         force = np.zeros(2)
         for near_particle, interaction in particle.iter_interactions(near_particles):
-            particle.fix_overlap(near_particle)
             force += interaction.force
+            particle.fix_overlap(near_particle)
             near_particle._collisions[particle] = -interaction.force
             if interaction.link_percentage is not None:
                 if interaction.link_percentage > 1.0:
@@ -139,7 +139,7 @@ class Simulation:
                 near_particles = self.state.particles
             force = self._compute_force(particle, near_particles)
             particle.update(force)
-            if particle.is_out_of_bounds():
+            if self.state.is_out_of_bounds(particle.rectangle):
                 self.state.remove_particle(particle)
 
     def _mouse_p_part(self, particle: Particle, x: int, y: int) -> bool:

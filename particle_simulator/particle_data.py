@@ -12,6 +12,8 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
+from particle_simulator.rectangle import Rectangle
+
 
 @dataclass
 class ParticleData:
@@ -56,6 +58,10 @@ class ParticleData:
     @property
     def y_max(self) -> float:
         return self.y + self.radius
+
+    @property
+    def rectangle(self) -> Rectangle:
+        return Rectangle(self.x_min, self.y_min, self.x_max, self.y_max)
 
     @property
     def interacts_with_all(self) -> bool:

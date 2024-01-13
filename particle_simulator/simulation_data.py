@@ -4,6 +4,8 @@ from typing import Tuple
 import numpy as np
 from numpy import typing as npt
 
+from particle_simulator.rectangle import Rectangle
+
 
 @dataclass(kw_only=True)
 class SimulationData:
@@ -54,3 +56,7 @@ class SimulationData:
     @property
     def delta_mouse_pos(self) -> npt.NDArray[np.float_]:
         return np.subtract([self.mx, self.my], [self.prev_mx, self.prev_my])
+
+    @property
+    def rectangle(self) -> Rectangle:
+        return Rectangle(x_min=0, y_min=0, x_max=self.width, y_max=self.height)

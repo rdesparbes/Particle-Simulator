@@ -17,6 +17,7 @@ import numpy as np
 from particle_simulator.error import Error
 from particle_simulator.particle import Particle
 from particle_simulator.particle_factory import ParticleFactory
+from particle_simulator.rectangle import Rectangle
 from particle_simulator.simulation_data import SimulationData
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
@@ -147,3 +148,6 @@ class SimulationState(SimulationData):
         for link, length in temp_link_lengths.items():
             self.link([link, p], fit_link=length is not None, distance=length)
         return p
+
+    def is_out_of_bounds(self, rectangle: Rectangle) -> bool:
+        return self.void_edges and self.rectangle.isdisjoint(rectangle)

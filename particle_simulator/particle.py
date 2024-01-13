@@ -175,14 +175,6 @@ class Particle(ParticleData):
 
         self._collisions = {}
 
-    def is_out_of_bounds(self) -> bool:
-        return self._sim.void_edges and (
-            self.x_min >= self._sim.width
-            or self.x_max <= 0
-            or self.y_min >= self._sim.height
-            or self.y_max <= 0
-        )
-
     def fix_overlap(self, p: Self) -> None:
         direction: npt.NDArray[np.float_] = np.subtract([p.x, p.y], [self.x, self.y])
         distance: float = float(np.linalg.norm(direction))
