@@ -105,6 +105,7 @@ class Simulation:
     ) -> npt.NDArray[np.float_]:
         force = np.zeros(2)
         for near_particle, interaction in particle.iter_interactions(near_particles):
+            particle.fix_overlap(near_particle)
             force += interaction.force
             near_particle._collisions[particle] = -interaction.force
             if interaction.link_percentage is not None:

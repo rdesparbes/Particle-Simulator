@@ -183,9 +183,40 @@ class Particle(ParticleData):
             or self.y_max <= 0
         )
 
-    def _compute_force(
+    def fix_overlap(self, p: Self) -> None:
+        direction: npt.NDArray[np.float_] = np.subtract([p.x, p.y], [self.x, self.y])
+        distance: float = float(np.linalg.norm(direction))
+        overlap = self.radius + p.radius - distance
+        if not self.collisions or overlap <= 0.0:
+            return
+        new_speed = self._compute_collision_speed(p)
+        p.velocity = p._compute_collision_speed(self)
+        self.velocity = new_speed
+        translate_vector = overlap * direction
+        dx, dy = self._compute_collision_delta_pos(-translate_vector, p.mass)
+        self.x += dx
+        self.y += dy
+        if not p.locked:
+            p_dx, p_dy = p._compute_collision_delta_pos(translate_vector, self.mass)
+            p.x += p_dx
+            p.y += p_dy
+
+    def _are_compatible(self, p: Self) -> bool:
+        return (
+            p != self
+            and (
+                self.linked_group_particles
+                or self._is_linked_to(p)
+                or not self._is_in_same_group(p)
+            )
+            and p not in self._collisions
+        )
+
+    def _compute_interaction(
         self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
     ) -> Optional[ParticleInteraction]:
+        if not self._are_compatible(p):
+            return None
         direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
         distance: float = float(np.linalg.norm(direction))
         if not (p.reaches(distance) or self.reaches(distance)):
@@ -204,41 +235,6 @@ class Particle(ParticleData):
                 link_percentage = self._compute_link_percentage(magnitude, max_force)
             force = direction * magnitude
         return ParticleInteraction(force, link_percentage)
-
-    def _compute_interaction(
-        self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
-    ) -> Optional[ParticleInteraction]:
-        if p == self:
-            return None
-
-        if (
-            not self.linked_group_particles
-            and not self._is_linked_to(p)
-            and self._is_in_same_group(p)
-        ) or p in self._collisions:
-            return None
-
-        interaction = self._compute_force(p, compute_magnitude_strategy)
-
-        direction: npt.NDArray[np.float_] = np.subtract([p.x, p.y], [self.x, self.y])
-        distance: float = float(np.linalg.norm(direction))
-        overlap = self.radius + p.radius - distance
-        if self.collisions and overlap > 0.0:
-            new_speed = self._compute_collision_speed(p)
-            p.velocity = p._compute_collision_speed(self)
-            self.velocity = new_speed
-
-            # Visual overlap fix
-            translate_vector = overlap * direction
-            dx, dy = self._compute_collision_delta_pos(-translate_vector, p.mass)
-            self.x += dx
-            self.y += dy
-            if not p.locked:
-                p_dx, p_dy = p._compute_collision_delta_pos(translate_vector, self.mass)
-                p.x += p_dx
-                p.y += p_dy
-
-        return interaction
 
     def _compute_collision_delta_pos(
         self, translate_vector: npt.NDArray[np.float_], mass: float
