@@ -333,7 +333,6 @@ class Simulation:
         self.state.create_group_callbacks = [self.gui.create_group]
         self.gui.set_particle_settings(controller_state.gui_particle_state)
 
-        self.gui.group_indices = []
         self.gui.groups_entry["values"] = []
         self.gui.set_sim_settings(controller_state.gui_settings)
 

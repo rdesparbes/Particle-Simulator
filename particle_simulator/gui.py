@@ -25,7 +25,6 @@ class GUI(GUIWidgets):
         self.save_manager = SaveManager(file_location=os.path.dirname(self.path))
         self.code_window: Optional[CodeWindow] = None
         self.extra_window: Optional[ExtraWindow] = None
-        self.group_indices = [1]
         self.tk.protocol("WM_DELETE_WINDOW", self.destroy)
         self._register_sim(sim)
         self._set_callbacks()
