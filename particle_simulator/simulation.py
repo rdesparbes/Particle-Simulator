@@ -62,7 +62,6 @@ class Simulation:
         self.shift = False
         self.start_save = False
         self.start_load = False
-        self.focus = True
         self.grid = Grid(*gridres, height=height, width=width)
         self.prev_fps_update_time = time.time()
         self.prev_time = self.prev_fps_update_time
@@ -222,7 +221,7 @@ class Simulation:
             self.state.mr = max(self.state.mr * 2 ** (event.delta / 500), 1)
 
     def _on_press(self, key: Union[Key, KeyCode, None]) -> None:
-        if not self.focus:
+        if not self.gui.get_focus():
             return
         # SPACE to pause
         if key == Key.space:
@@ -470,7 +469,6 @@ class Simulation:
 
     def simulate(self) -> None:
         while self.state.running:
-            self.focus = self.gui.get_focus()
             self._handle_save_manager()
             self._simulate_step()
             self._update_timings(new_time=time.time())
