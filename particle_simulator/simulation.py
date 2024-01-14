@@ -223,7 +223,7 @@ class Simulation:
             self.state.mr = max(self.state.mr * 2 ** (event.delta / 500), 1)
 
     def _on_press(self, key: Union[Key, KeyCode, None]) -> None:
-        if not self.gui.get_focus():
+        if not self.state.focus:
             return
         # SPACE to pause
         if key == Key.space:
@@ -446,6 +446,7 @@ class Simulation:
         self.prev_time = new_time
 
     def _update_mouse_position(self) -> None:
+        self.state.focus = self.gui.get_focus()
         self.state.prev_mx, self.state.prev_my = self.state.mx, self.state.my
         self.state.mx, self.state.my = self.gui.get_mouse_pos()
 

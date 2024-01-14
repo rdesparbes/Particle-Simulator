@@ -46,6 +46,7 @@ class SimulationState(SimulationData):
     min_spawn_delay: float = 0.05
     mouse_mode: Mode = "MOVE"
     running: bool = True
+    focus: bool = True  # Must be stored as an attribute because of thread conflicts
 
     @staticmethod
     def link(
