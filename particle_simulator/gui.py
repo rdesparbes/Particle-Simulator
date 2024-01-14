@@ -51,7 +51,7 @@ class GUI(GUIWidgets):
         self.delay_entry.configure(command=self._set_min_spawn_delay)
         self.calculate_radii_diff_chk.configure(command=self._set_calculate_radii_diff)
         self.extra_btn.configure(command=self._create_extra_window)
-        self.group_add_btn.configure(command=self.add_group)
+        self.group_add_btn.configure(command=self._add_group)
         self.copy_selected_btn.configure(command=self._copy_from_selected)
 
     def _register_sim(self, sim: SimulationState) -> None:
@@ -163,7 +163,7 @@ class GUI(GUIWidgets):
     def _extract_group_index(name: str) -> int:
         return int(name.replace("group", ""))
 
-    def add_group(self) -> None:
+    def _add_group(self) -> None:
         name = self.sim.add_group()
         self.create_group(name)
         self.groups_entry.current(self._extract_group_index(name) - 1)

@@ -40,7 +40,7 @@ class SimulationState(SimulationData):
     show_fps: bool = True
     show_num: bool = True
     show_links: bool = True
-    add_group_callbacks: List[Callable[[str], None]] = field(default_factory=list)
+    create_group_callbacks: List[Callable[[str], None]] = field(default_factory=list)
     grid_res_x: int = 50
     grid_res_y: int = 50
     min_spawn_delay: float = 0.05
@@ -129,8 +129,8 @@ class SimulationState(SimulationData):
         except KeyError:
             new_group: List[Particle] = []
             self.groups[name] = new_group
-            for callback in self.add_group_callbacks:
-                callback(name)
+            for create_group in self.create_group_callbacks:
+                create_group(name)
             return new_group
 
     def register_particle(self, particle: Particle) -> None:

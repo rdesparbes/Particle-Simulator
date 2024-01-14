@@ -70,7 +70,7 @@ class Simulation:
         self.pasting = False
 
         self.gui = GUI(self.state, title)
-        self.state.add_group_callbacks.append(self.gui.create_group)
+        self.state.create_group_callbacks.append(self.gui.create_group)
 
         self.gui.save_btn.configure(command=self.save)
         self.gui.load_btn.configure(command=self.load)
@@ -330,7 +330,7 @@ class Simulation:
     def from_controller_state(self, controller_state: ControllerState) -> None:
         self.state = SimulationState(**asdict(controller_state.sim_data))
         self.gui.register_sim(self.state)
-        self.state.add_group_callbacks = [self.gui.create_group]
+        self.state.create_group_callbacks = [self.gui.create_group]
         self.gui.set_particle_settings(controller_state.gui_particle_state)
 
         self.gui.group_indices = []
