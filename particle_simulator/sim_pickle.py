@@ -5,7 +5,6 @@ from typing import (
     Tuple,
     List,
     TypedDict,
-    Union,
     Optional,
     Sequence,
 )
@@ -135,9 +134,7 @@ def to_dict(controller_state: ControllerState) -> SimPickle:
     }
 
 
-def _parse_color(
-    color_any: Union[Sequence[float], str]
-) -> Optional[Tuple[int, int, int]]:
+def _parse_color(color_any: Any) -> Optional[Tuple[int, int, int]]:
     if color_any == "random":
         return None
 
@@ -153,7 +150,7 @@ def _parse_color(
     return int(color_any[0]), int(color_any[1]), int(color_any[2])
 
 
-def _parse_radius(radius_any: Union[float, None, str]) -> Optional[float]:
+def _parse_radius(radius_any: Any) -> Optional[float]:
     if radius_any is None:
         return None
     try:
@@ -172,18 +169,18 @@ def _parse_particle_settings(particle_settings: PickleSettings) -> ParticleFacto
         mass=float(p["mass_entry"][0]),
         velocity=(float(p["velocity_x_entry"][0]), float(p["velocity_y_entry"][0])),
         bounciness=float(p["bounciness_entry"][0]),
-        collisions=p["do_collision_bool"][0],
-        locked=p["locked_bool"][0],
-        linked_group_particles=p["linked_group_bool"][0],
+        collisions=bool(p["do_collision_bool"][0]),
+        locked=bool(p["locked_bool"][0]),
+        linked_group_particles=bool(p["linked_group_bool"][0]),
         attract_r=float(p["attr_r_entry"][0]),
         repel_r=float(p["repel_r_entry"][0]),
         attraction_strength=float(p["attr_strength_entry"][0]),
-        gravity_mode=p["gravity_mode_bool"][0],
+        gravity_mode=bool(p["gravity_mode_bool"][0]),
         repulsion_strength=float(p["repel_strength_entry"][0]),
         link_attr_breaking_force=float(p["link_attr_break_entry"][0]),
         link_repel_breaking_force=float(p["link_repel_break_entry"][0]),
-        group=p["groups_entry"][0],
-        separate_group=p["separate_group_bool"][0],
+        group=str(p["groups_entry"][0]),
+        separate_group=bool(p["separate_group_bool"][0]),
     )
 
 
@@ -225,6 +222,14 @@ def _extract_sim_settings(sim_pickle: PickleSettings) -> SimulationData:
     )
 
 
+def _parse_repel_r(value: Any) -> Optional[float]:
+    if isinstance(value, (float, type(None))):
+        return value
+    elif value == "repel":
+        return None
+    return float(value)
+
+
 def _parse_particles(particles_pickle: ParticlesPickle) -> List[ParticleData]:
     particles: List[ParticleData] = []
     for d in particles_pickle:
@@ -248,7 +253,10 @@ def _parse_particles(particles_pickle: ParticlesPickle) -> List[ParticleData]:
             group=str(d["group"]),
             separate_group=bool(d["separate_group"]),
             gravity_mode=bool(d["gravity_mode"]),
-            link_indices_lengths=d["link_lengths"],
+            link_indices_lengths={
+                int(p_index): _parse_repel_r(length)
+                for p_index, length in d["link_lengths"].items()
+            },
         )
         particles.append(particle)
     return particles
