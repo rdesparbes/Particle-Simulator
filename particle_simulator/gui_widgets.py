@@ -331,29 +331,27 @@ class GUIWidgets:
         tk.Label(self.tab1, text="X:", font=("helvetica", 8)).place(
             x=60, y=455, anchor="nw"
         )
-        self.grid_res_x_value = tk.IntVar(self.tk, value=gridres[0])
         self.grid_res_x = tk.Spinbox(
             self.tab1,
             width=7,
             from_=1,
             to=200,
             increment=1,
-            textvariable=self.grid_res_x_value,
         )
+        self._set_entry(self.grid_res_x, str(gridres[0]))
         self.grid_res_x.place(x=80, y=455)
 
         tk.Label(self.tab1, text="Y:", font=("helvetica", 8)).place(
             x=60, y=480, anchor="nw"
         )
-        self.grid_res_y_value = tk.IntVar(self.tk, value=gridres[1])
         self.grid_res_y = tk.Spinbox(
             self.tab1,
             width=7,
             from_=1,
             to=200,
             increment=1,
-            textvariable=self.grid_res_y_value,
         )
+        self._set_entry(self.grid_res_y, str(gridres[1]))
         self.grid_res_y.place(x=80, y=480)
 
         self.tab1_canvas.create_text(

@@ -53,8 +53,8 @@ class GUI(GUIWidgets):
         self.extra_btn.configure(command=self._create_extra_window)
         self.group_add_btn.configure(command=self._add_group)
         self.copy_selected_btn.configure(command=self._copy_from_selected)
-        self.grid_res_x_value.trace_add("write", self._set_grid_x)
-        self.grid_res_y_value.trace_add("write", self._set_grid_y)
+        self.grid_res_x.configure(command=self._set_grid_x)
+        self.grid_res_y.configure(command=self._set_grid_y)
 
     def _register_sim(self, sim: SimulationState) -> None:
         self.pause_button.configure(
@@ -123,11 +123,11 @@ class GUI(GUIWidgets):
     def _set_use_grid(self) -> None:
         self.sim.use_grid = self.grid_bool.get()
 
-    def _set_grid_x(self, *_args: Any) -> None:
-        self.sim.grid_res_x = self.grid_res_x_value.get()
+    def _set_grid_x(self) -> None:
+        self.sim.grid_res_x = int(self.grid_res_x.get())
 
     def _set_grid_y(self, *_args: Any) -> None:
-        self.sim.grid_res_y = self.grid_res_y_value.get()
+        self.sim.grid_res_y = int(self.grid_res_y.get())
 
     def _set_min_spawn_delay(self) -> None:
         self.sim.min_spawn_delay = float(self.delay_entry.get())
@@ -191,8 +191,8 @@ class GUI(GUIWidgets):
             show_fps=self.show_fps.get(),
             show_num=self.show_num.get(),
             show_links=self.show_links.get(),
-            grid_res_x=self.grid_res_x_value.get(),
-            grid_res_y=self.grid_res_y_value.get(),
+            grid_res_x=int(self.grid_res_x.get()),
+            grid_res_y=int(self.grid_res_y.get()),
             delay=float(self.delay_entry.get()),
         )
 
@@ -202,8 +202,8 @@ class GUI(GUIWidgets):
         self.show_fps.set(s.show_fps)
         self.show_num.set(s.show_num)
         self.show_links.set(s.show_links)
-        self.grid_res_x_value.set(s.grid_res_x)
-        self.grid_res_y_value.set(s.grid_res_y)
+        self._set_entry(self.grid_res_x, str(s.grid_res_x))
+        self._set_entry(self.grid_res_y, str(s.grid_res_y))
         self._set_entry(self.delay_entry, str(s.delay))
 
     def get_particle_settings(self) -> ParticleFactory:
