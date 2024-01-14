@@ -62,7 +62,6 @@ class Simulation:
         self.shift = False
         self.start_save = False
         self.start_load = False
-        self.grid = Grid(*gridres, height=height, width=width)
         self.prev_fps_update_time = time.time()
         self.prev_time = self.prev_fps_update_time
         self.clipboard: List[Dict[str, Any]] = []
@@ -76,8 +75,6 @@ class Simulation:
         self.gui.load_btn.configure(command=self.load)
         self.gui.set_selected_btn.configure(command=self.set_selected)
         self.gui.set_all_btn.configure(command=self.set_all)
-        self.gui.grid_res_x_value.trace("w", self._update_grid)
-        self.gui.grid_res_y_value.trace("w", self._update_grid)
 
         # Keyboard- and mouse-controls
         self.gui.canvas.bind("<B1-Motion>", self._mouse_m)
@@ -130,8 +127,15 @@ class Simulation:
 
     def _simulate_step(self) -> None:
         self._link_colors = []
+        grid: Optional[Grid] = None
         if self.state.use_grid:
-            self.grid.init_grid(self.state.particles)
+            grid = Grid(
+                self.state.grid_res_x,
+                self.state.grid_res_y,
+                height=self.state.height,
+                width=self.state.width,
+            )
+            grid.extend(self.state.particles)
         if self.state.toggle_pause:
             self.state.paused = not self.state.paused
 
@@ -143,8 +147,8 @@ class Simulation:
                 near_particles: Iterable[Particle] = []
             elif particle.interacts_with_all:
                 near_particles = self.state.particles
-            elif self.state.use_grid:
-                near_particles = self.grid.return_particles(particle)
+            elif grid is not None:
+                near_particles = grid.return_particles(particle)
             else:
                 near_particles = self.state.particles
             if self.state.paused:
@@ -268,21 +272,6 @@ class Simulation:
             self.shift = False
         elif KeyCode.from_char(str(key)).char == "'r'":
             self.rotate_mode = False
-
-    def update_grid(self, row_count: int, col_count: int) -> None:
-        self.state.grid_res_x = col_count
-        self.state.grid_res_y = row_count
-        self.grid = Grid(
-            row_count,
-            col_count,
-            height=self.state.height,
-            width=self.state.width,
-        )
-
-    def _update_grid(self, *_event: tk.Event) -> None:
-        row_count = self.gui.grid_res_x_value.get()
-        col_count = self.gui.grid_res_y_value.get()
-        self.update_grid(row_count, col_count)
 
     def _get_particle_settings(self) -> Optional[ParticleFactory]:
         try:

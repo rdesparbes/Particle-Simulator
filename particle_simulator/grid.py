@@ -12,15 +12,14 @@ class Grid:
         self.columns = columns
         self.row_height: float = height / self.rows
         self.column_width: float = width / self.columns
-        self._reset_grid()
+        self.reset_grid()
 
-    def _reset_grid(self) -> None:
+    def reset_grid(self) -> None:
         for i in range(self.rows):
             for j in range(self.columns):
                 self.grid[i, j] = []
 
-    def init_grid(self, particles: Iterable[Particle]) -> None:
-        self._reset_grid()
+    def extend(self, particles: Iterable[Particle]) -> None:
         for particle in particles:
             row = self._return_row(particle.y)
             column = self._return_column(particle.x)
@@ -34,10 +33,11 @@ class Grid:
         return min(int(x / self.column_width), self.rows - 1)
 
     def return_particles(self, particle: Particle) -> Iterator[Particle]:
-        min_row = self._return_row(particle.y - particle.range_)
-        max_row = self._return_row(particle.y + particle.range_)
-        min_col = self._return_column(particle.x - particle.range_)
-        max_col = self._return_column(particle.x + particle.range_)
+        p_range = particle.range_
+        min_row = self._return_row(particle.y - p_range)
+        max_row = self._return_row(particle.y + p_range)
+        min_col = self._return_column(particle.x - p_range)
+        max_col = self._return_column(particle.x + p_range)
         for i in range(min_row, max_row + 1):
             for j in range(min_col, max_col + 1):
                 if 0 <= i < self.rows and 0 <= j < self.columns:
