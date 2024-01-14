@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 from tkinter import messagebox
 from typing import Sequence, Dict, Any, Optional
@@ -12,6 +13,7 @@ from .extra_window import ExtraWindow
 from .gui_widgets import GUIWidgets
 from .particle_data import ParticleData
 from .particle_factory import ParticleFactory
+from .save_manager import SaveManager
 from .sim_gui_settings import SimGUISettings
 from .simulation_state import SimulationState
 
@@ -19,6 +21,10 @@ from .simulation_state import SimulationState
 class GUI(GUIWidgets):
     def __init__(self, sim: SimulationState, title: str) -> None:
         super().__init__(sim.width, sim.height, title, (sim.grid_res_x, sim.grid_res_y))
+        self.save_manager = SaveManager(file_location=os.path.dirname(self.path))
+        self.code_window: Optional[CodeWindow] = None
+        self.extra_window: Optional[ExtraWindow] = None
+        self.group_indices = [1]
         self.tk.protocol("WM_DELETE_WINDOW", self.destroy)
         self._register_sim(sim)
         self._set_callbacks()

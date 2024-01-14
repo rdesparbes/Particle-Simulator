@@ -4,10 +4,6 @@ import tkinter as tk
 from tkinter import ttk, colorchooser
 from typing import Optional, Tuple, Union
 
-from .code_window import CodeWindow
-from .extra_window import ExtraWindow
-from .save_manager import SaveManager
-
 _CANVAS_X = 0  # The X coordinate of the top-left corner of the canvas
 _CANVAS_Y = 30  # The Y coordinate of the top-left corner of the canvas
 
@@ -25,9 +21,6 @@ class GUIWidgets:
         self.gui_canvas.pack()
         self.canvas = tk.Canvas(self.tk, width=width, height=height)
         self.canvas.place(x=_CANVAS_X, y=_CANVAS_Y)
-
-        self.code_window: Optional[CodeWindow] = None
-        self.extra_window: Optional[ExtraWindow] = None
 
         self.gui_canvas.create_rectangle(0, 0, width, 30, fill="#1f3333")
         self.gui_canvas.create_line(80, 0, 80, 30, fill="grey30")
@@ -126,7 +119,6 @@ class GUIWidgets:
         self.save_img = tk.PhotoImage(
             file=os.path.join(self.path, "Assets/save.gif"), master=self.tk
         ).subsample(28, 28)
-        self.save_manager = SaveManager(file_location=os.path.dirname(self.path))
         self.save_btn = tk.Button(
             self.tk,
             image=self.save_img,
@@ -563,7 +555,6 @@ class GUIWidgets:
         tk.Label(self.tab2, text="Particle-group:", font=("helvetica", 8)).place(
             x=7, y=450, anchor="nw"
         )
-        self.group_indices = [1]
         self.groups_entry = ttk.Combobox(self.tab2, width=10, values=["group1"])
         self.groups_entry.current(0)
         self.groups_entry.place(x=10, y=470, anchor="nw")
