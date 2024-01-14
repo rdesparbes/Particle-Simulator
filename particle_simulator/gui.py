@@ -1,7 +1,8 @@
+import bisect
 import os
 import tkinter as tk
 from tkinter import messagebox
-from typing import Sequence, Dict, Any, Optional
+from typing import Sequence, Dict, Any, Optional, List
 
 import numpy as np
 import numpy.typing as npt
@@ -159,19 +160,23 @@ class GUI(GUIWidgets):
         self.code_window.set_exec_callback(self.sim.execute)
         self.code_window.set_save_callback(self.sim.set_code)
 
-    @staticmethod
-    def _extract_group_index(name: str) -> int:
-        return int(name.replace("group", ""))
-
     def _add_group(self) -> None:
         name = self.sim.add_group()
-        self.create_group(name)
-        self.groups_entry.current(self._extract_group_index(name) - 1)
+        index = self._create_group(name)
+        self.groups_entry.current(index)
+
+    def _create_group(self, name: str) -> int:
+        try:
+            return self.groups_entry["values"].index(name)
+        except ValueError:
+            group_names: List[str] = list(self.groups_entry["values"])
+            index = bisect.bisect(group_names, name)
+            group_names.insert(index, name)
+            self.groups_entry["values"] = group_names
+            return index
 
     def create_group(self, name: str) -> None:
-        self.group_indices.append(self._extract_group_index(name))
-        self.group_indices.sort()
-        self.groups_entry["values"] = [f"group{i}" for i in self.group_indices]
+        self._create_group(name)
 
     def get_focus(self) -> bool:
         try:
