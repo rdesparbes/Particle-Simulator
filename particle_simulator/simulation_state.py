@@ -99,6 +99,23 @@ class SimulationState(SimulationData):
         self.groups[particle.group].remove(particle)
         del particle
 
+    def remove_selection(self) -> None:
+        temp = self.selection.copy()
+        for p in temp:
+            self.remove_particle(p)
+
+    def select_all(self) -> None:
+        for p in self.particles:
+            self.select_particle(p)
+
+    def lock_selection(self) -> None:
+        for p in self.selection:
+            p.locked = True
+
+    def unlock_selection(self) -> None:
+        for p in self.selection:
+            p.locked = False
+
     def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
         for p in particles:
             for link, length in p.link_lengths.items():

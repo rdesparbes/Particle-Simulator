@@ -100,9 +100,7 @@ class Simulation:
 
     def _cut(self) -> None:
         self._copy_selected()
-        temp = self.state.selection.copy()
-        for p in temp:
-            self.state.remove_particle(p)
+        self.state.remove_selection()
 
     def _compute_force(
         self, particle: Particle, near_particles: Iterable[Particle]
@@ -228,15 +226,12 @@ class Simulation:
             self.state.toggle_paused()
         # DELETE to delete
         elif key == Key.delete:
-            temp = self.state.selection.copy()
-            for p in temp:
-                self.state.remove_particle(p)
+            self.state.remove_selection()
         elif key in {Key.shift_l, Key.shift_r}:
             self.shift = True
         # CTRL + A to select all
         elif KeyCode.from_char(str(key)).char == r"'\x01'":
-            for p in self.state.particles:
-                self.state.select_particle(p)
+            self.state.select_all()
         # CTRL + C to copy
         elif KeyCode.from_char(str(key)).char == r"'\x03'":
             self._copy_selected()
@@ -248,11 +243,9 @@ class Simulation:
             self._cut()
         # CTRL + L and CTRL + SHIFT + L to lock and 'unlock'
         elif KeyCode.from_char(str(key)).char == r"'\x0c'" and not self.shift:
-            for p in self.state.selection:
-                p.locked = True
+            self.state.lock_selection()
         elif KeyCode.from_char(str(key)).char == r"'\x0c'" and self.shift:
-            for p in self.state.selection:
-                p.locked = False
+            self.state.lock_selection()
         # L to link, SHIFT + L to unlink and ALT GR + L to fit-link
         elif KeyCode.from_char(str(key)).char == "'l'":
             self.state.link_selection()
