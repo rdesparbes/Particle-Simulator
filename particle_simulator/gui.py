@@ -21,7 +21,7 @@ from .simulation_state import SimulationState
 
 class GUI(GUIWidgets):
     def __init__(self, sim: SimulationState, title: str) -> None:
-        super().__init__(sim.width, sim.height, title, (sim.grid_res_x, sim.grid_res_y))
+        super().__init__(sim.width, sim.height, title)
         self.save_manager = SaveManager(file_location=os.path.dirname(self.path))
         self.code_window: Optional[CodeWindow] = None
         self.extra_window: Optional[ExtraWindow] = None

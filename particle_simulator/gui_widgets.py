@@ -11,9 +11,7 @@ _CANVAS_Y = 30  # The Y coordinate of the top-left corner of the canvas
 
 
 class GUIWidgets:
-    def __init__(
-        self, width: int, height: int, title: str, gridres: Tuple[int, int]
-    ) -> None:
+    def __init__(self, width: int, height: int, title: str) -> None:
         self.path = os.path.split(os.path.abspath(__file__))[0]
 
         self.tk = tk.Tk()
@@ -338,7 +336,6 @@ class GUIWidgets:
             to=200,
             increment=1,
         )
-        self._set_entry(self.grid_res_x, str(gridres[0]))
         self.grid_res_x.place(x=80, y=455)
 
         tk.Label(self.tab1, text="Y:", font=("helvetica", 8)).place(
@@ -351,7 +348,6 @@ class GUIWidgets:
             to=200,
             increment=1,
         )
-        self._set_entry(self.grid_res_y, str(gridres[1]))
         self.grid_res_y.place(x=80, y=480)
 
         self.tab1_canvas.create_text(
