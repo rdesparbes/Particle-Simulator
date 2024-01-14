@@ -453,9 +453,9 @@ class Simulation:
     def simulate(self) -> None:
         while self.state.running:
             self._handle_save_manager()
+            self._update_mouse_position()
             self._simulate_step()
             self._update_timings(new_time=time.time())
-            self._update_mouse_position()
             image = self._draw_image()
             self.gui.update(
                 image,
