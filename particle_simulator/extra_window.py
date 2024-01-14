@@ -6,6 +6,7 @@ from typing import Optional
 
 import numpy as np
 
+from .color import color_to_hex
 from .error import Error
 from .simulation_state import SimulationState
 
@@ -90,7 +91,7 @@ class ExtraWindow:
             115,
             150,
             135,
-            fill=self.sim.bg_color[1],
+            fill=color_to_hex(self.sim.bg_color[0]),
             activeoutline="red",
             tags="color_rect",
         )
