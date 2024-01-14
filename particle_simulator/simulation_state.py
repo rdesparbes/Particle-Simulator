@@ -129,8 +129,8 @@ class SimulationState(SimulationData):
         except KeyError:
             new_group: List[Particle] = []
             self.groups[name] = new_group
-            for create_group in self.create_group_callbacks:
-                create_group(name)
+            for create_group_callback in self.create_group_callbacks:
+                create_group_callback(name)
             return new_group
 
     def register_particle(self, particle: Particle) -> None:
