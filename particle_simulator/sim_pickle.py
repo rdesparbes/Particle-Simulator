@@ -46,7 +46,7 @@ def _sim_settings_to_dict(sim_data: SimulationData) -> PickleSettings:
         "g_dir": ((float(s.g_dir[0]), float(s.g_dir[1])),),
         "wind_force": ((float(s.wind_force[0]), float(s.wind_force[1])),),
         "stress_visualization": (s.stress_visualization,),
-        "bg_color": ((s.bg_color[0],),),
+        "bg_color": ((s.bg_color,),),
         "void_edges": (s.void_edges,),
         "code": (s.code,),
     }
@@ -216,7 +216,7 @@ def _extract_sim_settings(sim_pickle: PickleSettings) -> SimulationData:
         g_dir=np.array([float(g_dir_x), float(g_dir_y)]),
         wind_force=np.array([float(wind_dir_x), float(wind_dir_y)]),
         stress_visualization=bool(s["stress_visualization"][0]),
-        bg_color=((int(bg_color[0]), int(bg_color[1]), int(bg_color[2])), ""),
+        bg_color=(int(bg_color[0]), int(bg_color[1]), int(bg_color[2])),
         void_edges=bool(s["void_edges"][0]),
         code=str(s.get("code", [""])[0]),
     )

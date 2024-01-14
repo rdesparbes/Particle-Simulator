@@ -91,7 +91,7 @@ class ExtraWindow:
             115,
             150,
             135,
-            fill=color_to_hex(self.sim.bg_color[0]),
+            fill=color_to_hex(self.sim.bg_color),
             activeoutline="red",
             tags="color_rect",
         )
@@ -213,10 +213,10 @@ class ExtraWindow:
         self.sim.stress_visualization = self.stress_visualization_bool.get()
 
     def change_bg_color(self, *_event: tk.Event) -> None:
-        color = colorchooser.askcolor(title="Choose color")
-        if color[0] is not None:
+        color, color_hex = colorchooser.askcolor(title="Choose color")
+        if color is not None:
             self.sim.bg_color = color
-            self.gui_canvas.itemconfig(self.bg_color_rect, fill=color[1])
+            self.gui_canvas.itemconfig(self.bg_color_rect, fill=color_hex)
 
     def void_edges_toggle(self, *_event: tk.Event) -> None:
         self.sim.void_edges = self.void_edges_bool.get()

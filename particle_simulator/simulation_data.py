@@ -11,7 +11,7 @@ from particle_simulator.geometry import Rectangle
 class SimulationData:
     # Data that must be saved and loaded
     stress_visualization: bool = False
-    bg_color: Tuple[Tuple[int, int, int], str] = ((255, 255, 255), "#ffffff")
+    bg_color: Tuple[int, int, int] = (255, 255, 255)
     void_edges: bool = False
     right: bool = True
     left: bool = True

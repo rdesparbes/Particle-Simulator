@@ -382,7 +382,7 @@ class Simulation:
     def _draw_image(self) -> npt.NDArray[np.uint8]:
         image = np.full(
             (self.state.height, self.state.width, 3),
-            self.state.bg_color[0],
+            self.state.bg_color,
             dtype=np.uint8,
         )
         if self.state.show_links:
