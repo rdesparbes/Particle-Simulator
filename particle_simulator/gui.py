@@ -74,7 +74,6 @@ class GUI(GUIWidgets):
         self.left_bool.set(sim.left)
         self.right_bool.set(sim.right)
         self._set_entry(self.delay_entry, str(sim.min_spawn_delay))
-        self._set_color(sim.bg_color[1])
         self.group_select_btn.configure(
             command=lambda: sim.select_group(self.groups_entry.get())
         )

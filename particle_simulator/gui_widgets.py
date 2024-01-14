@@ -620,7 +620,7 @@ class GUIWidgets:
             self._set_entry(self._color_entry, str(list(color)))
             self.tab2_canvas.itemconfig(self.part_color_rect, fill=color_exa)
 
-    def _set_color(self, color: str) -> None:
+    def _set_part_color(self, color: str) -> None:
         self.tab2_canvas.itemconfig(self.part_color_rect, fill=color)
 
     def _parse_color(self) -> Optional[Tuple[int, int, int]]:
@@ -633,9 +633,9 @@ class GUIWidgets:
     def _change_color_entry(self, *_event: tk.Event) -> None:
         color = self._parse_color()
         if color is None:
-            self._set_color("#ffffff")
+            self._set_part_color("#ffffff")
         else:
-            self._set_color(f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}")
+            self._set_part_color(f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}")
 
     def get_mouse_pos(self) -> Tuple[int, int]:
         return (
