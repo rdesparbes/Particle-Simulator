@@ -16,7 +16,6 @@ import numpy as np
 import numpy.typing as npt
 from pynput.keyboard import Listener, Key, KeyCode
 
-from . import sim_pickle
 from .controller_state import ControllerState
 from .error import Error
 from .geometry import Circle
@@ -29,9 +28,6 @@ from .particle import (
     radii_compute_magnitude_strategy,
 )
 from .particle_factory import ParticleFactory
-from .sim_pickle import (
-    SimPickle,
-)
 from .simulation_state import SimulationState, Link
 
 
@@ -321,17 +317,15 @@ class Simulation:
             if particle_settings is not None:
                 self.state.replace_particle(p, particle_settings)
 
-    def to_dict(self) -> SimPickle:
-        controller_state = ControllerState(
+    def to_controller_state(self) -> ControllerState:
+        return ControllerState(
             sim_data=self.state,
             gui_settings=self.gui.get_sim_settings(),
             gui_particle_state=self.gui.get_particle_settings(),
             particles=self.state.particles,
         )
-        return sim_pickle.to_dict(controller_state)
 
-    def from_dict(self, data: SimPickle) -> None:
-        controller_state = sim_pickle.from_dict(data)
+    def from_controller_state(self, controller_state: ControllerState) -> None:
         self.state = SimulationState(**asdict(controller_state.sim_data))
         self.gui.register_sim(self.state)
         self.state.add_group_callbacks = [self.gui.create_group]
@@ -430,9 +424,9 @@ class Simulation:
         return image
 
     def save(self, filename: Optional[str] = None) -> None:
+        controller_state = self.to_controller_state()
         try:
-            data = self.to_dict()
-            self.gui.save_manager.save(data, filename=filename)
+            self.gui.save_manager.save(controller_state, filename=filename)
         except Exception as error:
             self.state.error = Error("Saving-Error", error)
 
@@ -440,10 +434,10 @@ class Simulation:
         if not self.state.paused:
             self.state.toggle_paused()
         try:
-            data = self.gui.save_manager.load(filename=filename)
-            if data is None:
+            controller_state = self.gui.save_manager.load(filename=filename)
+            if controller_state is None:
                 return
-            self.from_dict(data)
+            self.from_controller_state(controller_state)
         except Exception as error:
             self.state.error = Error("Loading-Error", error)
 

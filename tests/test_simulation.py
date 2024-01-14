@@ -4,6 +4,7 @@ from typing import Iterable, Union, Literal, Tuple
 
 import pytest
 
+from particle_simulator import sim_pickle
 from particle_simulator.sim_pickle import SimPickle, _parse_color
 from particle_simulator.simulation import Simulation
 
@@ -39,7 +40,7 @@ def fixture_pickle_data(sim_file_name: str) -> SimPickle:
 @pytest.fixture(name="simulation", scope="session")
 def fixture_simulation(pickle_data: SimPickle) -> Simulation:
     sim = Simulation()
-    sim.from_dict(pickle_data)
+    sim.from_controller_state(sim_pickle.from_dict(pickle_data))
     return sim
 
 
@@ -47,15 +48,17 @@ def test_simulation_write_then_load_generates_identical_file(
     simulation: Simulation,
 ) -> None:
     # Arrange
-    dumped_data = simulation.to_dict()
+    dumped_data = sim_pickle.to_dict(simulation.to_controller_state())
 
     # Act
     sim = Simulation()
-    sim.from_dict(dumped_data)
+    sim.from_controller_state(sim_pickle.from_dict(dumped_data))
 
     # Assert
     # Pickle is necessary because of numpy arrays:
-    assert pickle.dumps(dumped_data) == pickle.dumps(sim.to_dict())
+    assert pickle.dumps(dumped_data) == pickle.dumps(
+        sim_pickle.to_dict(sim.to_controller_state())
+    )
 
 
 @pytest.mark.parametrize(

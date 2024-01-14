@@ -3,7 +3,8 @@ import pickle
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 from typing import Optional
 
-from .sim_pickle import SimPickle
+from . import sim_pickle
+from .controller_state import ControllerState
 
 
 class SaveManager:
@@ -11,7 +12,9 @@ class SaveManager:
         self.file_location = file_location
         self.filename = "simulation"
 
-    def save(self, data: SimPickle, filename: Optional[str] = None) -> None:
+    def save(
+        self, controller_state: ControllerState, filename: Optional[str] = None
+    ) -> None:
         if filename is None:
             filename = asksaveasfilename(
                 initialdir=self.file_location,
@@ -22,12 +25,13 @@ class SaveManager:
 
             if not filename:
                 return
+        data = sim_pickle.to_dict(controller_state)
         with open(filename, "wb") as file_object:
             pickle.dump(data, file_object)
 
         self.file_location, self.filename = os.path.split(filename)
 
-    def load(self, filename: Optional[str] = None) -> Optional[SimPickle]:
+    def load(self, filename: Optional[str] = None) -> Optional[ControllerState]:
         if filename is None:
             filename = askopenfilename(
                 initialdir=self.file_location,
@@ -43,4 +47,4 @@ class SaveManager:
             data = pickle.load(file_object)
 
         self.file_location, self.filename = os.path.split(filename)
-        return data
+        return sim_pickle.from_dict(data)
