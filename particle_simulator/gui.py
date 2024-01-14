@@ -255,7 +255,7 @@ class GUI(GUIWidgets):
         for i, p in enumerate(selection):
             variable_names: Dict[str, Any] = {
                 "radius_entry": p.radius,
-                "color_entry": p.color,
+                "color_var": p.color,
                 "mass_entry": p.mass,
                 "velocity_x_entry": p.velocity[0],
                 "velocity_y_entry": p.velocity[1],
@@ -288,6 +288,11 @@ class GUI(GUIWidgets):
                     widget.delete(0, tk.END)
                     if same:
                         widget.insert(0, str(part_val))
+                elif isinstance(widget, tk.StringVar):
+                    if same:
+                        widget.set(str(part_val))
+                    else:
+                        widget.set("random")
                 else:
                     raise NotImplementedError(f"Unexpected widget: {type(widget)}")
 
