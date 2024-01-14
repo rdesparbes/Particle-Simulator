@@ -4,6 +4,8 @@ import tkinter as tk
 from tkinter import ttk, colorchooser
 from typing import Optional, Tuple, Union
 
+from particle_simulator.color import color_to_hex
+
 _CANVAS_X = 0  # The X coordinate of the top-left corner of the canvas
 _CANVAS_Y = 30  # The Y coordinate of the top-left corner of the canvas
 
@@ -620,8 +622,9 @@ class GUIWidgets:
             self._set_entry(self._color_entry, str(list(color)))
             self.tab2_canvas.itemconfig(self.part_color_rect, fill=color_exa)
 
-    def _set_part_color(self, color: str) -> None:
-        self.tab2_canvas.itemconfig(self.part_color_rect, fill=color)
+    def _set_part_color(self, color: Tuple[int, int, int]) -> None:
+        hex_color = color_to_hex(color)
+        self.tab2_canvas.itemconfig(self.part_color_rect, fill=hex_color)
 
     def _parse_color(self) -> Optional[Tuple[int, int, int]]:
         color_regex = r"(?P<red>\d+)\s*,\s*(?P<green>\d+)\s*,\s*(?P<blue>\d+)"
@@ -633,9 +636,9 @@ class GUIWidgets:
     def _change_color_entry(self, *_event: tk.Event) -> None:
         color = self._parse_color()
         if color is None:
-            self._set_part_color("#ffffff")
+            self._set_part_color((255, 255, 255))
         else:
-            self._set_part_color(f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}")
+            self._set_part_color(color)
 
     def get_mouse_pos(self) -> Tuple[int, int]:
         return (
