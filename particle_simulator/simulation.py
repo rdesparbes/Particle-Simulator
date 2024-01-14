@@ -51,6 +51,8 @@ class Simulation:
             g=g,
             air_res=air_res,
             ground_friction=ground_friction,
+            grid_res_x=gridres[0],
+            grid_res_y=gridres[1],
         )
 
         self.fps = 0.0
@@ -67,7 +69,7 @@ class Simulation:
         self.clipboard: List[Dict[str, Any]] = []
         self.pasting = False
 
-        self.gui = GUI(self.state, title, gridres)
+        self.gui = GUI(self.state, title)
         self.state.add_group_callbacks.append(self.gui.create_group)
 
         self.gui.save_btn.configure(command=self.save)

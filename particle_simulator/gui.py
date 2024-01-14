@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from typing import Sequence, Dict, Any, Optional, Tuple
+from typing import Sequence, Dict, Any, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -17,10 +17,8 @@ from .simulation_state import SimulationState
 
 
 class GUI(GUIWidgets):
-    def __init__(
-        self, sim: SimulationState, title: str, gridres: Tuple[int, int]
-    ) -> None:
-        super().__init__(sim.width, sim.height, title, gridres)
+    def __init__(self, sim: SimulationState, title: str) -> None:
+        super().__init__(sim.width, sim.height, title, (sim.grid_res_x, sim.grid_res_y))
         self.tk.protocol("WM_DELETE_WINDOW", self.destroy)
         self._register_sim(sim)
         self._set_callbacks()
