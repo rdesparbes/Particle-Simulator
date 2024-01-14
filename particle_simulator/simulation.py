@@ -71,6 +71,7 @@ class Simulation:
 
         self.gui = GUI(self.state, title)
         self.state.create_group_callbacks.append(self.gui.create_group)
+        self._link_colors: List[Link] = []
 
         self.gui.save_btn.configure(command=self.save)
         self.gui.load_btn.configure(command=self.load)
@@ -124,14 +125,14 @@ class Simulation:
                 if interaction.link_percentage > 1.0:
                     Particle.unlink([particle, near_particle])
                 elif self.state.stress_visualization:
-                    self.state.link_colors.append(
+                    self._link_colors.append(
                         Link(particle, near_particle, interaction.link_percentage)
                     )
         force += np.sum(list(particle._collisions.values()), axis=0)
         return force
 
     def _simulate_step(self) -> None:
-        self.state.link_colors = []
+        self._link_colors = []
         if self.state.use_grid:
             self.grid.init_grid(self.state.particles)
         if self.state.toggle_pause:
@@ -386,7 +387,7 @@ class Simulation:
         )
         if self.state.show_links:
             if self.state.stress_visualization and not self.state.paused:
-                for p1, p2, percentage in self.state.link_colors:
+                for p1, p2, percentage in self._link_colors:
                     color = [max(255 * percentage, 235)] + [235 * (1 - percentage)] * 2
                     cv2.line(
                         image,

@@ -44,7 +44,6 @@ class SimulationState(SimulationData):
     grid_res_x: int = 50
     grid_res_y: int = 50
     min_spawn_delay: float = 0.05
-    link_colors: List[Link] = field(default_factory=list)
     mouse_mode: Mode = "MOVE"
     running: bool = True
 
