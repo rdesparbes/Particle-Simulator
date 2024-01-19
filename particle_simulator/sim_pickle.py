@@ -110,7 +110,6 @@ def _particles_to_dict(particles: Sequence[ParticleData]) -> ParticlesPickle:
             "group": p.group,
             "separate_group": p.separate_group,
             "gravity_mode": p.gravity_mode,
-            "mouse": p.mouse,
             "link_lengths": {
                 particles.index(particle): value
                 for particle, value in p.link_lengths.items()
