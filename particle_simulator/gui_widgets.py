@@ -620,6 +620,12 @@ class GUIWidgets:
         hex_color = color_to_hex(color)
         self.tab2_canvas.itemconfig(self.part_color_rect, fill=hex_color)
 
+    def _parse_radius(self) -> Optional[float]:
+        try:
+            return float(self.radius_entry.get())
+        except ValueError:
+            return None
+
     def _parse_color(self) -> Optional[Tuple[int, int, int]]:
         color_regex = r"(?P<red>\d+)\s*,\s*(?P<green>\d+)\s*,\s*(?P<blue>\d+)"
         m = re.search(color_regex, self.color_var.get())

@@ -207,12 +207,6 @@ class GUI(GUIWidgets):
         self._set_entry(self.delay_entry, str(s.delay))
 
     def get_particle_settings(self) -> ParticleFactory:
-        radius_str: str = self.radius_entry.get()
-        try:
-            radius: Optional[float] = float(radius_str)
-        except ValueError:
-            radius = None
-
         return ParticleFactory(
             color=self._parse_color(),
             mass=float(self.mass_entry.get()),
@@ -233,7 +227,7 @@ class GUI(GUIWidgets):
             group=self.groups_entry.get(),
             separate_group=self.separate_group_bool.get(),
             gravity_mode=self.gravity_mode_bool.get(),
-            radius=radius,
+            radius=self._parse_radius(),
         )
 
     def set_particle_settings(self, particle_settings: ParticleFactory) -> None:
