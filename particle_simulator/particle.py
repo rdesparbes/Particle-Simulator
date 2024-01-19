@@ -4,6 +4,7 @@ from typing import (
     Optional,
     Sequence,
     Dict,
+    Any,
 )
 
 import numpy as np
@@ -78,8 +79,17 @@ class Particle(ParticleData):
             link_lengths=link_lengths,
             link_indices_lengths=link_indices_lengths,
         )
-
         self._sim = sim
+
+    def return_dict(self, index_source: Sequence[Self]) -> Dict[str, Any]:
+        dictionary: Dict[str, Any] = self.to_dict()
+        del dictionary["_sim"]
+        dictionary["link_lengths"] = {
+            index_source.index(particle): value
+            for particle, value in self.link_lengths.items()
+            if particle in index_source
+        }
+        return dictionary
 
     def _compute_delta_velocity(
         self, force: npt.NDArray[np.float_]

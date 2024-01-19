@@ -324,7 +324,7 @@ class Simulation:
 
         self.state.groups = {}
         particles = [
-            Particle(self.state, **asdict(particle_data))
+            Particle(self.state, **particle_data.to_dict())
             for particle_data in controller_state.particles
         ]
         for particle in particles:

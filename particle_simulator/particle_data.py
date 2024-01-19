@@ -1,5 +1,5 @@
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import (
     Self,
     Tuple,
@@ -113,7 +113,14 @@ class ParticleData:
     mouse = False
     link_lengths: Dict[Self, Optional[float]] = field(default_factory=dict)
     link_indices_lengths: Dict[int, Optional[float]] = field(default_factory=dict)
-    _collisions: Dict[Self, npt.NDArray[np.float_]] = field(default_factory=dict)
+    _collisions: Dict[Self, npt.NDArray[np.float_]] = field(
+        default_factory=dict, init=False, repr=False
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = asdict(self)
+        del d["_collisions"]
+        return d
 
     def _compute_default_force(
         self,
@@ -178,17 +185,6 @@ class ParticleData:
                 link_percentage = self._compute_link_percentage(magnitude, max_force)
             force = direction * magnitude
         return ParticleInteraction(force, link_percentage)
-
-    def return_dict(self, index_source: Sequence[Self]) -> Dict[str, Any]:
-        dictionary: Dict[str, Any] = self.__dict__.copy()
-        del dictionary["_sim"]
-        del dictionary["_collisions"]
-        dictionary["link_lengths"] = {
-            index_source.index(particle): value
-            for particle, value in self.link_lengths.items()
-            if particle in index_source
-        }
-        return dictionary
 
     def iter_interactions(
         self,
