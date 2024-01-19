@@ -110,15 +110,17 @@ class ParticleData:
     group: str = "group1"
     separate_group: bool = False
     gravity_mode: bool = False
-    mouse = False
-    link_lengths: Dict[Self, Optional[float]] = field(default_factory=dict)
     link_indices_lengths: Dict[int, Optional[float]] = field(default_factory=dict)
+    # Non-serializable fields:
+    link_lengths: Dict[Self, Optional[float]] = field(default_factory=dict)
+    mouse: bool = False
     _collisions: Dict[Self, npt.NDArray[np.float_]] = field(
         default_factory=dict, init=False, repr=False
     )
 
     def to_dict(self) -> Dict[str, Any]:
         d = asdict(self)
+        del d["mouse"]
         del d["_collisions"]
         return d
 
