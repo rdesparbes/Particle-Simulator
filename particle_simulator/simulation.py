@@ -21,8 +21,8 @@ from .error import Error
 from .geometry import Circle
 from .grid import Grid
 from .gui import GUI
-from .particle import (
-    Particle,
+from .particle import Particle
+from .particle_data import (
     default_compute_magnitude_strategy,
     ComputeMagnitudeStrategy,
     radii_compute_magnitude_strategy,
