@@ -156,7 +156,7 @@ class Simulation:
                 force: Optional[npt.NDArray[np.float_]] = None
             else:
                 force = self._compute_force(particle, near_particles)
-            particle.update(force)
+            particle.update(self.state, force)
             if self.state.is_out_of_bounds(particle.rectangle):
                 self.state.remove_particle(particle)
 

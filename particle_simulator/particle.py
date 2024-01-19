@@ -79,11 +79,9 @@ class Particle(ParticleData):
             link_lengths=link_lengths,
             link_indices_lengths=link_indices_lengths,
         )
-        self._sim = sim
 
     def return_dict(self, index_source: Sequence[Self]) -> Dict[str, Any]:
         dictionary: Dict[str, Any] = self.to_dict()
-        del dictionary["_sim"]
         dictionary["link_lengths"] = {
             index_source.index(particle): value
             for particle, value in self.link_lengths.items()
@@ -92,40 +90,40 @@ class Particle(ParticleData):
         return dictionary
 
     def _compute_delta_velocity(
-        self, force: npt.NDArray[np.float_]
+        self, sim_data: SimulationData, force: npt.NDArray[np.float_]
     ) -> npt.NDArray[np.float_]:
-        forces = [force, self._sim.wind_force * self.radius]
-        acceleration = np.sum(forces, axis=0) / self.mass + self._sim.g_vector
+        forces = [force, sim_data.wind_force * self.radius]
+        acceleration = np.sum(forces, axis=0) / self.mass + sim_data.g_vector
 
         return (
             np.clip(acceleration, -2, 2)
-            + np.random.uniform(-1, 1, 2) * self._sim.temperature
+            + np.random.uniform(-1, 1, 2) * sim_data.temperature
         )
 
-    def update(self, force: Optional[npt.NDArray[np.float_]] = None) -> None:
+    def update(self, sim_data: SimulationData, force: Optional[npt.NDArray[np.float_]] = None) -> None:
         if self.mouse:
-            self.velocity = self._sim.delta_mouse_pos
+            self.velocity = sim_data.delta_mouse_pos
             dx, dy = self.velocity
             self.x += dx
             self.y += dy
         elif force is not None and not self.locked:
-            self.velocity += self._compute_delta_velocity(force)
-            self.velocity *= self._sim.air_res_calc
-            dx, dy = self.velocity * self._sim.speed
+            self.velocity += self._compute_delta_velocity(sim_data, force)
+            self.velocity *= sim_data.air_res_calc
+            dx, dy = self.velocity * sim_data.speed
             self.x += dx
             self.y += dy
 
-        if self._sim.right and self.x_max >= self._sim.width:
-            self.velocity *= [-self.bounciness, 1 - self._sim.ground_friction]
-            self.x = self._sim.width - self.radius
-        if self._sim.left and self.x_min <= 0:
-            self.velocity *= [-self.bounciness, 1 - self._sim.ground_friction]
+        if sim_data.right and self.x_max >= sim_data.width:
+            self.velocity *= [-self.bounciness, 1 - sim_data.ground_friction]
+            self.x = sim_data.width - self.radius
+        if sim_data.left and self.x_min <= 0:
+            self.velocity *= [-self.bounciness, 1 - sim_data.ground_friction]
             self.x = self.radius
-        if self._sim.bottom and self.y_max >= self._sim.height:
-            self.velocity *= [1 - self._sim.ground_friction, -self.bounciness]
-            self.y = self._sim.height - self.radius
-        if self._sim.top and self.y_min <= 0:
-            self.velocity *= [1 - self._sim.ground_friction, -self.bounciness]
+        if sim_data.bottom and self.y_max >= sim_data.height:
+            self.velocity *= [1 - sim_data.ground_friction, -self.bounciness]
+            self.y = sim_data.height - self.radius
+        if sim_data.top and self.y_min <= 0:
+            self.velocity *= [1 - sim_data.ground_friction, -self.bounciness]
             self.y = self.radius
 
         self._collisions = {}
