@@ -10,12 +10,19 @@ from typing import (
     Optional,
     Callable,
     NamedTuple,
+    TypeVar,
+    Generic,
 )
 
 import numpy as np
 
 from particle_simulator.error import Error
 from particle_simulator.particle import Particle
+from particle_simulator.particle_data import (
+    ParticleData,
+    link_particles,
+    unlink_particles,
+)
 from particle_simulator.particle_factory import ParticleFactory
 from particle_simulator.geometry import Rectangle
 from particle_simulator.simulation_data import SimulationData
@@ -23,19 +30,22 @@ from particle_simulator.simulation_data import SimulationData
 Mode = Literal["SELECT", "MOVE", "ADD"]
 
 
-class Link(NamedTuple):
-    particle_a: Particle
-    particle_b: Particle
+_T = TypeVar("_T", bound=ParticleData)
+
+
+class Link(NamedTuple, Generic[_T]):
+    particle_a: _T
+    particle_b: _T
     percentage: float
 
 
 @dataclass(kw_only=True)
-class SimulationState(SimulationData):
-    particles: List[Particle] = field(default_factory=list)
-    groups: Dict[str, List[Particle]] = field(default_factory=lambda: {"group1": []})
+class SimulationState(SimulationData, Generic[_T]):
+    particles: List[_T] = field(default_factory=list)
+    groups: Dict[str, List[_T]] = field(default_factory=lambda: {"group1": []})
 
     toggle_pause: bool = False
-    selection: List[Particle] = field(default_factory=list)
+    selection: List[_T] = field(default_factory=list)
     error: Optional[Error] = None
     show_fps: bool = True
     show_num: bool = True
@@ -50,15 +60,15 @@ class SimulationState(SimulationData):
 
     @staticmethod
     def link(
-        particles: List[Particle],
+        particles: List[_T],
         fit_link: bool = False,
         distance: Optional[float] = None,
     ) -> None:
-        Particle.link(particles, fit_link, distance)
+        link_particles(particles, fit_link, distance)
 
     @staticmethod
-    def unlink(particles: Collection[Particle]) -> None:
-        Particle.unlink(particles)
+    def unlink(particles: Collection[_T]) -> None:
+        unlink_particles(particles)
 
     @staticmethod
     def rotate_2d(
@@ -86,12 +96,12 @@ class SimulationState(SimulationData):
         self.unlink(self.selection)
         self.selection = []
 
-    def select_particle(self, particle: Particle) -> None:
+    def select_particle(self, particle: _T) -> None:
         if particle in self.selection:
             return
         self.selection.append(particle)
 
-    def remove_particle(self, particle: Particle) -> None:
+    def remove_particle(self, particle: _T) -> None:
         self.particles.remove(particle)
         if particle in self.selection:
             self.selection.remove(particle)
@@ -117,7 +127,7 @@ class SimulationState(SimulationData):
         for p in self.selection:
             p.locked = False
 
-    def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
+    def change_link_lengths(self, particles: Iterable[_T], amount: float) -> None:
         for p in particles:
             for link, length in p.link_lengths.items():
                 if length is not None:
@@ -140,31 +150,29 @@ class SimulationState(SimulationData):
     def select_group(self, name: str) -> None:
         self.selection = list(self.groups[name])
 
-    def _get_group(self, name: str) -> List[Particle]:
+    def _get_group(self, name: str) -> List[_T]:
         try:
             return self.groups[name]
         except KeyError:
-            new_group: List[Particle] = []
+            new_group: List[_T] = []
             self.groups[name] = new_group
             for create_group_callback in self.create_group_callbacks:
                 create_group_callback(name)
             return new_group
 
-    def register_particle(self, particle: Particle) -> None:
+    def register_particle(self, particle: _T) -> None:
         self._get_group(particle.group).append(particle)
         self.particles.append(particle)
 
-    def replace_particle(
-        self, p: Particle, particle_settings: ParticleFactory
-    ) -> Particle:
+    def replace_particle(self, p: _T, particle_settings: ParticleFactory) -> Particle:
         temp_link_lengths = p.link_lengths.copy()
         px, py = p.x, p.y
         self.remove_particle(p)
-        p = Particle(self, px, py, **asdict(particle_settings))
+        new_p = Particle(self, px, py, **asdict(particle_settings))
         self.register_particle(p)
         for link, length in temp_link_lengths.items():
             self.link([link, p], fit_link=length is not None, distance=length)
-        return p
+        return new_p
 
     def is_out_of_bounds(self, rectangle: Rectangle) -> bool:
         return self.void_edges and self.rectangle.isdisjoint(rectangle)

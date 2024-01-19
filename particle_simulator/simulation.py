@@ -27,6 +27,7 @@ from .particle import (
     ComputeMagnitudeStrategy,
     radii_compute_magnitude_strategy,
 )
+from .particle_data import unlink_particles
 from .particle_factory import ParticleFactory
 from .simulation_state import SimulationState, Link
 
@@ -44,7 +45,7 @@ class Simulation:
         ground_friction: float = 0,
         fps_update_delay: float = 0.5,
     ):
-        self.state = SimulationState(
+        self.state: SimulationState[Particle] = SimulationState(
             width=width,
             height=height,
             temperature=temperature,
@@ -117,7 +118,7 @@ class Simulation:
             near_particle._collisions[particle] = -interaction.force
             if interaction.link_percentage is not None:
                 if interaction.link_percentage > 1.0:
-                    Particle.unlink([particle, near_particle])
+                    unlink_particles([particle, near_particle])
                 elif self.state.stress_visualization:
                     self._link_colors.append(
                         Link(particle, near_particle, interaction.link_percentage)

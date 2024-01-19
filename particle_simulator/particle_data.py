@@ -15,6 +15,20 @@ import numpy.typing as npt
 from particle_simulator.geometry import Circle, Rectangle
 
 
+def link_particles(
+    particles: Sequence["ParticleData"],
+    fit_link: bool = False,
+    distance: Optional[float] = None,
+) -> None:
+    for p in particles:
+        p._link(particles, fit_link=fit_link, distance=distance)
+
+
+def unlink_particles(particles: Collection["ParticleData"]) -> None:
+    for p in particles:
+        p._unlink(particles)
+
+
 @dataclass
 class ParticleData:
     x: float
@@ -161,17 +175,3 @@ class ParticleData:
             (self.mass - other.mass) / total_mass * self.velocity
             + 2.0 * other.mass / total_mass * other.velocity
         )
-
-    @staticmethod
-    def link(
-        particles: Sequence["ParticleData"],
-        fit_link: bool = False,
-        distance: Optional[float] = None,
-    ) -> None:
-        for p in particles:
-            p._link(particles, fit_link=fit_link, distance=distance)
-
-    @staticmethod
-    def unlink(particles: Collection["ParticleData"]) -> None:
-        for p in particles:
-            p._unlink(particles)
