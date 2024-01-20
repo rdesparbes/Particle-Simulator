@@ -15,6 +15,7 @@ from typing import (
 )
 
 import numpy as np
+import numpy.typing as npt
 
 from particle_simulator.error import Error
 from particle_simulator.geometry import Rectangle
@@ -183,3 +184,44 @@ class SimulationState(SimulationData, Generic[_T]):
 
     def is_out_of_bounds(self, rectangle: Rectangle) -> bool:
         return self.void_edges and self.rectangle.isdisjoint(rectangle)
+
+    def _compute_delta_velocity(
+        self, particle: ParticleData, force: npt.NDArray[np.float_]
+    ) -> npt.NDArray[np.float_]:
+        forces = [force, self.wind_force * particle.radius]
+        acceleration = np.sum(forces, axis=0) / particle.props.mass + self.g_vector
+
+        return (
+            np.clip(acceleration, -2, 2)
+            + np.random.uniform(-1, 1, 2) * self.temperature
+        )
+
+    def update(
+        self, particle: ParticleData, force: Optional[npt.NDArray[np.float_]] = None
+    ) -> None:
+        if particle.mouse:
+            particle.velocity = self.delta_mouse_pos
+            dx, dy = particle.velocity
+            particle.x += dx
+            particle.y += dy
+        elif force is not None and not particle.props.locked:
+            particle.velocity += self._compute_delta_velocity(particle, force)
+            particle.velocity *= self.air_res_calc
+            dx, dy = particle.velocity * self.speed
+            particle.x += dx
+            particle.y += dy
+
+        if self.right and particle.x_max >= self.width:
+            particle.velocity *= [-particle.props.bounciness, 1 - self.ground_friction]
+            particle.x = self.width - particle.radius
+        if self.left and particle.x_min <= 0:
+            particle.velocity *= [-particle.props.bounciness, 1 - self.ground_friction]
+            particle.x = particle.radius
+        if self.bottom and particle.y_max >= self.height:
+            particle.velocity *= [1 - self.ground_friction, -particle.props.bounciness]
+            particle.y = self.height - particle.radius
+        if self.top and particle.y_min <= 0:
+            particle.velocity *= [1 - self.ground_friction, -particle.props.bounciness]
+            particle.y = particle.radius
+
+        particle._collisions = {}

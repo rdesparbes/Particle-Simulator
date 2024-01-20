@@ -11,7 +11,6 @@ import numpy.typing as npt
 
 from .particle_data import ParticleData
 from .particle_properties import ParticleProperties
-from .simulation_data import SimulationData
 
 
 class Particle(ParticleData):
@@ -50,44 +49,3 @@ class Particle(ParticleData):
             velocity=velocity,
             link_lengths=link_lengths,
         )
-
-    def _compute_delta_velocity(
-        self, sim_data: SimulationData, force: npt.NDArray[np.float_]
-    ) -> npt.NDArray[np.float_]:
-        forces = [force, sim_data.wind_force * self.radius]
-        acceleration = np.sum(forces, axis=0) / self.props.mass + sim_data.g_vector
-
-        return (
-            np.clip(acceleration, -2, 2)
-            + np.random.uniform(-1, 1, 2) * sim_data.temperature
-        )
-
-    def update(
-        self, sim_data: SimulationData, force: Optional[npt.NDArray[np.float_]] = None
-    ) -> None:
-        if self.mouse:
-            self.velocity = sim_data.delta_mouse_pos
-            dx, dy = self.velocity
-            self.x += dx
-            self.y += dy
-        elif force is not None and not self.props.locked:
-            self.velocity += self._compute_delta_velocity(sim_data, force)
-            self.velocity *= sim_data.air_res_calc
-            dx, dy = self.velocity * sim_data.speed
-            self.x += dx
-            self.y += dy
-
-        if sim_data.right and self.x_max >= sim_data.width:
-            self.velocity *= [-self.props.bounciness, 1 - sim_data.ground_friction]
-            self.x = sim_data.width - self.radius
-        if sim_data.left and self.x_min <= 0:
-            self.velocity *= [-self.props.bounciness, 1 - sim_data.ground_friction]
-            self.x = self.radius
-        if sim_data.bottom and self.y_max >= sim_data.height:
-            self.velocity *= [1 - sim_data.ground_friction, -self.props.bounciness]
-            self.y = sim_data.height - self.radius
-        if sim_data.top and self.y_min <= 0:
-            self.velocity *= [1 - sim_data.ground_friction, -self.props.bounciness]
-            self.y = self.radius
-
-        self._collisions = {}
