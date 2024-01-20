@@ -45,7 +45,7 @@ class Simulation:
         ground_friction: float = 0,
         fps_update_delay: float = 0.5,
     ):
-        self.state: SimulationState[Particle] = SimulationState(
+        self.state: SimulationState = SimulationState(
             width=width,
             height=height,
             temperature=temperature,

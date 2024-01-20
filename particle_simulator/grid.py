@@ -1,13 +1,11 @@
-from typing import Iterable, Iterator, TypeVar, Generic
+from typing import Iterable, Iterator
 
 import numpy as np
 
 from .particle import Particle
 
-_T = TypeVar("_T", bound=Particle)
 
-
-class Grid(Generic[_T]):
+class Grid:
     def __init__(self, rows: int, columns: int, height: int, width: int) -> None:
         self.grid = np.empty((rows, columns), dtype="object")
         self.rows = rows
@@ -21,7 +19,7 @@ class Grid(Generic[_T]):
             for j in range(self.columns):
                 self.grid[i, j] = []
 
-    def extend(self, particles: Iterable[_T]) -> None:
+    def extend(self, particles: Iterable[Particle]) -> None:
         for particle in particles:
             row = self._return_row(particle.y)
             column = self._return_column(particle.x)
@@ -34,7 +32,7 @@ class Grid(Generic[_T]):
     def _return_column(self, x: float) -> int:
         return min(int(x / self.column_width), self.rows - 1)
 
-    def return_particles(self, particle: _T) -> Iterator[_T]:
+    def return_particles(self, particle: Particle) -> Iterator[Particle]:
         p_range = particle.range_
         min_row = self._return_row(particle.y - p_range)
         max_row = self._return_row(particle.y + p_range)

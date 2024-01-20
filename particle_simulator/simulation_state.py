@@ -10,8 +10,6 @@ from typing import (
     Optional,
     Callable,
     NamedTuple,
-    TypeVar,
-    Generic,
 )
 
 import numpy as np
@@ -30,22 +28,19 @@ from particle_simulator.simulation_data import SimulationData
 Mode = Literal["SELECT", "MOVE", "ADD"]
 
 
-_T = TypeVar("_T", bound=Particle)
-
-
-class Link(NamedTuple, Generic[_T]):
-    particle_a: _T
-    particle_b: _T
+class Link(NamedTuple):
+    particle_a: Particle
+    particle_b: Particle
     percentage: float
 
 
 @dataclass(kw_only=True)
-class SimulationState(SimulationData, Generic[_T]):
-    particles: List[_T] = field(default_factory=list)
-    groups: Dict[str, List[_T]] = field(default_factory=lambda: {"group1": []})
+class SimulationState(SimulationData):
+    particles: List[Particle] = field(default_factory=list)
+    groups: Dict[str, List[Particle]] = field(default_factory=lambda: {"group1": []})
 
     toggle_pause: bool = False
-    selection: List[_T] = field(default_factory=list)
+    selection: List[Particle] = field(default_factory=list)
     error: Optional[Error] = None
     show_fps: bool = True
     show_num: bool = True
@@ -60,14 +55,14 @@ class SimulationState(SimulationData, Generic[_T]):
 
     @staticmethod
     def link(
-        particles: List[_T],
+        particles: List[Particle],
         fit_link: bool = False,
         distance: Optional[float] = None,
     ) -> None:
         link_particles(particles, fit_link, distance)
 
     @staticmethod
-    def unlink(particles: Collection[_T]) -> None:
+    def unlink(particles: Collection[Particle]) -> None:
         unlink_particles(particles)
 
     @staticmethod
@@ -96,12 +91,12 @@ class SimulationState(SimulationData, Generic[_T]):
         self.unlink(self.selection)
         self.selection = []
 
-    def select_particle(self, particle: _T) -> None:
+    def select_particle(self, particle: Particle) -> None:
         if particle in self.selection:
             return
         self.selection.append(particle)
 
-    def remove_particle(self, particle: _T) -> None:
+    def remove_particle(self, particle: Particle) -> None:
         self.particles.remove(particle)
         if particle in self.selection:
             self.selection.remove(particle)
@@ -127,7 +122,7 @@ class SimulationState(SimulationData, Generic[_T]):
         for p in self.selection:
             p.props.locked = False
 
-    def change_link_lengths(self, particles: Iterable[_T], amount: float) -> None:
+    def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
         for p in particles:
             for link, length in p.link_lengths.items():
                 if length is not None:
@@ -150,21 +145,21 @@ class SimulationState(SimulationData, Generic[_T]):
     def select_group(self, name: str) -> None:
         self.selection = list(self.groups[name])
 
-    def _get_group(self, name: str) -> List[_T]:
+    def _get_group(self, name: str) -> List[Particle]:
         try:
             return self.groups[name]
         except KeyError:
-            new_group: List[_T] = []
+            new_group: List[Particle] = []
             self.groups[name] = new_group
             for create_group_callback in self.create_group_callbacks:
                 create_group_callback(name)
             return new_group
 
-    def register_particle(self, particle: _T) -> None:
+    def register_particle(self, particle: Particle) -> None:
         self._get_group(particle.props.group).append(particle)
         self.particles.append(particle)
 
-    def replace_particle(self, p: _T, factory: ParticleFactory) -> Particle:
+    def replace_particle(self, p: Particle, factory: ParticleFactory) -> Particle:
         temp_link_lengths = p.link_lengths.copy()
         self.remove_particle(p)
         new_p = Particle(
