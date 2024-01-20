@@ -6,7 +6,7 @@ from particle_simulator.particle_properties import ParticleProperties
 
 @dataclass(kw_only=True)
 class ParticleFactory:
-    color: Optional[Tuple[int, int, int]]
+    color: Tuple[int, int, int]
     props: ParticleProperties
     velocity: Tuple[float, float]
     radius: float = 4.0

@@ -9,6 +9,7 @@ import numpy.typing as npt
 from PIL import ImageTk, Image
 
 from .code_window import CodeWindow
+from .color import generate_random
 from .error import Error
 from .extra_window import ExtraWindow
 from .gui_widgets import GUIWidgets
@@ -224,8 +225,11 @@ class GUI(GUIWidgets):
             separate_group=self.separate_group_bool.get(),
             gravity_mode=self.gravity_mode_bool.get(),
         )
+        color = self._parse_color()
+        if color is None:
+            color = generate_random()
         factory = ParticleFactory(
-            color=self._parse_color(),
+            color=color,
             props=props,
             velocity=(
                 float(self.velocity_x_entry.get()),

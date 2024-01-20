@@ -167,11 +167,10 @@ class SimulationState(SimulationData, Generic[_T]):
 
     def replace_particle(self, p: _T, factory: ParticleFactory) -> Particle:
         temp_link_lengths = p.link_lengths.copy()
-        px, py = p.x, p.y
         self.remove_particle(p)
         new_p = Particle(
-            px,
-            py,
+            p.x,
+            p.y,
             radius=factory.radius,
             color=factory.color,
             props=factory.props,

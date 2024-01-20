@@ -11,6 +11,7 @@ from typing import (
 
 import numpy as np
 
+from particle_simulator.color import generate_random
 from particle_simulator.controller_state import ControllerState
 from particle_simulator.particle_factory import ParticleFactory, ParticleBuilder
 from particle_simulator.particle_properties import ParticleProperties
@@ -174,6 +175,8 @@ def _parse_particle_settings(particle_settings: PickleSettings) -> ParticleFacto
         group=str(p["groups_entry"][0]),
         separate_group=bool(p["separate_group_bool"][0]),
     )
+    if color is None:
+        color = generate_random()
     factory = ParticleFactory(
         color=color,
         props=props,
@@ -250,10 +253,13 @@ def _parse_particles(particles_pickle: ParticlesPickle) -> List[ParticleBuilder]
             gravity_mode=bool(d["gravity_mode"]),
         )
         v_x, v_y = d["v"]
+        color = _parse_color(d["color"])
+        if color is None:
+            color = generate_random()
         particle = ParticleBuilder(
             x=float(d["x"]),
             y=float(d["y"]),
-            color=_parse_color(d["color"]),
+            color=color,
             radius=float(d["r"]),
             props=props,
             velocity=(float(v_x), float(v_y)),
