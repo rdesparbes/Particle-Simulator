@@ -13,7 +13,7 @@ from .color import generate_random
 from .error import Error
 from .extra_window import ExtraWindow
 from .gui_widgets import GUIWidgets
-from .particle_data import ParticleData
+from .particle import Particle
 from .particle_factory import ParticleFactory
 from .particle_properties import ParticleProperties
 from .save_manager import SaveManager
@@ -268,7 +268,7 @@ class GUI(GUIWidgets):
         )
 
     def _copy_from_selected(self) -> None:
-        selection: Sequence[ParticleData] = self.sim.selection
+        selection: Sequence[Particle] = self.sim.selection
 
         particle_settings: Dict[str, Any] = {}
         for i, p in enumerate(selection):

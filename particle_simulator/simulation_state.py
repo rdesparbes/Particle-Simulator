@@ -19,9 +19,8 @@ import numpy.typing as npt
 
 from particle_simulator.error import Error
 from particle_simulator.geometry import Rectangle
-from particle_simulator.particle import Particle
-from particle_simulator.particle_data import (
-    ParticleData,
+from particle_simulator.particle import (
+    Particle,
     link_particles,
     unlink_particles,
 )
@@ -31,7 +30,7 @@ from particle_simulator.simulation_data import SimulationData
 Mode = Literal["SELECT", "MOVE", "ADD"]
 
 
-_T = TypeVar("_T", bound=ParticleData)
+_T = TypeVar("_T", bound=Particle)
 
 
 class Link(NamedTuple, Generic[_T]):
@@ -185,7 +184,7 @@ class SimulationState(SimulationData, Generic[_T]):
         return self.void_edges and self.rectangle.isdisjoint(rectangle)
 
     def _compute_delta_velocity(
-        self, particle: ParticleData, force: npt.NDArray[np.float_]
+        self, particle: Particle, force: npt.NDArray[np.float_]
     ) -> npt.NDArray[np.float_]:
         forces = [force, self.wind_force * particle.radius]
         acceleration = np.sum(forces, axis=0) / particle.props.mass + self.g_vector
@@ -196,7 +195,7 @@ class SimulationState(SimulationData, Generic[_T]):
         )
 
     def update(
-        self, particle: ParticleData, force: Optional[npt.NDArray[np.float_]] = None
+        self, particle: Particle, force: Optional[npt.NDArray[np.float_]] = None
     ) -> None:
         if particle.mouse:
             particle.velocity = self.delta_mouse_pos

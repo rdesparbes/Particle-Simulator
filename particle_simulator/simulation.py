@@ -22,12 +22,12 @@ from .geometry import Circle
 from .grid import Grid
 from .gui import GUI
 from .particle import Particle
-from .particle_data import (
+from .particle import (
     default_compute_magnitude_strategy,
     ComputeMagnitudeStrategy,
     radii_compute_magnitude_strategy,
 )
-from .particle_data import unlink_particles
+from .particle import unlink_particles
 from .particle_factory import ParticleFactory, ParticleBuilder
 from .simulation_state import SimulationState, Link
 

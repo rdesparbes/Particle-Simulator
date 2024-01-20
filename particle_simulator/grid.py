@@ -2,9 +2,9 @@ from typing import Iterable, Iterator, TypeVar, Generic
 
 import numpy as np
 
-from .particle_data import ParticleData
+from .particle import Particle
 
-_T = TypeVar("_T", bound=ParticleData)
+_T = TypeVar("_T", bound=Particle)
 
 
 class Grid(Generic[_T]):
