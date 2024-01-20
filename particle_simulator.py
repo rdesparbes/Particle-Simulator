@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 
+from particle_simulator.particle_properties import ParticleProperties
 from particle_simulator.simulation import Simulation
 from particle_simulator.particle import Particle
 
@@ -20,20 +21,22 @@ sim = sim_controller.state
 # Random particle-positions
 for i in range(50):
     s = 4
-    p = Particle(
-        sim,
-        random.normalvariate(sim.width / 2, sim.width / 5),
-        random.normalvariate(sim.height / 2, sim.height / 5),
-        radius=s,
-        color=np.random.randint(0, 255, 3).tolist(),
+    props = ParticleProperties(
         mass=1,
         bounciness=0.7,
-        velocity=np.zeros(2),
         collisions=False,
         attract_r=-1,
         repel_r=10,
         attraction_strength=0.25,
         repulsion_strength=1,
+    )
+    p = Particle(
+        x=random.normalvariate(sim.width / 2, sim.width / 5),
+        y=random.normalvariate(sim.height / 2, sim.height / 5),
+        radius=s,
+        color=np.random.randint(0, 255, 3).tolist(),
+        props=props,
+        velocity=np.zeros(2),
     )
     sim.register_particle(p)
 

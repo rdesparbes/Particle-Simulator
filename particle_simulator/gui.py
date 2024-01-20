@@ -14,6 +14,7 @@ from .extra_window import ExtraWindow
 from .gui_widgets import GUIWidgets
 from .particle_data import ParticleData
 from .particle_factory import ParticleFactory
+from .particle_properties import ParticleProperties
 from .save_manager import SaveManager
 from .sim_gui_settings import SimGUISettings
 from .simulation_state import SimulationState
@@ -207,13 +208,8 @@ class GUI(GUIWidgets):
         self._set_entry(self.delay_entry, str(s.delay))
 
     def get_particle_settings(self) -> ParticleFactory:
-        return ParticleFactory(
-            color=self._parse_color(),
+        props = ParticleProperties(
             mass=float(self.mass_entry.get()),
-            velocity=(
-                float(self.velocity_x_entry.get()),
-                float(self.velocity_y_entry.get()),
-            ),
             bounciness=float(self.bounciness_entry.get()),
             attract_r=float(self.attr_r_entry.get()),
             repel_r=float(self.repel_r_entry.get()),
@@ -227,15 +223,22 @@ class GUI(GUIWidgets):
             group=self.groups_entry.get(),
             separate_group=self.separate_group_bool.get(),
             gravity_mode=self.gravity_mode_bool.get(),
-            radius=self._parse_radius(),
         )
+        factory = ParticleFactory(
+            color=self._parse_color(),
+            props=props,
+            velocity=(
+                float(self.velocity_x_entry.get()),
+                float(self.velocity_y_entry.get()),
+            ),
+        )
+        radius = self._parse_radius()
+        if radius is not None:
+            factory.radius = radius
+        return factory
 
-    def set_particle_settings(self, particle_settings: ParticleFactory) -> None:
-        p = particle_settings
-        self.color_var.set(str(p.color or "random"))
+    def _set_particle_properties(self, p: ParticleProperties) -> None:
         self._set_entry(self.mass_entry, str(p.mass))
-        self._set_entry(self.velocity_x_entry, str(p.velocity[0]))
-        self._set_entry(self.velocity_y_entry, str(p.velocity[1]))
         self._set_entry(self.bounciness_entry, str(p.bounciness))
         self._set_entry(self.attr_r_entry, str(p.attract_r))
         self._set_entry(self.repel_r_entry, str(p.repel_r))
@@ -249,6 +252,13 @@ class GUI(GUIWidgets):
         self._set_entry(self.groups_entry, p.group)
         self.separate_group_bool.set(p.separate_group)
         self.gravity_mode_bool.set(p.gravity_mode)
+
+    def set_particle_settings(self, particle_settings: ParticleFactory) -> None:
+        p = particle_settings
+        self.color_var.set(str(p.color or "random"))
+        self._set_particle_properties(p.props)
+        self._set_entry(self.velocity_x_entry, str(p.velocity[0]))
+        self._set_entry(self.velocity_y_entry, str(p.velocity[1]))
         self._set_entry(
             self.radius_entry, "scroll" if p.radius is None else str(p.radius)
         )
@@ -261,22 +271,22 @@ class GUI(GUIWidgets):
             variable_names: Dict[str, Any] = {
                 "radius_entry": p.radius,
                 "color_var": p.color,
-                "mass_entry": p.mass,
+                "mass_entry": p.props.mass,
                 "velocity_x_entry": p.velocity[0],
                 "velocity_y_entry": p.velocity[1],
-                "bounciness_entry": p.bounciness,
-                "do_collision_bool": p.collisions,
-                "locked_bool": p.locked,
-                "linked_group_bool": p.linked_group_particles,
-                "attr_r_entry": p.attract_r,
-                "repel_r_entry": p.repel_r,
-                "attr_strength_entry": p.attraction_strength,
-                "repel_strength_entry": p.repulsion_strength,
-                "link_attr_break_entry": p.link_attr_breaking_force,
-                "link_repel_break_entry": p.link_repel_breaking_force,
-                "groups_entry": p.group,
-                "separate_group_bool": p.separate_group,
-                "gravity_mode_bool": p.gravity_mode,
+                "bounciness_entry": p.props.bounciness,
+                "do_collision_bool": p.props.collisions,
+                "locked_bool": p.props.locked,
+                "linked_group_bool": p.props.linked_group_particles,
+                "attr_r_entry": p.props.attract_r,
+                "repel_r_entry": p.props.repel_r,
+                "attr_strength_entry": p.props.attraction_strength,
+                "repel_strength_entry": p.props.repulsion_strength,
+                "link_attr_break_entry": p.props.link_attr_breaking_force,
+                "link_repel_break_entry": p.props.link_repel_breaking_force,
+                "groups_entry": p.props.group,
+                "separate_group_bool": p.props.separate_group,
+                "gravity_mode_bool": p.props.gravity_mode,
             }
             for gui_attr, part_val in variable_names.items():
                 if i == 0:

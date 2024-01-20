@@ -1,23 +1,20 @@
 from dataclasses import dataclass
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict
+
+from particle_simulator.particle_properties import ParticleProperties
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ParticleFactory:
     color: Optional[Tuple[int, int, int]]
-    mass: float
+    props: ParticleProperties
     velocity: Tuple[float, float]
-    bounciness: float
-    locked: bool
-    collisions: bool
-    attract_r: float
-    repel_r: float
-    attraction_strength: float
-    repulsion_strength: float
-    linked_group_particles: bool
-    link_attr_breaking_force: float
-    link_repel_breaking_force: float
-    group: str
-    separate_group: bool
-    gravity_mode: bool
-    radius: Optional[float] = None
+    radius: float = 4.0
+
+
+@dataclass(kw_only=True)
+class ParticleBuilder(ParticleFactory):
+    x: float
+    y: float
+    radius: float
+    link_indices_lengths: Dict[int, Optional[float]]

@@ -14,6 +14,7 @@ import numpy as np
 from particle_simulator.controller_state import ControllerState
 from particle_simulator.particle_data import ParticleData
 from particle_simulator.particle_factory import ParticleFactory
+from particle_simulator.particle_properties import ParticleProperties
 from particle_simulator.sim_gui_settings import SimGUISettings
 from particle_simulator.simulation_data import SimulationData
 
@@ -69,22 +70,22 @@ def _particle_settings_to_dict(particle_factory: ParticleFactory) -> PickleSetti
     return {
         "radius_entry": (p.radius,),
         "color_entry": (p.color or "random",),
-        "mass_entry": (p.mass,),
+        "mass_entry": (p.props.mass,),
         "velocity_x_entry": (p.velocity[0],),
         "velocity_y_entry": (p.velocity[1],),
-        "bounciness_entry": (p.bounciness,),
-        "do_collision_bool": (p.collisions,),
-        "locked_bool": (p.locked,),
-        "linked_group_bool": (p.linked_group_particles,),
-        "attr_r_entry": (p.attract_r,),
-        "repel_r_entry": (p.repel_r,),
-        "attr_strength_entry": (p.attraction_strength,),
-        "gravity_mode_bool": (p.gravity_mode,),
-        "repel_strength_entry": (p.repulsion_strength,),
-        "link_attr_break_entry": (p.link_attr_breaking_force,),
-        "link_repel_break_entry": (p.link_repel_breaking_force,),
-        "groups_entry": (p.group,),
-        "separate_group_bool": (p.separate_group,),
+        "bounciness_entry": (p.props.bounciness,),
+        "do_collision_bool": (p.props.collisions,),
+        "locked_bool": (p.props.locked,),
+        "linked_group_bool": (p.props.linked_group_particles,),
+        "attr_r_entry": (p.props.attract_r,),
+        "repel_r_entry": (p.props.repel_r,),
+        "attr_strength_entry": (p.props.attraction_strength,),
+        "gravity_mode_bool": (p.props.gravity_mode,),
+        "repel_strength_entry": (p.props.repulsion_strength,),
+        "link_attr_break_entry": (p.props.link_attr_breaking_force,),
+        "link_repel_break_entry": (p.props.link_repel_breaking_force,),
+        "groups_entry": (p.props.group,),
+        "separate_group_bool": (p.props.separate_group,),
     }
 
 
@@ -96,20 +97,20 @@ def _particles_to_dict(particles: Sequence[ParticleData]) -> ParticlesPickle:
             "v": p.velocity,
             "r": p.radius,
             "color": p.color,
-            "m": p.mass,
-            "bounciness": p.bounciness,
-            "locked": p.locked,
-            "collision_bool": p.collisions,
-            "attr_r": p.attract_r,
-            "repel_r": p.repel_r,
-            "attr": p.attraction_strength,
-            "repel": p.repulsion_strength,
-            "linked_group_particles": p.linked_group_particles,
-            "link_attr_breaking_force": p.link_attr_breaking_force,
-            "link_repel_breaking_force": p.link_repel_breaking_force,
-            "group": p.group,
-            "separate_group": p.separate_group,
-            "gravity_mode": p.gravity_mode,
+            "m": p.props.mass,
+            "bounciness": p.props.bounciness,
+            "locked": p.props.locked,
+            "collision_bool": p.props.collisions,
+            "attr_r": p.props.attract_r,
+            "repel_r": p.props.repel_r,
+            "attr": p.props.attraction_strength,
+            "repel": p.props.repulsion_strength,
+            "linked_group_particles": p.props.linked_group_particles,
+            "link_attr_breaking_force": p.props.link_attr_breaking_force,
+            "link_repel_breaking_force": p.props.link_repel_breaking_force,
+            "group": p.props.group,
+            "separate_group": p.props.separate_group,
+            "gravity_mode": p.props.gravity_mode,
             "link_lengths": {
                 particles.index(particle): value
                 for particle, value in p.link_lengths.items()
@@ -162,11 +163,8 @@ def _parse_particle_settings(particle_settings: PickleSettings) -> ParticleFacto
     p = particle_settings
     color = _parse_color(p["color_entry"][0])
     radius = _parse_radius(p["radius_entry"][0])
-    return ParticleFactory(
-        radius=radius,
-        color=color,
+    props = ParticleProperties(
         mass=float(p["mass_entry"][0]),
-        velocity=(float(p["velocity_x_entry"][0]), float(p["velocity_y_entry"][0])),
         bounciness=float(p["bounciness_entry"][0]),
         collisions=bool(p["do_collision_bool"][0]),
         locked=bool(p["locked_bool"][0]),
@@ -181,6 +179,14 @@ def _parse_particle_settings(particle_settings: PickleSettings) -> ParticleFacto
         group=str(p["groups_entry"][0]),
         separate_group=bool(p["separate_group_bool"][0]),
     )
+    factory = ParticleFactory(
+        color=color,
+        props=props,
+        velocity=(float(p["velocity_x_entry"][0]), float(p["velocity_y_entry"][0])),
+    )
+    if radius is not None:
+        factory.radius = radius
+    return factory
 
 
 def _extract_sim_gui_settings(sim_settings: PickleSettings) -> SimGUISettings:
@@ -233,12 +239,8 @@ def _parse_particles(particles_pickle: ParticlesPickle) -> List[ParticleData]:
     particles: List[ParticleData] = []
     for d in particles_pickle:
         v_x, v_y = d["v"]
-        particle = ParticleData(
-            x=float(d["x"]),
-            y=float(d["y"]),
-            color=d["color"],
+        props = ParticleProperties(
             mass=float(d["m"]),
-            velocity=np.array([float(v_x), float(v_y)]),
             bounciness=float(d["bounciness"]),
             locked=bool(d["locked"]),
             collisions=bool(d["collision_bool"]),
@@ -252,6 +254,13 @@ def _parse_particles(particles_pickle: ParticlesPickle) -> List[ParticleData]:
             group=str(d["group"]),
             separate_group=bool(d["separate_group"]),
             gravity_mode=bool(d["gravity_mode"]),
+        )
+        particle = ParticleData(
+            x=float(d["x"]),
+            y=float(d["y"]),
+            color=d["color"],
+            props=props,
+            velocity=np.array([float(v_x), float(v_y)]),
             link_indices_lengths={
                 int(p_index): _parse_repel_r(length)
                 for p_index, length in d["link_lengths"].items()

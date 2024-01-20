@@ -1,10 +1,9 @@
 import time
 import tkinter as tk
+from copy import copy
 from dataclasses import asdict
 from typing import (
     Optional,
-    Any,
-    Dict,
     Tuple,
     List,
     Union,
@@ -28,7 +27,7 @@ from .particle_data import (
     radii_compute_magnitude_strategy,
 )
 from .particle_data import unlink_particles
-from .particle_factory import ParticleFactory
+from .particle_factory import ParticleFactory, ParticleBuilder
 from .simulation_state import SimulationState, Link
 
 
@@ -65,7 +64,7 @@ class Simulation:
         self.start_load = False
         self.prev_fps_update_time = time.time()
         self.prev_time = self.prev_fps_update_time
-        self.clipboard: List[Dict[str, Any]] = []
+        self.clipboard: List[ParticleBuilder] = []
         self.pasting = False
 
         self.gui = GUI(self.state, title)
@@ -91,10 +90,20 @@ class Simulation:
     def _copy_selected(self) -> None:
         self.clipboard = []
         for p in self.state.selection:
-            dictionary = p.return_dict(index_source=self.state.selection)
-            dictionary["x"] -= self.state.mx
-            dictionary["y"] -= self.state.my
-            self.clipboard.append(dictionary)
+            factory = ParticleBuilder(
+                x=p.x - self.state.mx,
+                y=p.y - self.state.my,
+                radius=p.radius,
+                color=p.color,
+                props=copy(p.props),
+                velocity=(float(p.velocity[0]), float(p.velocity[1])),
+                link_indices_lengths={
+                    self.state.selection.index(particle): value
+                    for particle, value in p.link_lengths.items()
+                    if particle in self.state.selection
+                },
+            )
+            self.clipboard.append(factory)
 
     def _cut(self) -> None:
         self._copy_selected()
@@ -324,8 +333,16 @@ class Simulation:
 
         self.state.groups = {}
         particles = [
-            Particle(self.state, **particle_data.to_dict())
-            for particle_data in controller_state.particles
+            Particle(
+                p.x,
+                p.y,
+                radius=p.radius,
+                color=p.color,
+                props=p.props,
+                velocity=p.velocity,
+                link_indices_lengths=p.link_indices_lengths,
+            )
+            for p in controller_state.particles
         ]
         for particle in particles:
             particle.link_lengths = {
@@ -336,26 +353,37 @@ class Simulation:
             self.state.register_particle(particle)
 
     def add_particle(self, x: float, y: float) -> None:
-        particle_factory = self._get_particle_settings()
-        if particle_factory is not None:
-            p = Particle(self.state, x=x, y=y, **asdict(particle_factory))
-            self.state.register_particle(p)
+        p = self._get_particle_settings()
+        if p is not None:
+            particle = Particle(
+                x=x,
+                y=y,
+                radius=p.radius,
+                color=p.color,
+                props=p.props,
+                velocity=np.array(p.velocity),
+            )
+            self.state.register_particle(particle)
             self.last_particle_added_time = time.time()
 
     def _paste(self) -> None:
         self.pasting = True
         particles: List[Particle] = []
-        for particle_dict in self.clipboard:
-            dict_copy = particle_dict.copy()
-            dict_copy["x"] += self.state.mx
-            dict_copy["y"] += self.state.my
-            del dict_copy["link_lengths"]
-            particles.append(Particle(sim=self.state, **dict_copy))
+        for factory in self.clipboard:
+            particle = Particle(
+                x=factory.x + self.state.mx,
+                y=factory.y + self.state.my,
+                radius=factory.radius,
+                color=factory.color,
+                props=copy(factory.props),
+                velocity=np.array(factory.velocity),
+            )
+            particles.append(particle)
 
-        for particle, particle_dict in zip(particles, self.clipboard):
+        for particle, factory in zip(particles, self.clipboard):
             particle.link_lengths = {
                 particles[index]: length
-                for index, length in particle_dict["link_lengths"].items()
+                for index, length in factory.link_indices_lengths.items()
             }
             particle.mouse = True
             self.state.register_particle(particle)

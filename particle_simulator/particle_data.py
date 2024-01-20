@@ -1,5 +1,5 @@
 import math
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from typing import (
     Self,
     Tuple,
@@ -7,7 +7,6 @@ from typing import (
     Collection,
     Optional,
     Sequence,
-    Any,
     Callable,
     Iterable,
     Iterator,
@@ -18,6 +17,7 @@ import numpy.typing as npt
 
 from particle_simulator.geometry import Circle, Rectangle
 from particle_simulator.particle_interaction import ParticleInteraction
+from particle_simulator.particle_properties import ParticleProperties
 
 ComputeMagnitudeStrategy = Callable[
     ["ParticleData", "ParticleData", float, Optional[float]], float
@@ -31,15 +31,15 @@ def default_compute_magnitude_strategy(
     repel_r: Optional[float],
 ) -> float:
     if repel_r is None:
-        repel_r = max(part_a.repel_r, part_b.repel_r)
+        repel_r = max(part_a.props.repel_r, part_b.props.repel_r)
     magnitude = part_a.calculate_magnitude(
         part=part_b,
         distance=distance,
         repel_r=repel_r,
-        attr=part_b.attraction_strength + part_a.attraction_strength,
-        repel=part_b.repulsion_strength + part_a.repulsion_strength,
+        attr=part_b.props.attraction_strength + part_a.props.attraction_strength,
+        repel=part_b.props.repulsion_strength + part_a.props.repulsion_strength,
         is_in_group=part_a._is_in_same_group(part_b),
-        gravity=part_a.gravity_mode or part_b.gravity_mode,
+        gravity=part_a.props.gravity_mode or part_b.props.gravity_mode,
     )
     return magnitude
 
@@ -56,21 +56,21 @@ def radii_compute_magnitude_strategy(
         magnitude += part_a.calculate_magnitude(
             part=part_b,
             distance=distance,
-            repel_r=part_b.repel_r if repel_r is None else repel_r,
-            attr=part_b.attraction_strength,
-            repel=part_b.repulsion_strength,
+            repel_r=part_b.props.repel_r if repel_r is None else repel_r,
+            attr=part_b.props.attraction_strength,
+            repel=part_b.props.repulsion_strength,
             is_in_group=is_in_group,
-            gravity=part_b.gravity_mode,
+            gravity=part_b.props.gravity_mode,
         )
     if part_a._reaches(distance):
         magnitude += part_b.calculate_magnitude(
             part=part_a,
             distance=distance,
-            repel_r=part_a.repel_r if repel_r is None else repel_r,
-            attr=part_a.attraction_strength,
-            repel=part_a.repulsion_strength,
+            repel_r=part_a.props.repel_r if repel_r is None else repel_r,
+            attr=part_a.props.attraction_strength,
+            repel=part_a.props.repulsion_strength,
             is_in_group=is_in_group,
-            gravity=part_a.gravity_mode,
+            gravity=part_a.props.gravity_mode,
         )
     return magnitude
 
@@ -89,27 +89,14 @@ def unlink_particles(particles: Collection["ParticleData"]) -> None:
         p._unlink(particles)
 
 
-@dataclass
+@dataclass(slots=True)
 class ParticleData:
     x: float
     y: float
     velocity: npt.NDArray[np.float_] = field(default_factory=lambda: np.zeros(2))
     radius: float = 4.0
     color: Tuple[int, int, int] = (0, 0, 0)
-    mass: float = 1.0
-    bounciness: float = 0.7
-    locked: bool = False
-    collisions: bool = False
-    attract_r: float = -1.0
-    repel_r: float = 10.0
-    attraction_strength: float = 0.5
-    repulsion_strength: float = 1.0
-    linked_group_particles: bool = True
-    link_attr_breaking_force: float = -1.0
-    link_repel_breaking_force: float = -1.0
-    group: str = "group1"
-    separate_group: bool = False
-    gravity_mode: bool = False
+    props: ParticleProperties = field(default_factory=ParticleProperties)
     link_indices_lengths: Dict[int, Optional[float]] = field(default_factory=dict)
     # Non-serializable fields:
     link_lengths: Dict[Self, Optional[float]] = field(default_factory=dict)
@@ -118,27 +105,21 @@ class ParticleData:
         default_factory=dict, init=False, repr=False
     )
 
-    def to_dict(self) -> Dict[str, Any]:
-        d = asdict(self)
-        del d["mouse"]
-        del d["_collisions"]
-        return d
-
     def _compute_default_force(
         self,
         p: Self,
     ) -> npt.NDArray[np.float_]:
-        if self.gravity_mode or p.gravity_mode:
+        if self.props.gravity_mode or p.props.gravity_mode:
             return np.zeros(2)
         force = np.random.uniform(-10, 10, 2)
-        return force / np.linalg.norm(force) * -self.repulsion_strength
+        return force / np.linalg.norm(force) * -self.props.repulsion_strength
 
     def _compute_collision_delta_pos(
         self, translate_vector: npt.NDArray[np.float_], mass: float
     ) -> npt.NDArray[np.float_]:
         if self.mouse:
             return np.zeros(2)
-        return translate_vector * (self.mass / (self.mass + mass))
+        return translate_vector * (self.props.mass / (self.props.mass + mass))
 
     @staticmethod
     def _compute_link_percentage(magnitude: float, max_force: float) -> float:
@@ -149,7 +130,9 @@ class ParticleData:
     def _compute_max_force(self, distance: float, repel_r: float) -> float:
         attract = distance >= repel_r
         max_force = (
-            self.link_attr_breaking_force if attract else self.link_repel_breaking_force
+            self.props.link_attr_breaking_force
+            if attract
+            else self.props.link_repel_breaking_force
         )
         return max_force
 
@@ -157,7 +140,7 @@ class ParticleData:
         return (
             p != self
             and (
-                self.linked_group_particles
+                self.props.linked_group_particles
                 or self._is_linked_to(p)
                 or not self._is_in_same_group(p)
             )
@@ -181,7 +164,7 @@ class ParticleData:
             repel_r: Optional[float] = self.link_lengths.get(p)
             magnitude = compute_magnitude_strategy(self, p, distance, repel_r)
             if repel_r is None:
-                repel_r = max(self.repel_r, p.repel_r)
+                repel_r = max(self.props.repel_r, p.props.repel_r)
             if self._is_linked_to(p):
                 max_force = p._compute_max_force(distance, repel_r)
                 link_percentage = self._compute_link_percentage(magnitude, max_force)
@@ -193,7 +176,7 @@ class ParticleData:
         near_particles: Iterable[Self],
         compute_magnitude_strategy: ComputeMagnitudeStrategy = default_compute_magnitude_strategy,
     ) -> Iterator[Tuple[Self, ParticleInteraction]]:
-        if self.locked:
+        if self.props.locked:
             return
         for near_particle in near_particles:
             interaction = self._compute_interaction(
@@ -231,28 +214,28 @@ class ParticleData:
 
     @property
     def interacts_with_all(self) -> bool:
-        return self.attraction_strength != 0.0 and self.attract_r < 0
+        return self.props.attraction_strength != 0.0 and self.props.attract_r < 0
 
     @property
     def interacts(self) -> bool:
         return (
-            self.attraction_strength != 0.0
-            or self.repulsion_strength != 0.0
-            or self.collisions
+            self.props.attraction_strength != 0.0
+            or self.props.repulsion_strength != 0.0
+            or self.props.collisions
         )
 
     @property
     def range_(self) -> float:
-        if self.attraction_strength != 0.0 and not (
-            self.collisions and self.radius > self.attract_r
+        if self.props.attraction_strength != 0.0 and not (
+            self.props.collisions and self.radius > self.props.attract_r
         ):
-            return self.attract_r
+            return self.props.attract_r
         if (
-            self.attraction_strength == 0.0
-            and self.repulsion_strength != 0.0
-            and not (self.collisions and self.radius > self.repel_r)
+            self.props.attraction_strength == 0.0
+            and self.props.repulsion_strength != 0.0
+            and not (self.props.collisions and self.radius > self.props.repel_r)
         ):
-            return self.repel_r
+            return self.props.repel_r
         return self.radius
 
     def calculate_magnitude(
@@ -270,7 +253,7 @@ class ParticleData:
             return -repel * rest_distance / 10.0
         if is_in_group or self._is_linked_to(part):
             if gravity:
-                return 10.0 * attr * self.mass * part.mass / distance**2
+                return 10.0 * attr * self.props.mass * part.props.mass / distance**2
             return attr * rest_distance / 3000.0
         return 0.0
 
@@ -286,7 +269,7 @@ class ParticleData:
         return p in self.link_lengths
 
     def _is_in_same_group(self, p: Self) -> bool:
-        return not self.separate_group and p.group == self.group
+        return not self.props.separate_group and p.props.group == self.props.group
 
     def _link(
         self,
@@ -313,31 +296,34 @@ class ParticleData:
         }
 
     def _reaches(self, distance: float) -> bool:
-        return (self.attraction_strength != 0.0 or self.repulsion_strength != 0.0) and (
-            self.attract_r < 0 or distance < self.attract_r
-        )
+        return (
+            self.props.attraction_strength != 0.0
+            or self.props.repulsion_strength != 0.0
+        ) and (self.props.attract_r < 0 or distance < self.props.attract_r)
 
     def _compute_collision_speed(self, other: Self) -> npt.NDArray[np.float_]:
-        total_mass = self.mass + other.mass
+        total_mass = self.props.mass + other.props.mass
         return (
-            (self.mass - other.mass) / total_mass * self.velocity
-            + 2.0 * other.mass / total_mass * other.velocity
+            (self.props.mass - other.props.mass) / total_mass * self.velocity
+            + 2.0 * other.props.mass / total_mass * other.velocity
         )
 
     def fix_overlap(self, p: Self) -> None:
         direction: npt.NDArray[np.float_] = np.subtract([p.x, p.y], [self.x, self.y])
         distance: float = float(np.linalg.norm(direction))
         overlap = self.radius + p.radius - distance
-        if not self.collisions or overlap <= 0.0:
+        if not self.props.collisions or overlap <= 0.0:
             return
         new_speed = self._compute_collision_speed(p)
         p.velocity = p._compute_collision_speed(self)
         self.velocity = new_speed
         translate_vector = overlap * direction
-        dx, dy = self._compute_collision_delta_pos(-translate_vector, p.mass)
+        dx, dy = self._compute_collision_delta_pos(-translate_vector, p.props.mass)
         self.x += dx
         self.y += dy
-        if not p.locked:
-            p_dx, p_dy = p._compute_collision_delta_pos(translate_vector, self.mass)
+        if not p.props.locked:
+            p_dx, p_dy = p._compute_collision_delta_pos(
+                translate_vector, self.props.mass
+            )
             p.x += p_dx
             p.y += p_dy

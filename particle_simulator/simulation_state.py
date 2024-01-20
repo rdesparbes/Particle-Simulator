@@ -1,5 +1,5 @@
 import math
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from typing import (
     Tuple,
     List,
@@ -17,6 +17,7 @@ from typing import (
 import numpy as np
 
 from particle_simulator.error import Error
+from particle_simulator.geometry import Rectangle
 from particle_simulator.particle import Particle
 from particle_simulator.particle_data import (
     ParticleData,
@@ -24,7 +25,6 @@ from particle_simulator.particle_data import (
     unlink_particles,
 )
 from particle_simulator.particle_factory import ParticleFactory
-from particle_simulator.geometry import Rectangle
 from particle_simulator.simulation_data import SimulationData
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
@@ -107,7 +107,7 @@ class SimulationState(SimulationData, Generic[_T]):
             self.selection.remove(particle)
         for p in particle.link_lengths:
             del p.link_lengths[particle]
-        self.groups[particle.group].remove(particle)
+        self.groups[particle.props.group].remove(particle)
         del particle
 
     def remove_selection(self) -> None:
@@ -121,11 +121,11 @@ class SimulationState(SimulationData, Generic[_T]):
 
     def lock_selection(self) -> None:
         for p in self.selection:
-            p.locked = True
+            p.props.locked = True
 
     def unlock_selection(self) -> None:
         for p in self.selection:
-            p.locked = False
+            p.props.locked = False
 
     def change_link_lengths(self, particles: Iterable[_T], amount: float) -> None:
         for p in particles:
@@ -161,14 +161,21 @@ class SimulationState(SimulationData, Generic[_T]):
             return new_group
 
     def register_particle(self, particle: _T) -> None:
-        self._get_group(particle.group).append(particle)
+        self._get_group(particle.props.group).append(particle)
         self.particles.append(particle)
 
-    def replace_particle(self, p: _T, particle_settings: ParticleFactory) -> Particle:
+    def replace_particle(self, p: _T, factory: ParticleFactory) -> Particle:
         temp_link_lengths = p.link_lengths.copy()
         px, py = p.x, p.y
         self.remove_particle(p)
-        new_p = Particle(self, px, py, **asdict(particle_settings))
+        new_p = Particle(
+            px,
+            py,
+            radius=factory.radius,
+            color=factory.color,
+            props=factory.props,
+            velocity=np.array(factory.velocity),
+        )
         self.register_particle(p)
         for link, length in temp_link_lengths.items():
             self.link([link, p], fit_link=length is not None, distance=length)
