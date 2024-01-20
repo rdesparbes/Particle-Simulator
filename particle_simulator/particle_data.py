@@ -263,7 +263,7 @@ class ParticleData:
     def __eq__(self, other: object) -> bool:
         if isinstance(other, ParticleData):
             return self is other
-        raise NotImplemented
+        raise NotImplementedError
 
     def _is_linked_to(self, p: Self) -> bool:
         return p in self.link_lengths

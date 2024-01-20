@@ -230,7 +230,7 @@ def _extract_sim_settings(sim_pickle: PickleSettings) -> SimulationData:
 def _parse_repel_r(value: Any) -> Optional[float]:
     if isinstance(value, (float, type(None))):
         return value
-    elif value == "repel":
+    if value == "repel":
         return None
     return float(value)
 

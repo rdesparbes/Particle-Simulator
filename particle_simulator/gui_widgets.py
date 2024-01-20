@@ -156,14 +156,14 @@ class GUIWidgets:
         self.code_btn.place(x=width - 25, y=16, anchor="center")
 
         # layout sidebar-GUI
-        self.tabControl = ttk.Notebook(self.tk)
-        self.tab1 = ttk.Frame(self.tabControl, relief="flat")
-        self.tabControl.add(self.tab1, text="Sim-Settings")
+        self.tab_control = ttk.Notebook(self.tk)
+        self.tab1 = ttk.Frame(self.tab_control, relief="flat")
+        self.tab_control.add(self.tab1, text="Sim-Settings")
         self.tab2 = ttk.Frame(
-            self.tabControl, relief="flat", width=200, height=height + 30
+            self.tab_control, relief="flat", width=200, height=height + 30
         )
-        self.tabControl.add(self.tab2, text="Particle-Settings")
-        self.tabControl.place(x=width, y=0)
+        self.tab_control.add(self.tab2, text="Particle-Settings")
+        self.tab_control.place(x=width, y=0)
 
         # layout self.tab1
         self.tab1_canvas = tk.Canvas(self.tab1, width=200, height=height)

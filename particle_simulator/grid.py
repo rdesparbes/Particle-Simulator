@@ -43,5 +43,5 @@ class Grid(Generic[_T]):
         for i in range(min_row, max_row + 1):
             for j in range(min_col, max_col + 1):
                 if 0 <= i < self.rows and 0 <= j < self.columns:
-                    for particle in self.grid[i][j]:
-                        yield particle
+                    for p in self.grid[i][j]:
+                        yield p
