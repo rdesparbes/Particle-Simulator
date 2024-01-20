@@ -1,6 +1,5 @@
 import time
 import tkinter as tk
-from copy import copy
 from dataclasses import asdict
 from typing import (
     Optional,
@@ -90,20 +89,9 @@ class Simulation:
 
     def _copy_selected(self) -> None:
         self.clipboard = []
-        for p in self.state.selection:
-            factory = ParticleBuilder(
-                x=p.x - self.state.mx,
-                y=p.y - self.state.my,
-                radius=p.radius,
-                color=p.color,
-                props=copy(p.props),
-                velocity=(float(p.velocity[0]), float(p.velocity[1])),
-                link_indices_lengths={
-                    self.state.selection.index(particle): value
-                    for particle, value in p.link_lengths.items()
-                    if particle in self.state.selection
-                },
-            )
+        for factory in particles_to_builders(self.state.selection):
+            factory.x -= self.state.mx
+            factory.y -= self.state.my
             self.clipboard.append(factory)
 
     def _cut(self) -> None:
@@ -353,22 +341,9 @@ class Simulation:
     def _paste(self) -> None:
         self.pasting = True
         particles: List[Particle] = []
-        for factory in self.clipboard:
-            particle = Particle(
-                x=factory.x + self.state.mx,
-                y=factory.y + self.state.my,
-                radius=factory.radius,
-                color=factory.color,
-                props=copy(factory.props),
-                velocity=np.array(factory.velocity),
-            )
-            particles.append(particle)
-
-        for particle, factory in zip(particles, self.clipboard):
-            particle.link_lengths = {
-                particles[index]: length
-                for index, length in factory.link_indices_lengths.items()
-            }
+        for particle in builders_to_particles(self.clipboard):
+            particle.x += self.state.mx
+            particle.y += self.state.my
             particle.mouse = True
             self.state.register_particle(particle)
         self.state.selection = particles

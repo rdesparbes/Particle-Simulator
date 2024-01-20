@@ -1,3 +1,4 @@
+from copy import copy
 from typing import Sequence, List
 
 import numpy as np
@@ -13,7 +14,7 @@ def builders_to_particles(builders: Sequence[ParticleBuilder]) -> List[Particle]
             p.y,
             radius=p.radius,
             color=p.color,
-            props=p.props,
+            props=copy(p.props),
             velocity=np.array(p.velocity),
         )
         for p in builders
@@ -30,7 +31,7 @@ def particles_to_builders(particles: Sequence[Particle]) -> List[ParticleBuilder
     return [
         ParticleBuilder(
             color=p.color,
-            props=p.props,
+            props=copy(p.props),
             velocity=(float(p.velocity[0]), float(p.velocity[1])),
             radius=p.radius,
             x=p.x,
