@@ -259,7 +259,7 @@ class Simulation:
         elif KeyCode.from_char(str(key)).char == r"'\x0c'" and not self.shift:
             self.state.lock_selection()
         elif KeyCode.from_char(str(key)).char == r"'\x0c'" and self.shift:
-            self.state.lock_selection()
+            self.state.unlock_selection()
         # L to link, SHIFT + L to unlink and ALT GR + L to fit-link
         elif KeyCode.from_char(str(key)).char == "'l'":
             self.state.link_selection()
