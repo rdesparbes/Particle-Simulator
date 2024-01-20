@@ -24,7 +24,6 @@ class Particle(ParticleData):
         props: Optional[ParticleProperties] = None,
         velocity: Optional[npt.NDArray[np.float_]] = None,
         link_lengths: Optional[Dict[Self, Optional[float]]] = None,
-        link_indices_lengths: Optional[Dict[int, Optional[float]]] = None,
     ) -> None:
         if color is None:
             color = (
@@ -40,8 +39,6 @@ class Particle(ParticleData):
             velocity = np.zeros(2)
         if link_lengths is None:
             link_lengths = {}
-        if link_indices_lengths is None:
-            link_indices_lengths = {}
         if props is None:
             props = ParticleProperties()
         super().__init__(
@@ -52,7 +49,6 @@ class Particle(ParticleData):
             props=props,
             velocity=velocity,
             link_lengths=link_lengths,
-            link_indices_lengths=link_indices_lengths,
         )
 
     def _compute_delta_velocity(

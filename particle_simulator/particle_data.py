@@ -97,7 +97,6 @@ class ParticleData:
     radius: float = 4.0
     color: Tuple[int, int, int] = (0, 0, 0)
     props: ParticleProperties = field(default_factory=ParticleProperties)
-    link_indices_lengths: Dict[int, Optional[float]] = field(default_factory=dict)
     # Non-serializable fields:
     link_lengths: Dict[Self, Optional[float]] = field(default_factory=dict)
     mouse: bool = False

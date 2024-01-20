@@ -311,12 +311,30 @@ class Simulation:
             if particle_settings is not None:
                 self.state.replace_particle(p, particle_settings)
 
+    def _to_particle_builders(self) -> List[ParticleBuilder]:
+        return [
+            ParticleBuilder(
+                color=p.color,
+                props=p.props,
+                velocity=(float(p.velocity[0]), float(p.velocity[1])),
+                radius=p.radius,
+                x=p.x,
+                y=p.y,
+                link_indices_lengths={
+                    self.state.particles.index(particle): value
+                    for particle, value in p.link_lengths.items()
+                    if particle in self.state.particles
+                },
+            )
+            for p in self.state.particles
+        ]
+
     def to_controller_state(self) -> ControllerState:
         return ControllerState(
             sim_data=self.state,
             gui_settings=self.gui.get_sim_settings(),
             gui_particle_state=self.gui.get_particle_settings(),
-            particles=self.state.particles,
+            particles=self._to_particle_builders(),
         )
 
     def from_controller_state(self, controller_state: ControllerState) -> None:
@@ -339,17 +357,15 @@ class Simulation:
                 radius=p.radius,
                 color=p.color,
                 props=p.props,
-                velocity=p.velocity,
-                link_indices_lengths=p.link_indices_lengths,
+                velocity=np.array(p.velocity),
             )
             for p in controller_state.particles
         ]
-        for particle in particles:
+        for particle, builder in zip(particles, controller_state.particles):
             particle.link_lengths = {
                 particles[index]: value
-                for index, value in particle.link_indices_lengths.items()
+                for index, value in builder.link_indices_lengths.items()
             }
-            particle.link_indices_lengths = {}
             self.state.register_particle(particle)
 
     def add_particle(self, x: float, y: float) -> None:

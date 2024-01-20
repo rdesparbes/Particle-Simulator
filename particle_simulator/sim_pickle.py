@@ -12,8 +12,7 @@ from typing import (
 import numpy as np
 
 from particle_simulator.controller_state import ControllerState
-from particle_simulator.particle_data import ParticleData
-from particle_simulator.particle_factory import ParticleFactory
+from particle_simulator.particle_factory import ParticleFactory, ParticleBuilder
 from particle_simulator.particle_properties import ParticleProperties
 from particle_simulator.sim_gui_settings import SimGUISettings
 from particle_simulator.simulation_data import SimulationData
@@ -89,7 +88,7 @@ def _particle_settings_to_dict(particle_factory: ParticleFactory) -> PickleSetti
     }
 
 
-def _particles_to_dict(particles: Sequence[ParticleData]) -> ParticlesPickle:
+def _particles_to_dict(particles: Sequence[ParticleBuilder]) -> ParticlesPickle:
     return [
         {
             "x": p.x,
@@ -111,11 +110,7 @@ def _particles_to_dict(particles: Sequence[ParticleData]) -> ParticlesPickle:
             "group": p.props.group,
             "separate_group": p.props.separate_group,
             "gravity_mode": p.props.gravity_mode,
-            "link_lengths": {
-                particles.index(particle): value
-                for particle, value in p.link_lengths.items()
-                if particle in particles
-            },
+            "link_lengths": p.link_indices_lengths,
         }
         for p in particles
     ]
@@ -235,10 +230,9 @@ def _parse_repel_r(value: Any) -> Optional[float]:
     return float(value)
 
 
-def _parse_particles(particles_pickle: ParticlesPickle) -> List[ParticleData]:
-    particles: List[ParticleData] = []
+def _parse_particles(particles_pickle: ParticlesPickle) -> List[ParticleBuilder]:
+    particles: List[ParticleBuilder] = []
     for d in particles_pickle:
-        v_x, v_y = d["v"]
         props = ParticleProperties(
             mass=float(d["m"]),
             bounciness=float(d["bounciness"]),
@@ -255,12 +249,14 @@ def _parse_particles(particles_pickle: ParticlesPickle) -> List[ParticleData]:
             separate_group=bool(d["separate_group"]),
             gravity_mode=bool(d["gravity_mode"]),
         )
-        particle = ParticleData(
+        v_x, v_y = d["v"]
+        particle = ParticleBuilder(
             x=float(d["x"]),
             y=float(d["y"]),
-            color=d["color"],
+            color=_parse_color(d["color"]),
+            radius=float(d["r"]),
             props=props,
-            velocity=np.array([float(v_x), float(v_y)]),
+            velocity=(float(v_x), float(v_y)),
             link_indices_lengths={
                 int(p_index): _parse_repel_r(length)
                 for p_index, length in d["link_lengths"].items()
