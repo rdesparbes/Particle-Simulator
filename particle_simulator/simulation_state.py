@@ -17,10 +17,14 @@ import numpy.typing as npt
 
 from particle_simulator.error import Error
 from particle_simulator.geometry import Rectangle
+from particle_simulator.grid import Grid
 from particle_simulator.particle import (
     Particle,
     link_particles,
     unlink_particles,
+    ComputeMagnitudeStrategy,
+    radii_compute_magnitude_strategy,
+    default_compute_magnitude_strategy,
 )
 from particle_simulator.simulation_data import SimulationData
 
@@ -176,6 +180,33 @@ class SimulationState(SimulationData):
         self.prev_mx, self.prev_my = self.mx, self.my
         self.mx, self.my = new_mouse_pos
 
+    def _compute_force(
+        self, particle: Particle, near_particles: Iterable[Particle], link_colors: List[Link]
+    ) -> npt.NDArray[np.float_]:
+        force = np.zeros(2)
+        if self.calculate_radii_diff:
+            compute_magnitude_strategy: ComputeMagnitudeStrategy = (
+                radii_compute_magnitude_strategy
+            )
+        else:
+            compute_magnitude_strategy = default_compute_magnitude_strategy
+        for near_particle, interaction in particle.iter_interactions(
+            near_particles, compute_magnitude_strategy
+        ):
+            force += interaction.force
+            particle.fix_overlap(near_particle)
+            near_particle._collisions[particle] = -interaction.force
+            if interaction.link_percentage is not None:
+                if interaction.link_percentage > 1.0:
+                    unlink_particles([particle, near_particle])
+                elif self.stress_visualization:
+                    link_colors.append(
+                        Link(particle, near_particle, interaction.link_percentage)
+                    )
+
+        force += np.sum(list(particle._collisions.values()), axis=0)
+        return force
+
     def update(
         self, particle: Particle, force: Optional[npt.NDArray[np.float_]] = None
     ) -> None:
@@ -205,3 +236,38 @@ class SimulationState(SimulationData):
             particle.y = particle.radius
 
         particle._collisions = {}
+
+    def simulate_step(self) -> List[Link]:
+        link_colors: List[Link] = []
+        grid: Optional[Grid] = None
+        if self.use_grid:
+            grid = Grid(
+                self.grid_res_x,
+                self.grid_res_y,
+                height=self.height,
+                width=self.width,
+            )
+            grid.extend(self.particles)
+        if self.toggle_pause:
+            self.paused = not self.paused
+
+            if not self.paused:
+                self.selection = []
+            self.toggle_pause = False
+        for particle in self.particles:
+            if not particle.interacts:
+                near_particles: Iterable[Particle] = []
+            elif particle.interacts_with_all:
+                near_particles = self.particles
+            elif grid is not None:
+                near_particles = grid.return_particles(particle)
+            else:
+                near_particles = self.particles
+            if self.paused:
+                force: Optional[npt.NDArray[np.float_]] = None
+            else:
+                force = self._compute_force(particle, near_particles, link_colors)
+            self.update(particle, force)
+            if self.is_out_of_bounds(particle.rectangle):
+                self.remove_particle(particle)
+        return link_colors

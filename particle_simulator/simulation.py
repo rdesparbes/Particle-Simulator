@@ -17,16 +17,9 @@ from .controller_state import ControllerState
 from .conversion import builders_to_particles, particles_to_builders
 from .error import Error
 from .geometry import Circle
-from .grid import Grid
 from .gui import GUI
 from .painter import paint_image
 from .particle import Particle
-from .particle import (
-    default_compute_magnitude_strategy,
-    ComputeMagnitudeStrategy,
-    radii_compute_magnitude_strategy,
-)
-from .particle import unlink_particles
 from .particle_factory import ParticleFactory, ParticleBuilder
 from .simulation_state import SimulationState, Link
 
@@ -97,66 +90,6 @@ class Simulation:
     def _cut(self) -> None:
         self._copy_selected()
         self.state.remove_selection()
-
-    def _compute_force(
-        self, particle: Particle, near_particles: Iterable[Particle]
-    ) -> npt.NDArray[np.float_]:
-        force = np.zeros(2)
-        if self.state.calculate_radii_diff:
-            compute_magnitude_strategy: ComputeMagnitudeStrategy = (
-                radii_compute_magnitude_strategy
-            )
-        else:
-            compute_magnitude_strategy = default_compute_magnitude_strategy
-        for near_particle, interaction in particle.iter_interactions(
-            near_particles, compute_magnitude_strategy
-        ):
-            force += interaction.force
-            particle.fix_overlap(near_particle)
-            near_particle._collisions[particle] = -interaction.force
-            if interaction.link_percentage is not None:
-                if interaction.link_percentage > 1.0:
-                    unlink_particles([particle, near_particle])
-                elif self.state.stress_visualization:
-                    self._link_colors.append(
-                        Link(particle, near_particle, interaction.link_percentage)
-                    )
-        force += np.sum(list(particle._collisions.values()), axis=0)
-        return force
-
-    def _simulate_step(self) -> None:
-        self._link_colors = []
-        grid: Optional[Grid] = None
-        if self.state.use_grid:
-            grid = Grid(
-                self.state.grid_res_x,
-                self.state.grid_res_y,
-                height=self.state.height,
-                width=self.state.width,
-            )
-            grid.extend(self.state.particles)
-        if self.state.toggle_pause:
-            self.state.paused = not self.state.paused
-
-            if not self.state.paused:
-                self.state.selection = []
-            self.state.toggle_pause = False
-        for particle in self.state.particles:
-            if not particle.interacts:
-                near_particles: Iterable[Particle] = []
-            elif particle.interacts_with_all:
-                near_particles = self.state.particles
-            elif grid is not None:
-                near_particles = grid.return_particles(particle)
-            else:
-                near_particles = self.state.particles
-            if self.state.paused:
-                force: Optional[npt.NDArray[np.float_]] = None
-            else:
-                force = self._compute_force(particle, near_particles)
-            self.state.update(particle, force)
-            if self.state.is_out_of_bounds(particle.rectangle):
-                self.state.remove_particle(particle)
 
     def _iter_in_range(self, circle: Circle) -> Iterable[Particle]:
         for particle in self.state.particles:
@@ -343,11 +276,9 @@ class Simulation:
             self.state.register_particle(particle)
         self.state.selection = particles
 
-    def _paint_image(self) -> npt.NDArray[np.uint8]:
-        if self.state.stress_visualization and not self.state.paused:
-            link_colors = self._link_colors
-        else:
-            link_colors = None
+    def _paint_image(self, link_colors: Iterable[Link]) -> npt.NDArray[np.uint8]:
+        if not self.state.stress_visualization or self.state.paused:
+            return paint_image(self.state, None)
         return paint_image(self.state, link_colors)
 
     def save(self, filename: Optional[str] = None) -> None:
@@ -397,9 +328,9 @@ class Simulation:
         while self.state.running:
             self._handle_save_manager()
             self._update_mouse()
-            self._simulate_step()
+            link_colors = self.state.simulate_step()
             self._update_timings(new_time=time.time())
-            image = self._paint_image()
+            image = self._paint_image(link_colors)
             self.gui.update(
                 image,
                 paused=self.state.paused,
