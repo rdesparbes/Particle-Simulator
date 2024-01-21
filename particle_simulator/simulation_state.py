@@ -42,23 +42,41 @@ class Link(NamedTuple):
 
 @dataclass(kw_only=True)
 class SimulationState(SimulationData):
+    # Mutable collections:
     particles: List[Particle] = field(default_factory=list)
     groups: Dict[str, List[Particle]] = field(default_factory=lambda: {"group1": []})
-
-    toggle_pause: bool = False
     selection: List[Particle] = field(default_factory=list)
     clipboard: List[ParticleBuilder] = field(default_factory=list)
     errors: Deque[Error] = field(default_factory=deque)
+    create_group_callbacks: List[Callable[[str], None]] = field(default_factory=list)
+    # Geometry:
+    height: int = 600
+    width: int = 650
+    grid_res_x: int = 50
+    grid_res_y: int = 50
+    # States:
+    paused: bool = True
+    toggle_pause: bool = False
+    running: bool = True
+    pasting: bool = True
+    # Display:
     show_fps: bool = True
     show_num: bool = True
     show_links: bool = True
-    create_group_callbacks: List[Callable[[str], None]] = field(default_factory=list)
-    grid_res_x: int = 50
-    grid_res_y: int = 50
-    min_spawn_delay: float = 0.05
+    # Mouse:
+    mx: int = 0
+    my: int = 0
+    mr: float = 5.0
+    prev_mx: int = 0
+    prev_my: int = 0
     mouse_mode: Mode = "MOVE"
-    running: bool = True
-    pasting: bool = True
+    min_spawn_delay: float = 0.05
+
+    @property
+    def delta_mouse_pos(self) -> npt.NDArray[np.float_]:
+        return np.subtract([self.mx, self.my], [self.prev_mx, self.prev_my]).astype(
+            np.float_
+        )
 
     @staticmethod
     def _link(
@@ -177,6 +195,10 @@ class SimulationState(SimulationData):
     def register_particle(self, particle: Particle) -> None:
         self._get_group(particle.props.group).append(particle)
         self.particles.append(particle)
+
+    @property
+    def rectangle(self) -> Rectangle:
+        return Rectangle(x_min=0, y_min=0, x_max=self.width, y_max=self.height)
 
     def _is_out_of_bounds(self, rectangle: Rectangle) -> bool:
         return self.void_edges and self.rectangle.isdisjoint(rectangle)

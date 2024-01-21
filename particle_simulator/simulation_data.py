@@ -4,8 +4,6 @@ from typing import Tuple
 import numpy as np
 from numpy import typing as npt
 
-from particle_simulator.geometry import Rectangle
-
 
 @dataclass(kw_only=True)
 class SimulationData:
@@ -30,18 +28,6 @@ class SimulationData:
     temperature: float = 0.0
     code: str = 'print("Hello World")'
 
-    # Data needed by particles
-    height: int = 600
-    width: int = 650
-    paused: bool = True
-    mx: int = 0
-    my: int = 0
-    prev_mx: int = 0
-    prev_my: int = 0
-
-    # Not needed by particles, but closely related to mx/my:
-    mr: float = 5.0
-
     @property
     def g_vector(self) -> npt.NDArray[np.float_]:
         return self.g * self.g_dir
@@ -52,13 +38,3 @@ class SimulationData:
 
     def set_code(self, code: str) -> None:
         self.code = code
-
-    @property
-    def delta_mouse_pos(self) -> npt.NDArray[np.float_]:
-        return np.subtract([self.mx, self.my], [self.prev_mx, self.prev_my]).astype(
-            np.float_
-        )
-
-    @property
-    def rectangle(self) -> Rectangle:
-        return Rectangle(x_min=0, y_min=0, x_max=self.width, y_max=self.height)
