@@ -15,7 +15,7 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
-from particle_simulator.geometry import Circle, Rectangle
+from particle_simulator.geometry import Circle, Rectangle, rotate_2d
 from particle_simulator.particle_interaction import ParticleInteraction
 from particle_simulator.particle_properties import ParticleProperties
 
@@ -210,6 +210,9 @@ class Particle:
     @property
     def circle(self) -> Circle:
         return Circle(self.x, self.y, self.radius)
+
+    def rotate(self, x: float, y: float, angle: float) -> None:
+        self.x, self.y = rotate_2d(self.x, self.y, x, y, angle)
 
     @property
     def interacts_with_all(self) -> bool:

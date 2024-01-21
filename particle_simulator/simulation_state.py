@@ -1,4 +1,3 @@
-import math
 from collections import deque
 from dataclasses import dataclass, field
 from typing import (
@@ -62,7 +61,7 @@ class SimulationState(SimulationData):
     pasting: bool = True
 
     @staticmethod
-    def link(
+    def _link(
         particles: List[Particle],
         fit_link: bool = False,
         distance: Optional[float] = None,
@@ -70,23 +69,12 @@ class SimulationState(SimulationData):
         link_particles(particles, fit_link, distance)
 
     @staticmethod
-    def unlink(particles: Collection[Particle]) -> None:
+    def _unlink(particles: Collection[Particle]) -> None:
         unlink_particles(particles)
 
-    @staticmethod
-    def rotate_2d(
-        x: float, y: float, cx: float, cy: float, angle: float
-    ) -> Tuple[float, float]:
-        angle_rad = -np.radians(angle)
-        dist_x = x - cx
-        dist_y = y - cy
-        current_angle = math.atan2(dist_y, dist_x)
-        angle_rad += current_angle
-        radius = np.sqrt(dist_x**2 + dist_y**2)
-        x = cx + radius * np.cos(angle_rad)
-        y = cy + radius * np.sin(angle_rad)
-
-        return x, y
+    def rotate_selection(self, x: float, y: float, angle: float) -> None:
+        for p in self.selection:
+            p.rotate(x, y, angle=angle)
 
     def copy_selection(self) -> None:
         self.clipboard = []
@@ -113,11 +101,11 @@ class SimulationState(SimulationData):
         self.toggle_pause = True
 
     def link_selection(self, fit_link: bool = False) -> None:
-        self.link(self.selection, fit_link=fit_link)
+        self._link(self.selection, fit_link=fit_link)
         self.selection = []
 
     def unlink_selection(self) -> None:
-        self.unlink(self.selection)
+        self._unlink(self.selection)
         self.selection = []
 
     def select_particle(self, particle: Particle) -> None:
@@ -127,8 +115,10 @@ class SimulationState(SimulationData):
 
     def remove_particle(self, particle: Particle) -> None:
         self.particles.remove(particle)
-        if particle in self.selection:
+        try:
             self.selection.remove(particle)
+        except ValueError:
+            pass
         for p in particle.link_lengths:
             del p.link_lengths[particle]
         self.groups[particle.props.group].remove(particle)
@@ -155,7 +145,7 @@ class SimulationState(SimulationData):
         for p in particles:
             for link, length in p.link_lengths.items():
                 if length is not None:
-                    self.link([p, link], fit_link=True, distance=length + amount)
+                    self._link([p, link], fit_link=True, distance=length + amount)
 
     def execute(self, code: str) -> None:
         try:
@@ -188,7 +178,7 @@ class SimulationState(SimulationData):
         self._get_group(particle.props.group).append(particle)
         self.particles.append(particle)
 
-    def is_out_of_bounds(self, rectangle: Rectangle) -> bool:
+    def _is_out_of_bounds(self, rectangle: Rectangle) -> bool:
         return self.void_edges and self.rectangle.isdisjoint(rectangle)
 
     def _compute_delta_velocity(
@@ -293,6 +283,6 @@ class SimulationState(SimulationData):
             else:
                 force = self._compute_force(particle, near_particles, links)
             self._update(particle, force)
-            if self.is_out_of_bounds(particle.rectangle):
+            if self._is_out_of_bounds(particle.rectangle):
                 self.remove_particle(particle)
         return links

@@ -158,10 +158,9 @@ class Simulation:
 
     def _on_scroll(self, event: tk.Event) -> None:
         if self.rotate_mode:
-            for p in self.state.selection:
-                p.x, p.y = self.state.rotate_2d(
-                    p.x, p.y, event.x, event.y, angle=event.delta / 500 * self.state.mr
-                )
+            self.state.rotate_selection(
+                event.x, event.y, angle=event.delta / 500 * self.state.mr
+            )
         else:
             self.state.mr = max(self.state.mr * 2 ** (event.delta / 500), 1)
 

@@ -28,3 +28,16 @@ def test_register_particle_triggers_create_group_callbacks(
     sim_state.register_particle(Particle(0.0, 0.0))
     # Assert
     create_group_callback.assert_called_once_with("group1")
+
+
+def test_simulate_step_when_toggle_to_unpause_clears_selection(
+    sim_state: SimulationState,
+) -> None:
+    # Arrange
+    sim_state.toggle_pause = True
+    sim_state.paused = True
+    sim_state.select_particle(Particle(0., 0.))
+    # Act
+    sim_state.simulate_step()
+    # Assert
+    assert sim_state.selection == []
