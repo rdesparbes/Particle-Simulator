@@ -328,9 +328,9 @@ class Simulation:
         while self.state.running:
             self._handle_save_manager()
             self._update_mouse()
-            link_colors = self.state.simulate_step()
+            links = self.state.simulate_step()
             self._update_timings(new_time=time.time())
-            image = self._paint_image(link_colors)
+            image = self._paint_image(links)
             self.gui.update(
                 image,
                 paused=self.state.paused,

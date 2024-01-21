@@ -181,7 +181,7 @@ class SimulationState(SimulationData):
         self.mx, self.my = new_mouse_pos
 
     def _compute_force(
-        self, particle: Particle, near_particles: Iterable[Particle], link_colors: List[Link]
+        self, particle: Particle, near_particles: Iterable[Particle], links: List[Link]
     ) -> npt.NDArray[np.float_]:
         force = np.zeros(2)
         if self.calculate_radii_diff:
@@ -200,14 +200,14 @@ class SimulationState(SimulationData):
                 if interaction.link_percentage > 1.0:
                     unlink_particles([particle, near_particle])
                 elif self.stress_visualization:
-                    link_colors.append(
+                    links.append(
                         Link(particle, near_particle, interaction.link_percentage)
                     )
 
         force += np.sum(list(particle._collisions.values()), axis=0)
         return force
 
-    def update(
+    def _update(
         self, particle: Particle, force: Optional[npt.NDArray[np.float_]] = None
     ) -> None:
         if particle.mouse:
@@ -238,7 +238,7 @@ class SimulationState(SimulationData):
         particle._collisions = {}
 
     def simulate_step(self) -> List[Link]:
-        link_colors: List[Link] = []
+        links: List[Link] = []
         grid: Optional[Grid] = None
         if self.use_grid:
             grid = Grid(
@@ -266,8 +266,8 @@ class SimulationState(SimulationData):
             if self.paused:
                 force: Optional[npt.NDArray[np.float_]] = None
             else:
-                force = self._compute_force(particle, near_particles, link_colors)
-            self.update(particle, force)
+                force = self._compute_force(particle, near_particles, links)
+            self._update(particle, force)
             if self.is_out_of_bounds(particle.rectangle):
                 self.remove_particle(particle)
-        return link_colors
+        return links
