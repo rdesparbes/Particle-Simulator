@@ -311,10 +311,12 @@ class Particle:
         )
 
     def fix_overlap(self, p: Self) -> None:
+        if not self.props.collisions:
+            return
         direction: npt.NDArray[np.float_] = np.subtract([p.x, p.y], [self.x, self.y])
         distance: float = float(np.linalg.norm(direction))
         overlap = self.radius + p.radius - distance
-        if not self.props.collisions or overlap <= 0.0:
+        if overlap <= 0.0:
             return
         new_speed = self._compute_collision_speed(p)
         p.velocity = p._compute_collision_speed(self)

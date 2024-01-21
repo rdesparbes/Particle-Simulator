@@ -36,7 +36,7 @@ def test_simulate_step_when_toggle_to_unpause_clears_selection(
     # Arrange
     sim_state.toggle_pause = True
     sim_state.paused = True
-    sim_state.select_particle(Particle(0., 0.))
+    sim_state.select_particle(Particle(0.0, 0.0))
     # Act
     sim_state.simulate_step()
     # Assert
