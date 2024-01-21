@@ -110,7 +110,7 @@ class Particle:
     ) -> npt.NDArray[np.float_]:
         if self.props.gravity_mode or p.props.gravity_mode:
             return np.zeros(2)
-        force = np.random.uniform(-10, 10, 2)
+        force = np.random.normal(size=2)
         return force / np.linalg.norm(force) * -self.props.repulsion_strength
 
     def _compute_collision_delta_pos(
