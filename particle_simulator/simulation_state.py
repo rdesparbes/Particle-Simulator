@@ -232,7 +232,7 @@ class SimulationState(SimulationData):
             near_particles, compute_magnitude_strategy
         ):
             force += interaction.force
-            particle.fix_overlap(near_particle)
+            particle.compute_collision(near_particle)
             near_particle._collisions[particle] = -interaction.force
             if interaction.link_percentage is not None:
                 if interaction.link_percentage > 1.0:

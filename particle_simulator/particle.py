@@ -310,7 +310,7 @@ class Particle:
             + 2.0 * other.props.mass / total_mass * other.velocity
         )
 
-    def fix_overlap(self, p: Self) -> None:
+    def compute_collision(self, p: Self) -> None:
         if not self.props.collisions:
             return
         direction: npt.NDArray[np.float_] = np.subtract([p.x, p.y], [self.x, self.y])
