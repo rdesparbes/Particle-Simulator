@@ -5,7 +5,6 @@ from functools import partial
 from typing import (
     Optional,
     Tuple,
-    List,
     Iterable,
     Callable,
 )
@@ -20,7 +19,7 @@ from .geometry import Circle
 from .gui import GUI
 from .painter import paint_image
 from .particle import Particle
-from .particle_factory import ParticleFactory, ParticleBuilder
+from .particle_factory import ParticleFactory
 from .simulation_state import SimulationState, Link
 
 
@@ -61,8 +60,6 @@ class Simulation:
         self.last_particle_added_time = 0.0
         self.prev_fps_update_time = time.time()
         self.prev_time = self.prev_fps_update_time
-        self.clipboard: List[ParticleBuilder] = []
-        self.pasting = False
 
         self.gui = GUI(self.state, title)
         self.state.create_group_callbacks.append(self.gui.create_group)
@@ -83,9 +80,9 @@ class Simulation:
         self.gui.tk.bind("<space>", _no_event(self.state.toggle_paused))
         self.gui.tk.bind("<Delete>", _no_event(self.state.remove_selection))
         self.gui.tk.bind("<Control-a>", _no_event(self.state.select_all))
-        self.gui.tk.bind("<Control-c>", _no_event(self._copy_selected))
-        self.gui.tk.bind("<Control-x>", _no_event(self._cut))
-        self.gui.tk.bind("<Control-v>", _no_event(self._paste))
+        self.gui.tk.bind("<Control-c>", _no_event(self.state.copy_selected))
+        self.gui.tk.bind("<Control-x>", _no_event(self.state.cut))
+        self.gui.tk.bind("<Control-v>", _no_event(self.state.paste))
         self.gui.tk.bind("<Control-l>", _no_event(self.state.lock_selection))
         self.gui.tk.bind(
             "<Control-Shift-KeyPress-L>", _no_event(self.state.unlock_selection)
@@ -99,17 +96,6 @@ class Simulation:
         self.gui.tk.bind("<KeyRelease-r>", _no_event(self._exit_rotate_mode))
         self.gui.tk.bind("<Control-s>", _no_event(self.save))
         self.gui.tk.bind("<Control-o>", _no_event(self.load))
-
-    def _copy_selected(self) -> None:
-        self.clipboard = []
-        for factory in particles_to_builders(self.state.selection):
-            factory.x -= self.state.mx
-            factory.y -= self.state.my
-            self.clipboard.append(factory)
-
-    def _cut(self) -> None:
-        self._copy_selected()
-        self.state.remove_selection()
 
     def _iter_in_range(self, circle: Circle) -> Iterable[Particle]:
         for particle in self.state.particles:
@@ -151,10 +137,10 @@ class Simulation:
             self.add_particle(event.x, event.y)
 
     def _mouse_r(self, _event: tk.Event) -> None:
-        if self.state.mouse_mode == "MOVE" or self.pasting:
+        if self.state.mouse_mode == "MOVE" or self.state.pasting:
             for p in self.state.particles:
                 p.mouse = False
-        self.pasting = False
+        self.state.pasting = False
 
     def _right_mouse(self, event: tk.Event) -> None:
         temp = self.state.particles.copy()
@@ -238,16 +224,6 @@ class Simulation:
             )
             self.state.register_particle(particle)
             self.last_particle_added_time = time.time()
-
-    def _paste(self) -> None:
-        self.pasting = True
-        particles: List[Particle] = []
-        for particle in builders_to_particles(self.clipboard):
-            particle.x += self.state.mx
-            particle.y += self.state.my
-            particle.mouse = True
-            self.state.register_particle(particle)
-        self.state.selection = particles
 
     def _paint_image(self, link_colors: Iterable[Link]) -> npt.NDArray[np.uint8]:
         if not self.state.stress_visualization or self.state.paused:

@@ -15,6 +15,7 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
+from particle_simulator.conversion import builders_to_particles, particles_to_builders
 from particle_simulator.error import Error
 from particle_simulator.geometry import Rectangle
 from particle_simulator.grid import Grid
@@ -26,6 +27,7 @@ from particle_simulator.particle import (
     radii_compute_magnitude_strategy,
     default_compute_magnitude_strategy,
 )
+from particle_simulator.particle_factory import ParticleBuilder
 from particle_simulator.simulation_data import SimulationData
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
@@ -44,6 +46,7 @@ class SimulationState(SimulationData):
 
     toggle_pause: bool = False
     selection: List[Particle] = field(default_factory=list)
+    clipboard: List[ParticleBuilder] = field(default_factory=list)
     error: Optional[Error] = None
     show_fps: bool = True
     show_num: bool = True
@@ -54,6 +57,7 @@ class SimulationState(SimulationData):
     min_spawn_delay: float = 0.05
     mouse_mode: Mode = "MOVE"
     running: bool = True
+    pasting: bool = True
 
     @staticmethod
     def link(
@@ -81,6 +85,27 @@ class SimulationState(SimulationData):
         y = cy + radius * np.sin(angle_rad)
 
         return x, y
+
+    def copy_selected(self) -> None:
+        self.clipboard = []
+        for factory in particles_to_builders(self.selection):
+            factory.x -= self.mx
+            factory.y -= self.my
+            self.clipboard.append(factory)
+
+    def cut(self) -> None:
+        self.copy_selected()
+        self.remove_selection()
+
+    def paste(self) -> None:
+        self.pasting = True
+        particles: List[Particle] = []
+        for particle in builders_to_particles(self.clipboard):
+            particle.x += self.mx
+            particle.y += self.my
+            particle.mouse = True
+            self.register_particle(particle)
+        self.selection = particles
 
     def toggle_paused(self) -> None:
         self.toggle_pause = True
