@@ -389,15 +389,14 @@ class Simulation:
             self.prev_fps_update_time = new_time
         self.prev_time = new_time
 
-    def _update_mouse_position(self) -> None:
+    def _update_mouse(self) -> None:
         self.state.focus = self.gui.get_focus()
-        self.state.prev_mx, self.state.prev_my = self.state.mx, self.state.my
-        self.state.mx, self.state.my = self.gui.get_mouse_pos()
+        self.state.update_mouse_pos(self.gui.get_mouse_pos())
 
     def simulate(self) -> None:
         while self.state.running:
             self._handle_save_manager()
-            self._update_mouse_position()
+            self._update_mouse()
             self._simulate_step()
             self._update_timings(new_time=time.time())
             image = self._paint_image()

@@ -172,6 +172,10 @@ class SimulationState(SimulationData):
             + np.random.uniform(-1, 1, 2) * self.temperature
         )
 
+    def update_mouse_pos(self, new_mouse_pos: Tuple[int, int]) -> None:
+        self.prev_mx, self.prev_my = self.mx, self.my
+        self.mx, self.my = new_mouse_pos
+
     def update(
         self, particle: Particle, force: Optional[npt.NDArray[np.float_]] = None
     ) -> None:
