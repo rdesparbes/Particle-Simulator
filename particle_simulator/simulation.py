@@ -1,17 +1,17 @@
 import time
 import tkinter as tk
 from dataclasses import asdict
+from functools import partial
 from typing import (
     Optional,
     Tuple,
     List,
-    Union,
     Iterable,
+    Callable,
 )
 
 import numpy as np
 import numpy.typing as npt
-from pynput.keyboard import Listener, Key, KeyCode
 
 from .controller_state import ControllerState
 from .conversion import builders_to_particles, particles_to_builders
@@ -22,6 +22,13 @@ from .painter import paint_image
 from .particle import Particle
 from .particle_factory import ParticleFactory, ParticleBuilder
 from .simulation_state import SimulationState, Link
+
+
+def _no_event(action: Callable[[], None]) -> Callable[[tk.Event], None]:
+    def wrapper(_event: tk.Event) -> None:
+        return action()
+
+    return wrapper
 
 
 class Simulation:
@@ -52,9 +59,6 @@ class Simulation:
         self.fps_update_delay = fps_update_delay
         self.rotate_mode = False
         self.last_particle_added_time = 0.0
-        self.shift = False
-        self.start_save = False
-        self.start_load = False
         self.prev_fps_update_time = time.time()
         self.prev_time = self.prev_fps_update_time
         self.clipboard: List[ParticleBuilder] = []
@@ -77,8 +81,25 @@ class Simulation:
         self.gui.canvas.bind("<Button-3>", self._right_mouse)
         self.gui.canvas.bind("<MouseWheel>", self._on_scroll)
 
-        self.listener = Listener(on_press=self._on_press, on_release=self._on_release)
-        self.listener.start()
+        self.gui.tk.bind("<space>", _no_event(self.state.toggle_paused))
+        self.gui.tk.bind("<Delete>", _no_event(self.state.remove_selection))
+        self.gui.tk.bind("<Control-a>", _no_event(self.state.select_all))
+        self.gui.tk.bind("<Control-c>", _no_event(self._copy_selected))
+        self.gui.tk.bind("<Control-x>", _no_event(self._cut))
+        self.gui.tk.bind("<Control-v>", _no_event(self._paste))
+        self.gui.tk.bind("<Control-l>", _no_event(self.state.lock_selection))
+        self.gui.tk.bind(
+            "<Control-Shift-KeyPress-L>", _no_event(self.state.unlock_selection)
+        )
+        self.gui.tk.bind("<l>", _no_event(self.state.link_selection))
+        self.gui.tk.bind(
+            "<Alt_R><l>", _no_event(partial(self.state.link_selection, fit_link=True))
+        )
+        self.gui.tk.bind("<Shift-L>", _no_event(self.state.unlink_selection))
+        self.gui.tk.bind("<KeyPress-r>", _no_event(self._enter_rotate_mode))
+        self.gui.tk.bind("<KeyRelease-r>", _no_event(self._exit_rotate_mode))
+        self.gui.tk.bind("<Control-s>", _no_event(self.save))
+        self.gui.tk.bind("<Control-o>", _no_event(self.load))
 
     def _copy_selected(self) -> None:
         self.clipboard = []
@@ -154,56 +175,11 @@ class Simulation:
         else:
             self.state.mr = max(self.state.mr * 2 ** (event.delta / 500), 1)
 
-    def _on_press(self, key: Union[Key, KeyCode, None]) -> None:
-        if not self.state.focus:
-            return
-        # SPACE to pause
-        if key == Key.space:
-            self.state.toggle_paused()
-        # DELETE to delete
-        elif key == Key.delete:
-            self.state.remove_selection()
-        elif key in {Key.shift_l, Key.shift_r}:
-            self.shift = True
-        # CTRL + A to select all
-        elif KeyCode.from_char(str(key)).char == r"'\x01'":
-            self.state.select_all()
-        # CTRL + C to copy
-        elif KeyCode.from_char(str(key)).char == r"'\x03'":
-            self._copy_selected()
-        # CTRL + V to copy
-        elif KeyCode.from_char(str(key)).char == r"'\x16'":
-            self._paste()
-        # CTRL + X to cut
-        elif KeyCode.from_char(str(key)).char == r"'\x18'":
-            self._cut()
-        # CTRL + L and CTRL + SHIFT + L to lock and 'unlock'
-        elif KeyCode.from_char(str(key)).char == r"'\x0c'" and not self.shift:
-            self.state.lock_selection()
-        elif KeyCode.from_char(str(key)).char == r"'\x0c'" and self.shift:
-            self.state.unlock_selection()
-        # L to link, SHIFT + L to unlink and ALT GR + L to fit-link
-        elif KeyCode.from_char(str(key)).char == "'l'":
-            self.state.link_selection()
-        elif KeyCode.from_char(str(key)).char == "<76>":
-            self.state.link_selection(fit_link=True)
-        elif KeyCode.from_char(str(key)).char == "'L'":
-            self.state.unlink_selection()
-        # R to enter rotate-mode
-        elif KeyCode.from_char(str(key)).char == "'r'":
-            self.rotate_mode = True
-        # CTRL + S to save
-        elif KeyCode.from_char(str(key)).char == r"'\x13'":
-            self.start_save = True  # Threading-issues
-        # CTRL + O to load / open
-        elif KeyCode.from_char(str(key)).char == r"'\x0f'":
-            self.start_load = True
+    def _enter_rotate_mode(self) -> None:
+        self.rotate_mode = True
 
-    def _on_release(self, key: Union[Key, KeyCode, None]) -> None:
-        if key in {Key.shift_l, Key.shift_r}:
-            self.shift = False
-        elif KeyCode.from_char(str(key)).char == "'r'":
-            self.rotate_mode = False
+    def _exit_rotate_mode(self) -> None:
+        self.rotate_mode = False
 
     def _get_particle_settings(self) -> Optional[ParticleFactory]:
         try:
@@ -299,14 +275,6 @@ class Simulation:
         except Exception as error:
             self.state.error = Error("Loading-Error", error)
 
-    def _handle_save_manager(self) -> None:
-        if self.start_save:
-            self.save()
-            self.start_save = False
-        if self.start_load:
-            self.load()
-            self.start_load = False
-
     @property
     def _fps_update_time(self) -> float:
         return self.prev_fps_update_time + self.fps_update_delay
@@ -320,14 +288,9 @@ class Simulation:
             self.prev_fps_update_time = new_time
         self.prev_time = new_time
 
-    def _update_mouse(self) -> None:
-        self.state.focus = self.gui.get_focus()
-        self.state.update_mouse_pos(self.gui.get_mouse_pos())
-
     def simulate(self) -> None:
         while self.state.running:
-            self._handle_save_manager()
-            self._update_mouse()
+            self.state.update_mouse_pos(self.gui.get_mouse_pos())
             links = self.state.simulate_step()
             self._update_timings(new_time=time.time())
             image = self._paint_image(links)

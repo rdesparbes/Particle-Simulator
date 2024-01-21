@@ -182,12 +182,6 @@ class GUI(GUIWidgets):
     def create_group(self, name: str) -> None:
         self._create_group(name)
 
-    def get_focus(self) -> bool:
-        try:
-            return isinstance(self.tk.focus_displayof(), (tk.Canvas, tk.Tk))
-        except KeyError:
-            return False
-
     def get_sim_settings(self) -> SimGUISettings:
         return SimGUISettings(
             show_fps=self.show_fps.get(),
