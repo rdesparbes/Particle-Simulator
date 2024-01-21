@@ -205,6 +205,7 @@ class SimulationState(SimulationData):
                     )
 
         force += np.sum(list(particle._collisions.values()), axis=0)
+        particle._collisions = {}
         return force
 
     def _update(
@@ -234,8 +235,6 @@ class SimulationState(SimulationData):
         if self.top and particle.y_min <= 0:
             particle.velocity *= [1 - self.ground_friction, -particle.props.bounciness]
             particle.y = particle.radius
-
-        particle._collisions = {}
 
     def simulate_step(self) -> List[Link]:
         links: List[Link] = []
