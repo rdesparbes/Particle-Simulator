@@ -28,14 +28,14 @@ def default_compute_magnitude_strategy(
     part_a: "Particle",
     part_b: "Particle",
     distance: float,
-    repel_r: Optional[float],
+    link_length: Optional[float],
 ) -> float:
-    if repel_r is None:
-        repel_r = max(part_a.props.repel_r, part_b.props.repel_r)
+    if link_length is None:
+        link_length = max(part_a.props.repel_r, part_b.props.repel_r)
     magnitude = part_a.calculate_magnitude(
         part=part_b,
         distance=distance,
-        repel_r=repel_r,
+        repel_r=link_length,
         attr=part_b.props.attraction_strength + part_a.props.attraction_strength,
         repel=part_b.props.repulsion_strength + part_a.props.repulsion_strength,
         is_in_group=part_a._is_in_same_group(part_b),
@@ -48,7 +48,7 @@ def radii_compute_magnitude_strategy(
     part_a: "Particle",
     part_b: "Particle",
     distance: float,
-    repel_r: Optional[float],
+    link_length: Optional[float],
 ) -> float:
     magnitude = 0.0
     is_in_group = part_a._is_in_same_group(part_b)
@@ -56,7 +56,7 @@ def radii_compute_magnitude_strategy(
         magnitude += part_a.calculate_magnitude(
             part=part_b,
             distance=distance,
-            repel_r=part_b.props.repel_r if repel_r is None else repel_r,
+            repel_r=part_b.props.repel_r if link_length is None else link_length,
             attr=part_b.props.attraction_strength,
             repel=part_b.props.repulsion_strength,
             is_in_group=is_in_group,
@@ -66,7 +66,7 @@ def radii_compute_magnitude_strategy(
         magnitude += part_b.calculate_magnitude(
             part=part_a,
             distance=distance,
-            repel_r=part_a.props.repel_r if repel_r is None else repel_r,
+            repel_r=part_a.props.repel_r if link_length is None else link_length,
             attr=part_a.props.attraction_strength,
             repel=part_a.props.repulsion_strength,
             is_in_group=is_in_group,
@@ -151,7 +151,7 @@ class Particle:
     ) -> Optional[ParticleInteraction]:
         if not self._are_compatible(p):
             return None
-        direction = np.array([p.x, p.y]) - np.array([self.x, self.y])
+        direction = np.subtract([p.x, p.y], [self.x, self.y])
         distance: float = float(np.linalg.norm(direction))
         if not (p._reaches(distance) or self._reaches(distance)):
             return None
@@ -160,12 +160,12 @@ class Particle:
             force = self._compute_default_force(p)
         else:
             direction = direction / distance
-            repel_r: Optional[float] = self.link_lengths.get(p)
-            magnitude = compute_magnitude_strategy(self, p, distance, repel_r)
-            if repel_r is None:
-                repel_r = max(self.props.repel_r, p.props.repel_r)
+            link_length: Optional[float] = self.link_lengths.get(p)
+            magnitude = compute_magnitude_strategy(self, p, distance, link_length)
+            if link_length is None:
+                link_length = max(self.props.repel_r, p.props.repel_r)
             if self._is_linked_to(p):
-                max_force = p._compute_max_force(distance, repel_r)
+                max_force = p._compute_max_force(distance, link_length)
                 link_percentage = self._compute_link_percentage(magnitude, max_force)
             force = direction * magnitude
         return ParticleInteraction(force, link_percentage)
