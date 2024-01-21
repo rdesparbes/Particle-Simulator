@@ -141,22 +141,16 @@ class GUI(GUIWidgets):
         self.sim.calculate_radii_diff = self.calculate_radii_diff_bool.get()
 
     def _set_select_mode(self) -> None:
+        super()._set_select_mode()
         self.sim.mouse_mode = "SELECT"
-        self.gui_canvas.itemconfig(self.select_rect, state="normal")
-        self.gui_canvas.itemconfig(self.move_rect, state="hidden")
-        self.gui_canvas.itemconfig(self.add_rect, state="hidden")
 
     def _set_move_mode(self) -> None:
+        super()._set_move_mode()
         self.sim.mouse_mode = "MOVE"
-        self.gui_canvas.itemconfig(self.select_rect, state="hidden")
-        self.gui_canvas.itemconfig(self.move_rect, state="normal")
-        self.gui_canvas.itemconfig(self.add_rect, state="hidden")
 
     def _set_add_mode(self) -> None:
+        super()._set_add_mode()
         self.sim.mouse_mode = "ADD"
-        self.gui_canvas.itemconfig(self.select_rect, state="hidden")
-        self.gui_canvas.itemconfig(self.move_rect, state="hidden")
-        self.gui_canvas.itemconfig(self.add_rect, state="normal")
 
     def _create_extra_window(self) -> None:
         self.extra_window = ExtraWindow(self.sim, str(self.path))

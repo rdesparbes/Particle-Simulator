@@ -52,6 +52,7 @@ class GUIWidgets:
             relief=tk.FLAT,
             bg="#1f3333",
             activebackground="#1f3333",
+            command=self._set_select_mode,
         )
         self.select_btn.place(x=x, y=16, anchor="center")
         self.select_rect = self.gui_canvas.create_rectangle(
@@ -69,6 +70,7 @@ class GUIWidgets:
             relief=tk.FLAT,
             bg="#1f3333",
             activebackground="#1f3333",
+            command=self._set_move_mode,
         )
         self.move_btn.place(x=x, y=16, anchor="center")
         self.move_rect = self.gui_canvas.create_rectangle(
@@ -86,6 +88,7 @@ class GUIWidgets:
             relief=tk.FLAT,
             bg="#1f3333",
             activebackground="#1f3333",
+            command=self._set_add_mode,
         )
         self.add_btn.place(x=x, y=15, anchor="center")
         self.add_rect = self.gui_canvas.create_rectangle(
@@ -603,6 +606,23 @@ class GUIWidgets:
         self.set_selected_btn.place(x=15, y=height - 30)
         self.set_all_btn = tk.Button(self.tab2, text="Set All", bg="light blue")
         self.set_all_btn.place(x=95, y=height - 30)
+
+    def _reset_mode(self) -> None:
+        self.gui_canvas.itemconfig(self.select_rect, state="hidden")
+        self.gui_canvas.itemconfig(self.move_rect, state="hidden")
+        self.gui_canvas.itemconfig(self.add_rect, state="hidden")
+
+    def _set_select_mode(self) -> None:
+        self._reset_mode()
+        self.gui_canvas.itemconfig(self.select_rect, state="normal")
+
+    def _set_move_mode(self) -> None:
+        self._reset_mode()
+        self.gui_canvas.itemconfig(self.move_rect, state="normal")
+
+    def _set_add_mode(self) -> None:
+        self._reset_mode()
+        self.gui_canvas.itemconfig(self.add_rect, state="normal")
 
     @staticmethod
     def _set_entry(entry: Union[tk.Entry, tk.Spinbox], text: str) -> None:
