@@ -55,7 +55,7 @@ class GUIWidgets:
         )
         self.select_btn.place(x=x, y=16, anchor="center")
         self.select_rect = self.gui_canvas.create_rectangle(
-            x - 12, 3, x + 12, 27, outline="blue", state="hidden"
+            x - 12, 3, x + 12, 27, outline="blue", state="hidden"  # type: ignore[call-overload]
         )
 
         x = 165
@@ -89,7 +89,7 @@ class GUIWidgets:
         )
         self.add_btn.place(x=x, y=15, anchor="center")
         self.add_rect = self.gui_canvas.create_rectangle(
-            x - 13, 3, x + 11, 27, outline="blue", state="hidden"
+            x - 13, 3, x + 11, 27, outline="blue", state="hidden"  # type: ignore[call-overload]
         )
 
         self.link_btn = tk.Button(
