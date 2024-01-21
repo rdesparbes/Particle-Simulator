@@ -306,21 +306,26 @@ class Particle:
     def _compute_collision_speed(self, other: Self) -> npt.NDArray[np.float_]:
         total_mass = self.props.mass + other.props.mass
         return (
-            (self.props.mass - other.props.mass) / total_mass * self.velocity
-            + 2.0 * other.props.mass / total_mass * other.velocity
-        )
+            (self.props.mass - other.props.mass) * self.velocity
+            + 2.0 * other.props.mass * other.velocity
+        ) / total_mass
 
     def compute_collision(self, p: Self) -> None:
         if not self.props.collisions:
             return
         direction: npt.NDArray[np.float_] = np.subtract([p.x, p.y], [self.x, self.y])
-        distance: float = float(np.linalg.norm(direction))
+        distance = float(np.linalg.norm(direction))
         overlap = self.radius + p.radius - distance
         if overlap <= 0.0:
             return
         new_speed = self._compute_collision_speed(p)
         p.velocity = p._compute_collision_speed(self)
         self.velocity = new_speed
+        if distance == 0.0:
+            direction = np.random.normal(2)
+            direction = np.linalg.norm(direction)
+        else:
+            direction /= distance
         translate_vector = overlap * direction
         dx, dy = self._compute_collision_delta_pos(-translate_vector, p.props.mass)
         self.x += dx
