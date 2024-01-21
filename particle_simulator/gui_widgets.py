@@ -397,7 +397,7 @@ class GUIWidgets:
             x=7, y=20, anchor="nw"
         )
         self.radius_entry = tk.Spinbox(self.tab2, width=7, from_=1, to=300, increment=1)
-        self._set_entry(self.radius_entry, "1")
+        self._set_entry(self.radius_entry, "4")
         self.radius_entry.place(x=100, y=20)
 
         tk.Label(self.tab2, text="Color:", font=("helvetica", 8)).place(
@@ -551,8 +551,7 @@ class GUIWidgets:
         tk.Label(self.tab2, text="Particle-group:", font=("helvetica", 8)).place(
             x=7, y=450, anchor="nw"
         )
-        self.groups_entry = ttk.Combobox(self.tab2, width=10, values=["group1"])
-        self.groups_entry.current(0)
+        self.groups_entry = ttk.Combobox(self.tab2, width=10)
         self.groups_entry.place(x=10, y=470, anchor="nw")
 
         self.group_add_btn = tk.Button(

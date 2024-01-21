@@ -88,15 +88,15 @@ class SimulationState(SimulationData):
 
         return x, y
 
-    def copy_selected(self) -> None:
+    def copy_selection(self) -> None:
         self.clipboard = []
         for factory in particles_to_builders(self.selection):
             factory.x -= self.mx
             factory.y -= self.my
             self.clipboard.append(factory)
 
-    def cut(self) -> None:
-        self.copy_selected()
+    def cut_selection(self) -> None:
+        self.copy_selection()
         self.remove_selection()
 
     def paste(self) -> None:

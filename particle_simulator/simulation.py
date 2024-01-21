@@ -53,6 +53,8 @@ class Simulation:
             grid_res_x=gridres[0],
             grid_res_y=gridres[1],
         )
+        self.gui = GUI(self.state, title)
+        self.state.create_group_callbacks.append(self.gui.create_group)
 
         self.fps = 0.0
         self.fps_update_delay = fps_update_delay
@@ -61,27 +63,21 @@ class Simulation:
         self.prev_fps_update_time = time.time()
         self.prev_time = self.prev_fps_update_time
 
-        self.gui = GUI(self.state, title)
-        self.state.create_group_callbacks.append(self.gui.create_group)
+        self._bind_commands()
+        self._bind_events()
 
+    def _bind_commands(self) -> None:
         self.gui.save_btn.configure(command=self.save)
         self.gui.load_btn.configure(command=self.load)
         self.gui.set_selected_btn.configure(command=self.set_selected)
         self.gui.set_all_btn.configure(command=self.set_all)
 
-        # Keyboard- and mouse-controls
-        self.gui.canvas.bind("<B1-Motion>", self._mouse_m)
-        self.gui.canvas.bind("<Button-1>", self._mouse_p)
-        self.gui.canvas.bind("<ButtonRelease-1>", self._mouse_r)
-        self.gui.canvas.bind("<B3-Motion>", self._right_mouse)
-        self.gui.canvas.bind("<Button-3>", self._right_mouse)
-        self.gui.canvas.bind("<MouseWheel>", self._on_scroll)
-
+    def _bind_sim_events(self) -> None:
         self.gui.tk.bind("<space>", _no_event(self.state.toggle_paused))
         self.gui.tk.bind("<Delete>", _no_event(self.state.remove_selection))
         self.gui.tk.bind("<Control-a>", _no_event(self.state.select_all))
-        self.gui.tk.bind("<Control-c>", _no_event(self.state.copy_selected))
-        self.gui.tk.bind("<Control-x>", _no_event(self.state.cut))
+        self.gui.tk.bind("<Control-c>", _no_event(self.state.copy_selection))
+        self.gui.tk.bind("<Control-x>", _no_event(self.state.cut_selection))
         self.gui.tk.bind("<Control-v>", _no_event(self.state.paste))
         self.gui.tk.bind("<Control-l>", _no_event(self.state.lock_selection))
         self.gui.tk.bind(
@@ -92,10 +88,21 @@ class Simulation:
             "<Alt_R><l>", _no_event(partial(self.state.link_selection, fit_link=True))
         )
         self.gui.tk.bind("<Shift-L>", _no_event(self.state.unlink_selection))
+
+    def _bind_events(self) -> None:
+        self.gui.canvas.bind("<B1-Motion>", self._mouse_m)
+        self.gui.canvas.bind("<Button-1>", self._mouse_p)
+        self.gui.canvas.bind("<ButtonRelease-1>", self._mouse_r)
+        self.gui.canvas.bind("<B3-Motion>", self._right_mouse)
+        self.gui.canvas.bind("<Button-3>", self._right_mouse)
+        self.gui.canvas.bind("<MouseWheel>", self._on_scroll)
+
         self.gui.tk.bind("<KeyPress-r>", _no_event(self._enter_rotate_mode))
         self.gui.tk.bind("<KeyRelease-r>", _no_event(self._exit_rotate_mode))
         self.gui.tk.bind("<Control-s>", _no_event(self.save))
         self.gui.tk.bind("<Control-o>", _no_event(self.load))
+
+        self._bind_sim_events()
 
     def _iter_in_range(self, circle: Circle) -> Iterable[Particle]:
         for particle in self.state.particles:
@@ -196,18 +203,16 @@ class Simulation:
         )
 
     def from_controller_state(self, controller_state: ControllerState) -> None:
-        self.state = SimulationState(**asdict(controller_state.sim_data))
-        self.gui.register_sim(self.state)
-        self.state.create_group_callbacks = [self.gui.create_group]
-        self.gui.set_particle_settings(controller_state.gui_particle_state)
+        self.state = SimulationState(
+            **asdict(controller_state.sim_data),
+            create_group_callbacks=[self.gui.create_group]
+        )
+        self._bind_sim_events()
 
-        self.gui.groups_entry["values"] = []
+        self.gui.register_sim(self.state)
+        self.gui.set_particle_settings(controller_state.gui_particle_state)
         self.gui.set_sim_settings(controller_state.gui_settings)
 
-        for p in self.state.particles.copy():
-            self.state.remove_particle(p)
-
-        self.state.groups = {}
         for particle in builders_to_particles(controller_state.particles):
             self.state.register_particle(particle)
 

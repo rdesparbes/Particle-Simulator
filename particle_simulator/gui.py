@@ -21,7 +21,7 @@ from .simulation_state import SimulationState
 
 
 class GUI(GUIWidgets):
-    def __init__(self, sim: SimulationState, title: str) -> None:
+    def __init__(self, sim: SimulationState, title: str = "Simulation") -> None:
         super().__init__(sim.width, sim.height, title)
         self.save_manager = SaveManager(file_location=os.path.dirname(self.path))
         self.code_window: Optional[CodeWindow] = None
@@ -80,6 +80,10 @@ class GUI(GUIWidgets):
         self.group_select_btn.configure(
             command=lambda: sim.select_group(self.groups_entry.get())
         )
+        groups = sorted(sim.groups)
+        self.groups_entry["values"] = groups
+        if groups:
+            self.groups_entry.current(0)
 
     def register_sim(self, sim: SimulationState) -> None:
         self._register_sim(sim)
