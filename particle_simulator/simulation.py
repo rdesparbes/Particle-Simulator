@@ -168,7 +168,7 @@ class Simulation:
         try:
             return self.gui.get_particle_settings()
         except Exception as error:
-            self.state.error = Error("Input-Error", error)
+            self.state.errors.append(Error("Input-Error", error))
         return None
 
     def _set_particles(self, particles: Iterable[Particle]) -> None:
@@ -235,7 +235,7 @@ class Simulation:
         try:
             self.gui.save_manager.save(controller_state, filename=filename)
         except Exception as error:
-            self.state.error = Error("Saving-Error", error)
+            self.state.errors.append(Error("Saving-Error", error))
 
     def load(self, filename: Optional[str] = None) -> None:
         if not self.state.paused:
@@ -246,7 +246,7 @@ class Simulation:
                 return
             self.from_controller_state(controller_state)
         except Exception as error:
-            self.state.error = Error("Loading-Error", error)
+            self.state.errors.append(Error("Loading-Error", error))
 
     @property
     def _fps_update_time(self) -> float:
@@ -268,4 +268,3 @@ class Simulation:
             self._update_timings(new_time=time.time())
             image = self._paint_image(links)
             self.gui.update(image, self.fps)
-            self.state.error = None

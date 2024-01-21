@@ -227,7 +227,7 @@ class ExtraWindow:
                 self.sim.selection, float(self.delta_length_entry.get()) * sign
             )
         except Exception as e:
-            self.sim.error = Error("Input-Error", e)
+            self.sim.errors.append(Error("Input-Error", e))
 
     def toggle_link_change_plus(self, state: bool) -> None:
         self.changing_length_plus = time.time() if state else None

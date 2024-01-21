@@ -317,8 +317,9 @@ class GUI(GUIWidgets):
         image: npt.NDArray[np.uint8],
         fps: Optional[float] = None,
     ) -> None:
-        if self.sim.error is not None:
-            messagebox.showerror(self.sim.error.name, str(self.sim.error.exception))
+        while self.sim.errors:
+            error = self.sim.errors.popleft()
+            messagebox.showerror(error.name, str(error.exception))
         photo = ImageTk.PhotoImage(image=Image.fromarray(image.astype(np.uint8)))
         self.pause_button.config(
             image=self.play_photo if self.sim.paused else self.pause_photo

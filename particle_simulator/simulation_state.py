@@ -1,4 +1,5 @@
 import math
+from collections import deque
 from dataclasses import dataclass, field
 from typing import (
     Tuple,
@@ -10,6 +11,7 @@ from typing import (
     Optional,
     Callable,
     NamedTuple,
+    Deque,
 )
 
 import numpy as np
@@ -47,7 +49,7 @@ class SimulationState(SimulationData):
     toggle_pause: bool = False
     selection: List[Particle] = field(default_factory=list)
     clipboard: List[ParticleBuilder] = field(default_factory=list)
-    error: Optional[Error] = None
+    errors: Deque[Error] = field(default_factory=deque)
     show_fps: bool = True
     show_num: bool = True
     show_links: bool = True
@@ -159,7 +161,7 @@ class SimulationState(SimulationData):
         try:
             exec(code)
         except Exception as error:
-            self.error = Error("Code-Error", error)
+            self.errors.append(Error("Code-Error", error))
 
     def add_group(self) -> str:
         for i in range(1, len(self.groups) + 2):
