@@ -397,7 +397,7 @@ class GUIWidgets:
             x=7, y=20, anchor="nw"
         )
         self.radius_entry = tk.Spinbox(self.tab2, width=7, from_=1, to=300, increment=1)
-        self._set_entry(self.radius_entry, "scroll")
+        self._set_entry(self.radius_entry, "1")
         self.radius_entry.place(x=100, y=20)
 
         tk.Label(self.tab2, text="Color:", font=("helvetica", 8)).place(
