@@ -10,7 +10,6 @@ from PIL import ImageTk, Image
 
 from .code_window import CodeWindow
 from .color import generate_random
-from .error import Error
 from .extra_window import ExtraWindow
 from .gui_widgets import GUIWidgets
 from .particle import Particle
@@ -316,19 +315,18 @@ class GUI(GUIWidgets):
     def update(
         self,
         image: npt.NDArray[np.uint8],
-        paused: bool = True,
         fps: Optional[float] = None,
-        particle_count: Optional[int] = None,
-        error: Optional[Error] = None,
     ) -> None:
-        if error is not None:
-            messagebox.showerror(error.name, str(error.exception))
+        if self.sim.error is not None:
+            messagebox.showerror(self.sim.error.name, str(self.sim.error.exception))
         photo = ImageTk.PhotoImage(image=Image.fromarray(image.astype(np.uint8)))
-        self.pause_button.config(image=self.play_photo if paused else self.pause_photo)
+        self.pause_button.config(
+            image=self.play_photo if self.sim.paused else self.pause_photo
+        )
 
         self.canvas.delete("all")
         self.canvas.create_image(0, 0, image=photo, anchor=tk.NW)
-        if self.show_fps.get() and fps is not None:
+        if self.sim.show_fps and fps is not None:
             self.canvas.create_text(
                 10,
                 10,
@@ -336,11 +334,11 @@ class GUI(GUIWidgets):
                 anchor="nw",
                 font=("Helvetica", 9, "bold"),
             )
-        if self.sim.show_num and particle_count is not None:
+        if self.sim.show_num:
             self.canvas.create_text(
                 10,
                 25,
-                text=f"Particles: {particle_count}",
+                text=f"Particles: {len(self.sim.particles)}",
                 anchor="nw",
                 font=("Helvetica", 9, "bold"),
             )

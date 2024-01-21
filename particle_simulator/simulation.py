@@ -294,11 +294,5 @@ class Simulation:
             links = self.state.simulate_step()
             self._update_timings(new_time=time.time())
             image = self._paint_image(links)
-            self.gui.update(
-                image,
-                paused=self.state.paused,
-                fps=self.fps,
-                particle_count=len(self.state.particles),
-                error=self.state.error,
-            )
+            self.gui.update(image, self.fps)
             self.state.error = None
