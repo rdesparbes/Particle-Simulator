@@ -9,7 +9,6 @@ from typing import (
     Iterable,
 )
 
-import cv2
 import numpy as np
 import numpy.typing as npt
 from pynput.keyboard import Listener, Key, KeyCode
@@ -20,6 +19,7 @@ from .error import Error
 from .geometry import Circle
 from .grid import Grid
 from .gui import GUI
+from .painter import paint_image
 from .particle import Particle
 from .particle import (
     default_compute_magnitude_strategy,
@@ -343,51 +343,12 @@ class Simulation:
             self.state.register_particle(particle)
         self.state.selection = particles
 
-    def _draw_image(self) -> npt.NDArray[np.uint8]:
-        image = np.full(
-            (self.state.height, self.state.width, 3),
-            self.state.bg_color,
-            dtype=np.uint8,
-        )
-        if self.state.show_links:
-            if self.state.stress_visualization and not self.state.paused:
-                for p1, p2, percentage in self._link_colors:
-                    color = [max(255 * percentage, 235)] + [235 * (1 - percentage)] * 2
-                    cv2.line(
-                        image,
-                        (int(p1.x), int(p1.y)),
-                        (int(p2.x), int(p2.y)),
-                        color,
-                        1,
-                    )
-            else:
-                for p1 in self.state.particles:
-                    for p2 in p1.link_lengths:
-                        cv2.line(
-                            image,
-                            (int(p1.x), int(p1.y)),
-                            (int(p2.x), int(p2.y)),
-                            [235] * 3,
-                            1,
-                        )
-        for particle in self.state.particles:
-            cv2.circle(
-                image,
-                (int(particle.x), int(particle.y)),
-                int(particle.radius),
-                [int(c) for c in particle.color],
-                -1,
-            )
-        for particle in self.state.selection:
-            cv2.circle(
-                image,
-                (int(particle.x), int(particle.y)),
-                int(particle.radius),
-                [0, 0, 255],
-                2,
-            )
-        cv2.circle(image, (self.state.mx, self.state.my), int(self.state.mr), [127] * 3)
-        return image
+    def _paint_image(self) -> npt.NDArray[np.uint8]:
+        if self.state.stress_visualization and not self.state.paused:
+            link_colors = self._link_colors
+        else:
+            link_colors = None
+        return paint_image(self.state, link_colors)
 
     def save(self, filename: Optional[str] = None) -> None:
         controller_state = self.to_controller_state()
@@ -439,7 +400,7 @@ class Simulation:
             self._update_mouse_position()
             self._simulate_step()
             self._update_timings(new_time=time.time())
-            image = self._draw_image()
+            image = self._paint_image()
             self.gui.update(
                 image,
                 paused=self.state.paused,
