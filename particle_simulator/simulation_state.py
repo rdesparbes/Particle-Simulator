@@ -22,7 +22,6 @@ from particle_simulator.particle import (
     link_particles,
     unlink_particles,
 )
-from particle_simulator.particle_factory import ParticleFactory
 from particle_simulator.simulation_data import SimulationData
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
@@ -158,22 +157,6 @@ class SimulationState(SimulationData):
     def register_particle(self, particle: Particle) -> None:
         self._get_group(particle.props.group).append(particle)
         self.particles.append(particle)
-
-    def replace_particle(self, p: Particle, factory: ParticleFactory) -> Particle:
-        temp_link_lengths = p.link_lengths.copy()
-        self.remove_particle(p)
-        new_p = Particle(
-            p.x,
-            p.y,
-            radius=factory.radius,
-            color=factory.color,
-            props=factory.props,
-            velocity=np.array(factory.velocity),
-        )
-        self.register_particle(p)
-        for link, length in temp_link_lengths.items():
-            self.link([link, p], fit_link=length is not None, distance=length)
-        return new_p
 
     def is_out_of_bounds(self, rectangle: Rectangle) -> bool:
         return self.void_edges and self.rectangle.isdisjoint(rectangle)

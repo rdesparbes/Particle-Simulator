@@ -69,7 +69,7 @@ def _particle_settings_to_dict(particle_factory: ParticleFactory) -> PickleSetti
     p = particle_factory
     return {
         "radius_entry": (p.radius,),
-        "color_entry": (p.color or "random",),
+        "color_entry": (p.color,),
         "mass_entry": (p.props.mass,),
         "velocity_x_entry": (p.velocity[0],),
         "velocity_y_entry": (p.velocity[1],),

@@ -274,31 +274,26 @@ class Simulation:
 
     def _get_particle_settings(self) -> Optional[ParticleFactory]:
         try:
-            particle_settings = self.gui.get_particle_settings()
-            if particle_settings.radius is None:
-                particle_settings.radius = self.state.mr
-            return particle_settings
+            return self.gui.get_particle_settings()
         except Exception as error:
             self.state.error = Error("Input-Error", error)
         return None
 
+    def _set_particles(self, particles: Iterable[Particle]) -> None:
+        for p in particles:
+            # Update for each particle in case of 'random' and avoid sharing properties:
+            factory = self._get_particle_settings()
+            if factory is not None:
+                p.radius = factory.radius
+                p.color = factory.color
+                p.props = factory.props
+                p.velocity = np.array(factory.velocity)
+
     def set_selected(self) -> None:
-        particle_settings = self._get_particle_settings()
-        if particle_settings is None:
-            return
-        temp = self.state.selection.copy()
-        for p in temp:
-            p = self.state.replace_particle(p, particle_settings)
-            self.state.selection.append(p)
+        self._set_particles(self.state.selection)
 
     def set_all(self) -> None:
-        temp = self.state.particles.copy()
-        for p in temp:
-            particle_settings = (
-                self._get_particle_settings()
-            )  # Update for each particle in case of 'random'
-            if particle_settings is not None:
-                self.state.replace_particle(p, particle_settings)
+        self._set_particles(self.state.particles)
 
     def to_controller_state(self) -> ControllerState:
         return ControllerState(

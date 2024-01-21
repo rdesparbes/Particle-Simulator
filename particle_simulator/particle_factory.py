@@ -9,7 +9,7 @@ class ParticleFactory:
     color: Tuple[int, int, int]
     props: ParticleProperties
     velocity: Tuple[float, float]
-    radius: float = 4.0
+    radius: float = 4.0  # has a default value because of the 'scroll' problem
 
 
 @dataclass(kw_only=True)

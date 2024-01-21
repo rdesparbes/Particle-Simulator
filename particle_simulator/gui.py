@@ -231,14 +231,12 @@ class GUI(GUIWidgets):
         factory = ParticleFactory(
             color=color,
             props=props,
+            radius=float(self.radius_entry.get()),
             velocity=(
                 float(self.velocity_x_entry.get()),
                 float(self.velocity_y_entry.get()),
             ),
         )
-        radius = self._parse_radius()
-        if radius is not None:
-            factory.radius = radius
         return factory
 
     def _set_particle_properties(self, p: ParticleProperties) -> None:
@@ -259,13 +257,11 @@ class GUI(GUIWidgets):
 
     def set_particle_settings(self, particle_settings: ParticleFactory) -> None:
         p = particle_settings
-        self.color_var.set(str(p.color or "random"))
+        self.color_var.set(str(p.color))
         self._set_particle_properties(p.props)
         self._set_entry(self.velocity_x_entry, str(p.velocity[0]))
         self._set_entry(self.velocity_y_entry, str(p.velocity[1]))
-        self._set_entry(
-            self.radius_entry, "scroll" if p.radius is None else str(p.radius)
-        )
+        self._set_entry(self.radius_entry, str(p.radius))
 
     def _copy_from_selected(self) -> None:
         selection: Sequence[Particle] = self.sim.selection
