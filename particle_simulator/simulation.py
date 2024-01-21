@@ -66,7 +66,6 @@ class Simulation:
 
         self.gui = GUI(self.state, title)
         self.state.create_group_callbacks.append(self.gui.create_group)
-        self._link_colors: List[Link] = []
 
         self.gui.save_btn.configure(command=self.save)
         self.gui.load_btn.configure(command=self.load)
@@ -118,7 +117,6 @@ class Simulation:
                 yield particle
 
     def _mouse_p(self, event: tk.Event) -> None:
-        self.gui.canvas.focus_set()
         mouse_circle = Circle(event.x, event.y, self.state.mr)
         if self.state.mouse_mode == "SELECT":
             selected = False
@@ -159,7 +157,6 @@ class Simulation:
         self.pasting = False
 
     def _right_mouse(self, event: tk.Event) -> None:
-        self.gui.canvas.focus_set()
         temp = self.state.particles.copy()
         mouse_circle = Circle(event.x, event.y, self.state.mr)
         for p in temp:
