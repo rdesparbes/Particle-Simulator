@@ -276,8 +276,9 @@ class SimulationState(SimulationData):
             particle.velocity *= [1 - self.ground_friction, -particle.props.bounciness]
             particle.y = particle.radius
 
-    def simulate_step(self) -> List[Link]:
-        links: List[Link] = []
+    def _compute_forces_and_links(
+        self,
+    ) -> Tuple[Dict[Particle, Optional[npt.NDArray[np.float_]]], List[Link]]:
         grid: Optional[Grid] = None
         if self.use_grid:
             grid = Grid(
@@ -287,12 +288,8 @@ class SimulationState(SimulationData):
                 width=self.width,
             )
             grid.extend(self.particles)
-        if self.toggle_pause:
-            self.paused = not self.paused
-
-            if not self.paused:
-                self.selection = []
-            self.toggle_pause = False
+        links: List[Link] = []
+        forces: Dict[Particle, Optional[npt.NDArray[np.float_]]] = {}
         for particle in self.particles:
             if not particle.interacts:
                 near_particles: Iterable[Particle] = []
@@ -303,9 +300,19 @@ class SimulationState(SimulationData):
             else:
                 near_particles = self.particles
             if self.paused:
-                force: Optional[npt.NDArray[np.float_]] = None
+                forces[particle] = None
             else:
-                force = self._compute_force(particle, near_particles, links)
+                forces[particle] = self._compute_force(particle, near_particles, links)
+        return forces, links
+
+    def simulate_step(self) -> List[Link]:
+        if self.toggle_pause:
+            self.paused = not self.paused
+            if not self.paused:
+                self.selection = []
+            self.toggle_pause = False
+        forces, links = self._compute_forces_and_links()
+        for particle, force in forces.items():
             self._update(particle, force)
             if self._is_out_of_bounds(particle.rectangle):
                 self.remove_particle(particle)
