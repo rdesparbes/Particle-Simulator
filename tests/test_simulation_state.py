@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock
 
+import numpy as np
 import pytest
 
 from particle_simulator.particle import Particle
@@ -41,3 +42,22 @@ def test_simulate_step_when_toggle_to_unpause_clears_selection(
     sim_state.simulate_step()
     # Assert
     assert sim_state.selection == []
+
+
+def test_simulate_step_given_no_external_forces_makes_two_identical_particles_travel_the_same_distance(
+    sim_state: SimulationState,
+) -> None:
+    # Arrange
+    init_pos = (100.0, 100.0)
+    p1 = Particle(*init_pos)
+    p2 = Particle(*init_pos)
+    sim_state.register_particle(p1)
+    sim_state.register_particle(p2)
+    sim_state.paused = False
+    sim_state.wind_force[:] = 0.0
+    sim_state.g = 0.0
+    sim_state.temperature = 0.0
+    # Act
+    sim_state.simulate_step()
+    # Assert
+    assert np.isclose(p1.distance(*init_pos), p2.distance(*init_pos))
