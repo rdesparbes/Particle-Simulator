@@ -322,10 +322,9 @@ class Particle:
         p.velocity = p._compute_collision_speed(self)
         self.velocity = new_speed
         if distance == 0.0:
-            direction = np.random.normal(2)
-            direction = np.linalg.norm(direction)
-        else:
-            direction /= distance
+            direction = np.random.normal(size=2)
+            distance = float(np.linalg.norm(direction))
+        direction /= distance
         translate_vector = overlap * direction
         dx, dy = self._compute_collision_delta_pos(-translate_vector, p.props.mass)
         self.x += dx
