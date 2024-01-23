@@ -46,9 +46,9 @@ class SimulationState(SimulationData):
     particles: List[Particle] = field(default_factory=list)
     groups: Dict[str, List[Particle]] = field(default_factory=lambda: {"group1": []})
     selection: List[Particle] = field(default_factory=list)
-    clipboard: List[ParticleBuilder] = field(default_factory=list)
     errors: Deque[Error] = field(default_factory=deque)
     create_group_callbacks: List[Callable[[str], None]] = field(default_factory=list)
+    _clipboard: List[ParticleBuilder] = field(default_factory=list, init=False)
     # Geometry:
     height: int = 600
     width: int = 650
@@ -56,9 +56,9 @@ class SimulationState(SimulationData):
     grid_res_y: int = 50
     # States:
     paused: bool = True
-    toggle_pause: bool = False
     running: bool = True
     pasting: bool = True
+    _toggle_pause: bool = False
     # Display:
     show_fps: bool = True
     show_num: bool = True
@@ -67,14 +67,14 @@ class SimulationState(SimulationData):
     mx: int = 0
     my: int = 0
     mr: float = 5.0
-    prev_mx: int = 0
-    prev_my: int = 0
+    _prev_mx: int = field(default=0, init=False)
+    _prev_my: int = field(default=0, init=False)
     mouse_mode: Mode = "MOVE"
     min_spawn_delay: float = 0.05
 
     @property
-    def delta_mouse_pos(self) -> npt.NDArray[np.float_]:
-        return np.subtract([self.mx, self.my], [self.prev_mx, self.prev_my]).astype(
+    def _delta_mouse_pos(self) -> npt.NDArray[np.float_]:
+        return np.subtract([self.mx, self.my], [self._prev_mx, self._prev_my]).astype(
             np.float_
         )
 
@@ -95,11 +95,11 @@ class SimulationState(SimulationData):
             p.rotate(x, y, angle=angle)
 
     def copy_selection(self) -> None:
-        self.clipboard = []
+        self._clipboard = []
         for factory in particles_to_builders(self.selection):
             factory.x -= self.mx
             factory.y -= self.my
-            self.clipboard.append(factory)
+            self._clipboard.append(factory)
 
     def cut_selection(self) -> None:
         self.copy_selection()
@@ -108,7 +108,7 @@ class SimulationState(SimulationData):
     def paste(self) -> None:
         self.pasting = True
         particles: List[Particle] = []
-        for particle in builders_to_particles(self.clipboard):
+        for particle in builders_to_particles(self._clipboard):
             particle.x += self.mx
             particle.y += self.my
             particle.mouse = True
@@ -116,7 +116,7 @@ class SimulationState(SimulationData):
         self.selection = particles
 
     def toggle_paused(self) -> None:
-        self.toggle_pause = True
+        self._toggle_pause = True
 
     def link_selection(self, fit_link: bool = False) -> None:
         self._link(self.selection, fit_link=fit_link)
@@ -197,11 +197,11 @@ class SimulationState(SimulationData):
         self.particles.append(particle)
 
     @property
-    def rectangle(self) -> Rectangle:
+    def _rectangle(self) -> Rectangle:
         return Rectangle(x_min=0, y_min=0, x_max=self.width, y_max=self.height)
 
     def _is_out_of_bounds(self, rectangle: Rectangle) -> bool:
-        return self.void_edges and self.rectangle.isdisjoint(rectangle)
+        return self.void_edges and self._rectangle.isdisjoint(rectangle)
 
     def _compute_delta_velocity(
         self,
@@ -217,7 +217,7 @@ class SimulationState(SimulationData):
         return acceleration + np.random.normal(scale=0.75, size=2) * self.temperature
 
     def update_mouse_pos(self, new_mouse_pos: Tuple[int, int]) -> None:
-        self.prev_mx, self.prev_my = self.mx, self.my
+        self._prev_mx, self._prev_my = self.mx, self.my
         self.mx, self.my = new_mouse_pos
 
     def _compute_force(
@@ -252,7 +252,7 @@ class SimulationState(SimulationData):
         self, particle: Particle, force: Optional[npt.NDArray[np.float_]] = None
     ) -> None:
         if particle.mouse:
-            particle.velocity = self.delta_mouse_pos
+            particle.velocity = self._delta_mouse_pos
             dx, dy = particle.velocity
             particle.x += dx
             particle.y += dy
@@ -306,11 +306,11 @@ class SimulationState(SimulationData):
         return forces, links
 
     def simulate_step(self) -> List[Link]:
-        if self.toggle_pause:
+        if self._toggle_pause:
             self.paused = not self.paused
             if not self.paused:
                 self.selection = []
-            self.toggle_pause = False
+            self._toggle_pause = False
         forces, links = self._compute_forces_and_links()
         for particle, force in forces.items():
             self._update(particle, force)

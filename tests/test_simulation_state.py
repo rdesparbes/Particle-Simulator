@@ -38,13 +38,14 @@ def test_simulate_step_when_toggle_to_unpause_clears_selection(
     sim_state: SimulationState,
 ) -> None:
     # Arrange
-    sim_state.toggle_pause = True
     sim_state.paused = True
     sim_state.select_particle(Particle(0.0, 0.0))
+    sim_state.toggle_paused()
     # Act
     sim_state.simulate_step()
     # Assert
     assert sim_state.selection == []
+    assert not sim_state.paused
 
 
 def test_simulate_step_given_no_external_forces_makes_two_identical_particles_travel_the_same_distance(
