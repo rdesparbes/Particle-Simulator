@@ -204,15 +204,17 @@ class SimulationState(SimulationData):
         return self.void_edges and self.rectangle.isdisjoint(rectangle)
 
     def _compute_delta_velocity(
-        self, particle: Particle, force: npt.NDArray[np.float_]
+        self,
+        particle: Particle,
+        force: npt.NDArray[np.float_],
+        max_acceleration_magnitude: float = 2.0,
     ) -> npt.NDArray[np.float_]:
         forces = [force, self.wind_force * particle.radius]
         acceleration = np.sum(forces, axis=0) / particle.props.mass + self.g_vector
-
-        return (
-            np.clip(acceleration, -2, 2)
-            + np.random.uniform(-1, 1, 2) * self.temperature
-        )
+        acc_magnitude = float(np.linalg.norm(acceleration))
+        clipped_magnitude = min(acc_magnitude, max_acceleration_magnitude)
+        acceleration = acceleration / acc_magnitude * clipped_magnitude
+        return acceleration + np.random.normal(scale=0.75, size=2) * self.temperature
 
     def update_mouse_pos(self, new_mouse_pos: Tuple[int, int]) -> None:
         self.prev_mx, self.prev_my = self.mx, self.my
