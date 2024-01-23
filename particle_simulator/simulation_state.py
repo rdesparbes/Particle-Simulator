@@ -212,8 +212,9 @@ class SimulationState(SimulationData):
         forces = [force, self.wind_force * particle.radius]
         acceleration = np.sum(forces, axis=0) / particle.props.mass + self.g_vector
         acc_magnitude = float(np.linalg.norm(acceleration))
-        clipped_magnitude = min(acc_magnitude, max_acceleration_magnitude)
-        acceleration = acceleration / acc_magnitude * clipped_magnitude
+        if acc_magnitude > 0.0:
+            clipped_magnitude = min(acc_magnitude, max_acceleration_magnitude)
+            acceleration = acceleration / acc_magnitude * clipped_magnitude
         return acceleration + np.random.normal(scale=0.75, size=2) * self.temperature
 
     def update_mouse_pos(self, new_mouse_pos: Tuple[int, int]) -> None:
