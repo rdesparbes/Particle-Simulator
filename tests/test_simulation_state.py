@@ -61,3 +61,22 @@ def test_simulate_step_given_no_external_forces_makes_two_identical_particles_tr
     sim_state.simulate_step()
     # Assert
     assert np.isclose(p1.distance(*init_pos), p2.distance(*init_pos))
+
+
+def test_simulate_step_when_no_edges_removes_particle_about_to_leave_canvas(
+    sim_state: SimulationState,
+) -> None:
+    # Arrange
+    p1 = Particle(1.0, 1.0, velocity=np.array([-10.0, -10.0]))
+    sim_state.register_particle(p1)
+    sim_state.paused = False
+    sim_state.temperature = 0.0
+    sim_state.void_edges = True
+    sim_state.left = False
+    sim_state.right = False
+    sim_state.top = False
+    sim_state.bottom = False
+    # Act
+    sim_state.simulate_step()
+    # Assert
+    assert not sim_state.particles
