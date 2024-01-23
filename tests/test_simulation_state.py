@@ -53,14 +53,12 @@ def test_simulate_step_when_toggle_to_unpause_clears_selection(
     "init_pos_1, init_pos_2",
     [((10.0, 10.0), (10.0, 10.0)), ((10.0, 10.0), (11.0, 10.0))],
 )
-@pytest.mark.parametrize(
-    "calculate_radii_diff", [True, False]
-)
+@pytest.mark.parametrize("calculate_radii_diff", [True, False])
 def test_simulate_step_given_no_external_forces_makes_two_identical_near_particles_travel_with_opposite_vectors(
     sim_state: SimulationState,
     init_pos_1: Tuple[float, float],
     init_pos_2: Tuple[float, float],
-    calculate_radii_diff: bool
+    calculate_radii_diff: bool,
 ) -> None:
     # Arrange
     p1 = Particle(*init_pos_1)
@@ -82,7 +80,7 @@ def test_simulate_step_when_no_edges_removes_particle_about_to_leave_canvas(
     sim_state: SimulationState,
 ) -> None:
     # Arrange
-    p1 = Particle(1.0, 1.0, velocity=np.array([0.0, -10.0]))
+    p1 = Particle(5.0, 5.0, velocity=np.array([0.0, -10.0]))
     sim_state.register_particle(p1)
     sim_state.void_edges = True
     sim_state.top = False
@@ -96,9 +94,26 @@ def test_simulate_step_when_edges_makes_particle_about_to_leave_canvas_bounce(
     sim_state: SimulationState,
 ) -> None:
     # Arrange
-    p1 = Particle(1.0, 1.0, velocity=np.array([0.0, -10.0]))
+    p1 = Particle(5.0, 5.0, velocity=np.array([0.0, -10.0]))
     sim_state.register_particle(p1)
     # Act
     sim_state.simulate_step()
     # Assert
     assert len(sim_state.particles) == 1
+
+
+@pytest.mark.parametrize("paused, expected_to_move", [(True, False), (False, True)])
+def test_simulate_step_given_paused_freezes_the_particles(
+    sim_state: SimulationState, paused: bool, expected_to_move: bool
+) -> None:
+    # Arrange
+    init_pos = (5.0, 5.0)
+    p1 = Particle(*init_pos, velocity=np.array([0.0, -10.0]))
+    sim_state.register_particle(p1)
+    sim_state.paused = paused
+    # Act
+    sim_state.simulate_step()
+    # Assert
+    delta_pos = np.subtract((p1.x, p1.y), init_pos)
+    has_moved = np.any(delta_pos)
+    assert has_moved == expected_to_move
