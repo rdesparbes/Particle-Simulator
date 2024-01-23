@@ -9,7 +9,10 @@ from particle_simulator.simulation_state import SimulationState
 
 @pytest.fixture(name="sim_state")
 def fixture_sim_state() -> SimulationState:
-    return SimulationState()
+    return SimulationState(
+        temperature=0.0,  # Set to 0 to keep the simulation deterministic
+        paused=False,
+    )
 
 
 def test_add_group(sim_state: SimulationState) -> None:
@@ -53,10 +56,8 @@ def test_simulate_step_given_no_external_forces_makes_two_identical_particles_tr
     p2 = Particle(*init_pos)
     sim_state.register_particle(p1)
     sim_state.register_particle(p2)
-    sim_state.paused = False
     sim_state.wind_force[:] = 0.0
     sim_state.g = 0.0
-    sim_state.temperature = 0.0
     # Act
     sim_state.simulate_step()
     # Assert
@@ -67,16 +68,23 @@ def test_simulate_step_when_no_edges_removes_particle_about_to_leave_canvas(
     sim_state: SimulationState,
 ) -> None:
     # Arrange
-    p1 = Particle(1.0, 1.0, velocity=np.array([-10.0, -10.0]))
+    p1 = Particle(1.0, 1.0, velocity=np.array([0.0, -10.0]))
     sim_state.register_particle(p1)
-    sim_state.paused = False
-    sim_state.temperature = 0.0
     sim_state.void_edges = True
-    sim_state.left = False
-    sim_state.right = False
     sim_state.top = False
-    sim_state.bottom = False
     # Act
     sim_state.simulate_step()
     # Assert
     assert not sim_state.particles
+
+
+def test_simulate_step_when_edges_makes_particle_about_to_leave_canvas_bounce(
+    sim_state: SimulationState,
+) -> None:
+    # Arrange
+    p1 = Particle(1.0, 1.0, velocity=np.array([0.0, -10.0]))
+    sim_state.register_particle(p1)
+    # Act
+    sim_state.simulate_step()
+    # Assert
+    assert len(sim_state.particles) == 1
