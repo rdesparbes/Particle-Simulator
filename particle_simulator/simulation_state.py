@@ -249,18 +249,19 @@ class SimulationState(SimulationData):
         particle._collisions = {}
         return force
 
-    def _update(
-        self, particle: Particle, force: Optional[npt.NDArray[np.float_]] = None
-    ) -> None:
+    def _apply_force(self, particle: Particle, force: npt.NDArray[np.float_]) -> None:
+        if particle.mouse or particle.props.locked:
+            return
+        particle.velocity += self._compute_delta_velocity(particle, force)
+        particle.velocity *= self.air_res_calc
+        dx, dy = particle.velocity * self.speed
+        particle.x += dx
+        particle.y += dy
+
+    def _update(self, particle: Particle) -> None:
         if particle.mouse:
             particle.velocity = self._delta_mouse_pos
             dx, dy = particle.velocity
-            particle.x += dx
-            particle.y += dy
-        elif force is not None and not particle.props.locked:
-            particle.velocity += self._compute_delta_velocity(particle, force)
-            particle.velocity *= self.air_res_calc
-            dx, dy = particle.velocity * self.speed
             particle.x += dx
             particle.y += dy
 
@@ -300,10 +301,7 @@ class SimulationState(SimulationData):
                 near_particles = grid.return_particles(particle)
             else:
                 near_particles = self.particles
-            if self.paused:
-                forces[particle] = None
-            else:
-                forces[particle] = self._compute_force(particle, near_particles, links)
+            forces[particle] = self._compute_force(particle, near_particles, links)
         return forces, links
 
     def simulate_step(self) -> List[Link]:
@@ -312,9 +310,15 @@ class SimulationState(SimulationData):
             if not self.paused:
                 self.selection = []
             self._toggle_pause = False
-        forces, links = self._compute_forces_and_links()
-        for particle, force in forces.items():
-            self._update(particle, force)
+        if self.paused:
+            links: List[Link] = []
+        else:
+            forces, links = self._compute_forces_and_links()
+            for particle, force in forces.items():
+                self._apply_force(particle, force)
+
+        for particle in self.particles:
+            self._update(particle)
             if self._is_out_of_bounds(particle.rectangle):
                 self.remove_particle(particle)
         return links
