@@ -23,7 +23,6 @@ Example simulation can be found in the 'example_simulations'-folder. (see 'Savin
 7. [Code-window](#Code-window)
 
 ## Required modules <a name="Required_modules"></a>
-- pynput
 - numpy
 - cv2 (OpenCV) 
 - PIL

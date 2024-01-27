@@ -1,6 +1,24 @@
 [project]
 name = "particle-simulator"
 version = "0.1.0"
+dependencies = [
+    "Pillow",
+    "opencv-python",
+    "numpy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy",
+    "pytest",
+    "types-Pillow",
+    "pytest-cov",
+    "black",
+]
 
 [tool.setuptools]
 packages = ["particle_simulator"]
+
+[tool.mypy]
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
