@@ -20,7 +20,11 @@ from particle_simulator.conversion import builders_to_particles, particles_to_bu
 from particle_simulator.error import Error
 from particle_simulator.geometry import Rectangle
 from particle_simulator.grid import Grid
-from particle_simulator.interaction_transformer import InteractionTransformer
+from particle_simulator.interaction_transformer import (
+    InteractionTransformer,
+    apply_collisions,
+    remove_broken_links,
+)
 from particle_simulator.particle import (
     Particle,
     link_particles,
@@ -42,8 +46,8 @@ class SimulationState(SimulationData):
     particles: List[Particle] = field(default_factory=list)
     groups: Dict[str, List[Particle]] = field(default_factory=lambda: {"group1": []})
     selection: List[Particle] = field(default_factory=list)
-    errors: Deque[Error] = field(default_factory=deque)
     create_group_callbacks: List[Callable[[str], None]] = field(default_factory=list)
+    errors: Deque[Error] = field(default_factory=deque, init=False)
     _clipboard: List[ParticleBuilder] = field(default_factory=list, init=False)
     # Geometry:
     height: int = 600
@@ -287,24 +291,6 @@ class SimulationState(SimulationData):
             self._update_interactions(interactions, particle, near_particles)
         return interactions
 
-    @staticmethod
-    def _remove_broken_links(
-        particle: Particle, interactions: Mapping[Particle, ParticleInteraction]
-    ) -> None:
-        for near_particle, interaction in interactions.items():
-            if (
-                interaction.link_percentage is not None
-                and interaction.link_percentage > 1.0
-            ):
-                unlink_particles([particle, near_particle])
-
-    @staticmethod
-    def _apply_collisions(
-        particle: Particle, interactions: Mapping[Particle, ParticleInteraction]
-    ) -> None:
-        for near_particle in interactions:
-            particle.compute_collision(near_particle)
-
     def _apply_forces(
         self, particle: Particle, interactions: Mapping[Particle, ParticleInteraction]
     ) -> None:
@@ -330,8 +316,8 @@ class SimulationState(SimulationData):
             self._toggle_pause = False
         if not self.paused:
             transformers: List[InteractionTransformer] = [
-                self._apply_collisions,
-                self._remove_broken_links,
+                apply_collisions,
+                remove_broken_links,
                 self._apply_forces,
             ]
             transformers.extend(additional_transformers)
