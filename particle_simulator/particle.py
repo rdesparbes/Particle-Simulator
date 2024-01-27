@@ -131,13 +131,10 @@ class Particle:
         return max_force
 
     def _are_compatible(self, p: Self) -> bool:
-        return (
-            p != self
-            and (
-                self.props.linked_group_particles
-                or self._is_linked_to(p)
-                or not self._is_in_same_group(p)
-            )
+        return p != self and (
+            self.props.linked_group_particles
+            or self._is_linked_to(p)
+            or not self._is_in_same_group(p)
         )
 
     def compute_interaction(
@@ -291,7 +288,7 @@ class Particle:
         ) / total_mass
 
     def compute_collision(self, p: Self) -> None:
-        if not self.props.collisions:
+        if not self.props.collisions or not p.props.collisions:
             return
         direction: npt.NDArray[np.float_] = np.subtract([p.x, p.y], [self.x, self.y])
         distance = float(np.linalg.norm(direction))
@@ -306,9 +303,10 @@ class Particle:
             distance = float(np.linalg.norm(direction))
         direction /= distance
         translate_vector = overlap * direction
-        dx, dy = self._compute_collision_delta_pos(-translate_vector, p.props.mass)
-        self.x += dx
-        self.y += dy
+        if not self.props.locked:
+            dx, dy = self._compute_collision_delta_pos(-translate_vector, p.props.mass)
+            self.x += dx
+            self.y += dy
         if not p.props.locked:
             p_dx, p_dy = p._compute_collision_delta_pos(
                 translate_vector, self.props.mass
