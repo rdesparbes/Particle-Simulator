@@ -14,10 +14,18 @@ dev = [
     "types-Pillow",
     "pytest-cov",
     "black",
+    "pylint",
 ]
 
 [tool.setuptools]
 packages = ["particle_simulator"]
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = """
+    missing-function-docstring,
+    missing-module-docstring,
+    missing-class-docstring,
+"""
 
 [tool.mypy]
 disallow_incomplete_defs = true
