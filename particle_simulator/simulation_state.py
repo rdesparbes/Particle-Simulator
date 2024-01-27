@@ -11,6 +11,7 @@ from typing import (
     Callable,
     NamedTuple,
     Deque,
+    Mapping,
 )
 
 import numpy as np
@@ -302,17 +303,20 @@ class SimulationState(SimulationData):
             self._update_interactions(interactions, particle, near_particles)
         return interactions
 
-    def _compute_links(self, interactions) -> List[Link]:
+    def _compute_links(
+        self, interactions: Mapping[Particle, Mapping[Particle, ParticleInteraction]]
+    ) -> List[Link]:
         links = []
         for particle, near_particles in interactions.items():
             for near_particle, interaction in near_particles.items():
-                if interaction.link_percentage is not None:
-                    if interaction.link_percentage > 1.0:
-                        unlink_particles([particle, near_particle])
-                    elif self.stress_visualization:
-                        links.append(
-                            Link(particle, near_particle, interaction.link_percentage)
-                        )
+                if interaction.link_percentage is None:
+                    continue
+                if interaction.link_percentage > 1.0:
+                    unlink_particles([particle, near_particle])
+                elif self.stress_visualization:
+                    links.append(
+                        Link(particle, near_particle, interaction.link_percentage)
+                    )
         return links
 
     def simulate_step(self) -> List[Link]:
