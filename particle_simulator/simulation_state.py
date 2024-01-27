@@ -12,6 +12,7 @@ from typing import (
     NamedTuple,
     Deque,
     Mapping,
+    Iterator,
 )
 
 import numpy as np
@@ -303,21 +304,37 @@ class SimulationState(SimulationData):
             self._update_interactions(interactions, particle, near_particles)
         return interactions
 
+    @staticmethod
+    def _iter_interactions(
+        interactions: Mapping[Particle, Mapping[Particle, ParticleInteraction]]
+    ) -> Iterator[Tuple[Particle, Particle, ParticleInteraction]]:
+        for particle, near_particles in interactions.items():
+            for near_particle, interaction in near_particles.items():
+                yield particle, near_particle, interaction
+
+    def _remove_broken_links(
+        self, interactions: Mapping[Particle, Mapping[Particle, ParticleInteraction]]
+    ) -> None:
+        for particle, near_particle, interaction in self._iter_interactions(
+            interactions
+        ):
+            if (
+                interaction.link_percentage is not None
+                and interaction.link_percentage > 1.0
+            ):
+                unlink_particles([particle, near_particle])
+
     def _compute_links(
         self, interactions: Mapping[Particle, Mapping[Particle, ParticleInteraction]]
     ) -> List[Link]:
-        links = []
-        for particle, near_particles in interactions.items():
-            for near_particle, interaction in near_particles.items():
-                if interaction.link_percentage is None:
-                    continue
-                if interaction.link_percentage > 1.0:
-                    unlink_particles([particle, near_particle])
-                elif self.stress_visualization:
-                    links.append(
-                        Link(particle, near_particle, interaction.link_percentage)
-                    )
-        return links
+        return [
+            Link(particle, near_particle, interaction.link_percentage)
+            for particle, near_particle, interaction in self._iter_interactions(
+                interactions
+            )
+            if interaction.link_percentage is not None
+            and interaction.link_percentage <= 1.0
+        ]
 
     def simulate_step(self) -> List[Link]:
         if self._toggle_pause:
@@ -325,9 +342,9 @@ class SimulationState(SimulationData):
             if not self.paused:
                 self.selection = []
             self._toggle_pause = False
-        if self.paused:
-            links: List[Link] = []
-        else:
+
+        links: List[Link] = []
+        if not self.paused:
             interactions = self._compute_interactions()
             forces: Dict[Particle, npt.NDArray[np.float_]] = {
                 particle: sum(
@@ -336,7 +353,9 @@ class SimulationState(SimulationData):
                 )
                 for particle, interactions_dict in interactions.items()
             }
-            links = self._compute_links(interactions)
+            self._remove_broken_links(interactions)
+            if self.stress_visualization:
+                links = self._compute_links(interactions)
             for particle, force in forces.items():
                 self._apply_force(particle, force)
 
