@@ -8,8 +8,6 @@ from typing import (
     Optional,
     Sequence,
     Callable,
-    Iterable,
-    Iterator,
 )
 
 import numpy as np
@@ -100,9 +98,6 @@ class Particle:
     # Non-serializable fields:
     link_lengths: Dict[Self, Optional[float]] = field(default_factory=dict)
     mouse: bool = False
-    _collisions: Dict[Self, npt.NDArray[np.float_]] = field(
-        default_factory=dict, init=False, repr=False
-    )
 
     def _compute_default_force(
         self,
@@ -143,10 +138,9 @@ class Particle:
                 or self._is_linked_to(p)
                 or not self._is_in_same_group(p)
             )
-            and p not in self._collisions
         )
 
-    def _compute_interaction(
+    def compute_interaction(
         self, p: Self, compute_magnitude_strategy: ComputeMagnitudeStrategy
     ) -> Optional[ParticleInteraction]:
         if not self._are_compatible(p):
@@ -169,20 +163,6 @@ class Particle:
                 link_percentage = self._compute_link_percentage(magnitude, max_force)
             force = direction * magnitude
         return ParticleInteraction(force, link_percentage)
-
-    def iter_interactions(
-        self,
-        near_particles: Iterable[Self],
-        compute_magnitude_strategy: ComputeMagnitudeStrategy = default_compute_magnitude_strategy,
-    ) -> Iterator[Tuple[Self, ParticleInteraction]]:
-        if self.props.locked:
-            return
-        for near_particle in near_particles:
-            interaction = self._compute_interaction(
-                near_particle, compute_magnitude_strategy
-            )
-            if interaction is not None:
-                yield near_particle, interaction
 
     def distance(self, x: float, y: float) -> float:
         return math.dist((x, y), (self.x, self.y))

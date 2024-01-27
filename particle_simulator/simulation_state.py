@@ -1,4 +1,4 @@
-from collections import deque
+from collections import deque, defaultdict
 from dataclasses import dataclass, field
 from typing import (
     Tuple,
@@ -222,21 +222,33 @@ class SimulationState(SimulationData):
         self.mx, self.my = new_mouse_pos
 
     def _compute_force(
-        self, particle: Particle, near_particles: Iterable[Particle], links: List[Link]
-    ) -> npt.NDArray[np.float_]:
-        force = np.zeros(2)
+        self,
+        collisions: Dict[Particle, Dict[Particle, npt.NDArray]],
+        particle: Particle,
+        near_particles: Iterable[Particle],
+        links: List[Link],
+    ) -> None:
+        """
+        :param collisions: A dictionary mapping each particle to the particles that
+            influence it (force-wise).
+        """
         if self.calculate_radii_diff:
             compute_magnitude_strategy: ComputeMagnitudeStrategy = (
                 radii_compute_magnitude_strategy
             )
         else:
             compute_magnitude_strategy = default_compute_magnitude_strategy
-        for near_particle, interaction in particle.iter_interactions(
-            near_particles, compute_magnitude_strategy
-        ):
-            force += interaction.force
+        for near_particle in near_particles:
+            if particle.props.locked or near_particle in collisions[particle]:
+                continue
+            interaction = particle.compute_interaction(
+                near_particle, compute_magnitude_strategy
+            )
+            if interaction is None:
+                continue
             particle.compute_collision(near_particle)
-            near_particle._collisions[particle] = -interaction.force
+            collisions[particle][near_particle] = interaction.force
+            collisions[near_particle][particle] = -interaction.force
             if interaction.link_percentage is not None:
                 if interaction.link_percentage > 1.0:
                     unlink_particles([particle, near_particle])
@@ -244,10 +256,6 @@ class SimulationState(SimulationData):
                     links.append(
                         Link(particle, near_particle, interaction.link_percentage)
                     )
-
-        force += np.sum(list(particle._collisions.values()), axis=0)
-        particle._collisions = {}
-        return force
 
     def _apply_force(self, particle: Particle, force: npt.NDArray[np.float_]) -> None:
         if particle.mouse or particle.props.locked:
@@ -280,7 +288,7 @@ class SimulationState(SimulationData):
 
     def _compute_forces_and_links(
         self,
-    ) -> Tuple[Dict[Particle, Optional[npt.NDArray[np.float_]]], List[Link]]:
+    ) -> Tuple[Dict[Particle, npt.NDArray[np.float_]], List[Link]]:
         grid: Optional[Grid] = None
         if self.use_grid:
             grid = Grid(
@@ -291,7 +299,7 @@ class SimulationState(SimulationData):
             )
             grid.extend(self.particles)
         links: List[Link] = []
-        forces: Dict[Particle, Optional[npt.NDArray[np.float_]]] = {}
+        collisions: Dict[Particle, Dict[Particle, npt.NDArray]] = defaultdict(dict)
         for particle in self.particles:
             if not particle.interacts:
                 near_particles: Iterable[Particle] = []
@@ -301,7 +309,11 @@ class SimulationState(SimulationData):
                 near_particles = grid.return_particles(particle)
             else:
                 near_particles = self.particles
-            forces[particle] = self._compute_force(particle, near_particles, links)
+            self._compute_force(collisions, particle, near_particles, links)
+        forces: Dict[Particle, npt.NDArray[np.float_]] = {
+            particle: sum(forces_dict.values(), start=np.zeros(2))
+            for particle, forces_dict in collisions.items()
+        }
         return forces, links
 
     def simulate_step(self) -> List[Link]:
