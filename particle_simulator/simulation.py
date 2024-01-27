@@ -7,6 +7,7 @@ from typing import (
     Tuple,
     Iterable,
     Callable,
+    List,
 )
 
 import numpy as np
@@ -17,10 +18,11 @@ from .conversion import builders_to_particles, particles_to_builders
 from .error import Error
 from .geometry import Circle
 from .gui import GUI
+from .interaction_transformer import compute_links, InteractionTransformer, Link
 from .painter import paint_image
 from .particle import Particle
 from .particle_factory import ParticleFactory
-from .simulation_state import SimulationState, Link
+from .simulation_state import SimulationState
 
 
 def _no_event(action: Callable[[], None]) -> Callable[[tk.Event], None]:
@@ -268,7 +270,11 @@ class Simulation:
     def simulate(self) -> None:
         while self.state.running:
             self.state.update_mouse_pos(self.gui.get_mouse_pos())
-            links = self.state.simulate_step()
+            links: List[Link] = []
+            transformers: List[InteractionTransformer] = []
+            if self.state.stress_visualization:
+                transformers.append(partial(compute_links, links=links))
+            self.state.simulate_step(transformers)
             self._update_timings(new_time=time.time())
             image = self._paint_image(links)
             self.gui.update(image, self.fps)

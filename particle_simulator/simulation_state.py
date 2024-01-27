@@ -1,6 +1,5 @@
 from collections import deque, defaultdict
 from dataclasses import dataclass, field
-from functools import partial
 from typing import (
     Tuple,
     List,
@@ -10,7 +9,6 @@ from typing import (
     Iterable,
     Optional,
     Callable,
-    NamedTuple,
     Deque,
     Mapping,
 )
@@ -22,6 +20,7 @@ from particle_simulator.conversion import builders_to_particles, particles_to_bu
 from particle_simulator.error import Error
 from particle_simulator.geometry import Rectangle
 from particle_simulator.grid import Grid
+from particle_simulator.interaction_transformer import InteractionTransformer
 from particle_simulator.particle import (
     Particle,
     link_particles,
@@ -35,17 +34,6 @@ from particle_simulator.particle_interaction import ParticleInteraction
 from particle_simulator.simulation_data import SimulationData
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
-
-
-class Link(NamedTuple):
-    particle_a: Particle
-    particle_b: Particle
-    percentage: float
-
-
-InteractionTransformer = Callable[
-    [Particle, Mapping[Particle, ParticleInteraction]], None
-]
 
 
 @dataclass(kw_only=True)
@@ -211,7 +199,7 @@ class SimulationState(SimulationData):
     def _is_out_of_bounds(self, rectangle: Rectangle) -> bool:
         return self.void_edges and self._rectangle.isdisjoint(rectangle)
 
-    def _compute_delta_velocity(
+    def _compute_acceleration(
         self,
         particle: Particle,
         force: npt.NDArray[np.float_],
@@ -311,19 +299,6 @@ class SimulationState(SimulationData):
                 unlink_particles([particle, near_particle])
 
     @staticmethod
-    def _compute_links(
-        particle: Particle,
-        interactions: Mapping[Particle, ParticleInteraction],
-        links: List[Link],
-    ) -> None:
-        for near_particle, interaction in interactions.items():
-            if (
-                interaction.link_percentage is not None
-                and interaction.link_percentage <= 1.0
-            ):
-                links.append(Link(particle, near_particle, interaction.link_percentage))
-
-    @staticmethod
     def _apply_collisions(
         particle: Particle, interactions: Mapping[Particle, ParticleInteraction]
     ) -> None:
@@ -339,27 +314,27 @@ class SimulationState(SimulationData):
             (interaction.force for interaction in interactions.values()),
             start=np.zeros(2),
         )
-        particle.velocity += self._compute_delta_velocity(particle, force)
+        particle.velocity += self._compute_acceleration(particle, force)
         particle.velocity *= self.air_res_calc
         dx, dy = particle.velocity * self.speed
         particle.x += dx
         particle.y += dy
 
-    def simulate_step(self) -> List[Link]:
+    def simulate_step(
+        self, additional_transformers: Iterable[InteractionTransformer] = ()
+    ) -> None:
         if self._toggle_pause:
             self.paused = not self.paused
             if not self.paused:
                 self.selection = []
             self._toggle_pause = False
-        links: List[Link] = []
         if not self.paused:
             transformers: List[InteractionTransformer] = [
                 self._apply_collisions,
                 self._remove_broken_links,
                 self._apply_forces,
             ]
-            if self.stress_visualization:
-                transformers.append(partial(self._compute_links, links=links))
+            transformers.extend(additional_transformers)
             inter_dict = self._compute_interactions()
             for transformer in transformers:
                 for particle, interactions in inter_dict.items():
@@ -368,4 +343,3 @@ class SimulationState(SimulationData):
             self._update(particle)
             if self._is_out_of_bounds(particle.rectangle):
                 self.remove_particle(particle)
-        return links

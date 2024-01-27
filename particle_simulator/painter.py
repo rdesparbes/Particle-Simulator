@@ -4,8 +4,11 @@ import cv2
 import numpy as np
 import numpy.typing as npt
 
+from particle_simulator.interaction_transformer import Link
 from particle_simulator.particle import Particle
-from particle_simulator.simulation_state import SimulationState, Link
+from particle_simulator.simulation_state import SimulationState
+
+MAX_COLOR = 235
 
 
 def _draw_line(
@@ -35,15 +38,15 @@ def paint_image(
         if link_colors is not None:
             for p1, p2, percent in link_colors:
                 color = (
-                    max(int(255 * percent), 235),
-                    int(235 * (1 - percent)),
-                    int(235 * (1 - percent)),
+                    max(MAX_COLOR, int(255 * percent)),
+                    int(MAX_COLOR * (1.0 - percent)),
+                    int(MAX_COLOR * (1.0 - percent)),
                 )
                 _draw_line(image, p1, p2, color)
         else:
             for p1 in state.particles:
                 for p2 in p1.link_lengths:
-                    _draw_line(image, p1, p2, (235, 235, 235))
+                    _draw_line(image, p1, p2, (MAX_COLOR, MAX_COLOR, MAX_COLOR))
     for particle in state.particles:
         cv2.circle(
             image,
