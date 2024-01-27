@@ -6,9 +6,6 @@ from typing import Optional, Tuple, Union
 
 from particle_simulator.color import color_to_hex
 
-_CANVAS_X = 0  # The X coordinate of the top-left corner of the canvas
-_CANVAS_Y = 30  # The Y coordinate of the top-left corner of the canvas
-
 
 class GUIWidgets:
     def __init__(self, width: int, height: int, title: str) -> None:
@@ -17,22 +14,32 @@ class GUIWidgets:
         self.tk = tk.Tk()
         self.tk.title(title)
         self.tk.resizable(False, False)
-        self._gui_canvas = tk.Canvas(self.tk, width=width + 200, height=height + 30)
-        self._gui_canvas.pack()
-        self.canvas = tk.Canvas(self.tk, width=width, height=height)
-        self.canvas.place(x=_CANVAS_X, y=_CANVAS_Y)
 
-        self._gui_canvas.create_rectangle(0, 0, width, 30, fill="#1f3333")
-        self._gui_canvas.create_line(80, 0, 80, 30, fill="grey30")
+        # layout sidebar-GUI
+        self._tab_control = ttk.Notebook(self.tk, width=200)
+        self._sim_tab = ttk.Frame(self._tab_control, relief="flat")
+        self._tab_control.add(self._sim_tab, text="Sim-Settings")
+        self._particle_tab = ttk.Frame(self._tab_control, relief="flat")
+        self._tab_control.add(self._particle_tab, text="Particle-Settings")
+        self._tab_control.pack(side="right", fill="both", expand=True)
+
+        self._bar_canvas = tk.Canvas(
+            self.tk, width=width, height=30, background="#1f3333"
+        )
+        self._bar_canvas.create_line(80, 0, 80, 30, fill="grey30")
+        self._bar_canvas.pack(side="top", fill="x")
+
+        self.canvas = tk.Canvas(self.tk, width=width, height=height)
+        self.canvas.pack(side="top")
 
         self._play_photo = tk.PhotoImage(
-            file=os.path.join(self._path, "Assets/play.gif"), master=self.tk
+            file=os.path.join(self._path, "Assets/play.gif"), master=self._bar_canvas
         ).subsample(8, 8)
         self._pause_photo = tk.PhotoImage(
-            file=os.path.join(self._path, "Assets/pause.gif"), master=self.tk
+            file=os.path.join(self._path, "Assets/pause.gif"), master=self._bar_canvas
         ).subsample(7, 7)
         self.pause_button = tk.Button(
-            self._gui_canvas,
+            self._bar_canvas,
             image=self._pause_photo,
             cursor="hand2",
             border="0",
@@ -43,10 +50,10 @@ class GUIWidgets:
 
         x = 125
         self._select_img = tk.PhotoImage(
-            file=os.path.join(self._path, "Assets/select.gif"), master=self.tk
+            file=os.path.join(self._path, "Assets/select.gif"), master=self._bar_canvas
         ).subsample(57, 57)
         self.select_btn = tk.Button(
-            self.tk,
+            self._bar_canvas,
             image=self._select_img,
             cursor="hand2",
             relief=tk.FLAT,
@@ -55,16 +62,16 @@ class GUIWidgets:
             command=self._set_select_mode,
         )
         self.select_btn.place(x=x, y=16, anchor="center")
-        self._select_rect = self._gui_canvas.create_rectangle(
+        self._select_rect = self._bar_canvas.create_rectangle(
             x - 12, 3, x + 12, 27, outline="blue", state="hidden"  # type: ignore[call-overload]
         )
 
         x = 165
         self._move_img = tk.PhotoImage(
-            file=os.path.join(self._path, "Assets/move.gif"), master=self.tk
+            file=os.path.join(self._path, "Assets/move.gif"), master=self._bar_canvas
         ).subsample(42, 42)
         self.move_btn = tk.Button(
-            self.tk,
+            self._bar_canvas,
             image=self._move_img,
             cursor="hand2",
             relief=tk.FLAT,
@@ -73,16 +80,16 @@ class GUIWidgets:
             command=self._set_move_mode,
         )
         self.move_btn.place(x=x, y=16, anchor="center")
-        self._move_rect = self._gui_canvas.create_rectangle(
+        self._move_rect = self._bar_canvas.create_rectangle(
             x - 12, 3, x + 12, 27, outline="blue"
         )
 
         x = 205
         self._add_img = tk.PhotoImage(
-            file=os.path.join(self._path, "Assets/add.gif"), master=self.tk
+            file=os.path.join(self._path, "Assets/add.gif"), master=self._bar_canvas
         ).subsample(36, 36)
         self.add_btn = tk.Button(
-            self.tk,
+            self._bar_canvas,
             image=self._add_img,
             cursor="hand2",
             relief=tk.FLAT,
@@ -91,12 +98,12 @@ class GUIWidgets:
             command=self._set_add_mode,
         )
         self.add_btn.place(x=x, y=15, anchor="center")
-        self._add_rect = self._gui_canvas.create_rectangle(
+        self._add_rect = self._bar_canvas.create_rectangle(
             x - 13, 3, x + 11, 27, outline="blue", state="hidden"  # type: ignore[call-overload]
         )
 
         self.link_btn = tk.Button(
-            self.tk,
+            self._bar_canvas,
             text="LINK",
             font=("Helvetica", 8, "bold"),
             cursor="hand2",
@@ -108,7 +115,7 @@ class GUIWidgets:
         self.link_btn.place(x=250, y=16, anchor="center")
 
         self.unlink_btn = tk.Button(
-            self.tk,
+            self._bar_canvas,
             text="UNLINK",
             font=("Helvetica", 8, "bold"),
             cursor="hand2",
@@ -120,10 +127,10 @@ class GUIWidgets:
         self.unlink_btn.place(x=300, y=16, anchor="center")
 
         self._save_img = tk.PhotoImage(
-            file=os.path.join(self._path, "Assets/save.gif"), master=self.tk
+            file=os.path.join(self._path, "Assets/save.gif"), master=self._bar_canvas
         ).subsample(28, 28)
         self.save_btn = tk.Button(
-            self.tk,
+            self._bar_canvas,
             image=self._save_img,
             cursor="hand2",
             bg="#1f3333",
@@ -133,10 +140,10 @@ class GUIWidgets:
         self.save_btn.place(x=width - 110, y=16, anchor="center")
 
         self._load_img = tk.PhotoImage(
-            file=os.path.join(self._path, "Assets/load.gif"), master=self.tk
+            file=os.path.join(self._path, "Assets/load.gif"), master=self._bar_canvas
         ).subsample(32, 32)
         self.load_btn = tk.Button(
-            self.tk,
+            self._bar_canvas,
             image=self._load_img,
             cursor="hand2",
             bg="#1f3333",
@@ -146,10 +153,10 @@ class GUIWidgets:
         self.load_btn.place(x=width - 75, y=16, anchor="center")
 
         self._code_img = tk.PhotoImage(
-            file=os.path.join(self._path, "Assets/code.gif"), master=self.tk
+            file=os.path.join(self._path, "Assets/code.gif"), master=self._bar_canvas
         ).subsample(13, 13)
         self.code_btn = tk.Button(
-            self.tk,
+            self._bar_canvas,
             image=self._code_img,
             cursor="hand2",
             relief=tk.FLAT,
@@ -158,25 +165,15 @@ class GUIWidgets:
         )
         self.code_btn.place(x=width - 25, y=16, anchor="center")
 
-        # layout sidebar-GUI
-        self._tab_control = ttk.Notebook(self.tk)
-        self._sim_tab = ttk.Frame(self._tab_control, relief="flat")
-        self._tab_control.add(self._sim_tab, text="Sim-Settings")
-        self._particle_tab = ttk.Frame(
-            self._tab_control, relief="flat", width=200, height=height + 30
-        )
-        self._tab_control.add(self._particle_tab, text="Particle-Settings")
-        self._tab_control.place(x=width, y=0)
-
         # layout self.tab1
-        self._sim_tab_canvas = tk.Canvas(self._sim_tab, width=200, height=height)
-        self._sim_tab_canvas.pack()
+        self._sim_tab_canvas = tk.Canvas(self._sim_tab)
+        self._sim_tab_canvas.pack(expand=True, fill="both")
 
-        tk.Label(self._sim_tab, text="Gravity:", font=("helvetica", 8)).place(
+        tk.Label(self._sim_tab_canvas, text="Gravity:", font=("helvetica", 8)).place(
             x=7, y=20, anchor="nw"
         )
         self.gravity_entry = tk.Spinbox(
-            self._sim_tab,
+            self._sim_tab_canvas,
             width=7,
             from_=0,
             to=1,
@@ -184,11 +181,11 @@ class GUIWidgets:
         )
         self.gravity_entry.place(x=100, y=20)
 
-        tk.Label(self._sim_tab, text="Air Resistance:", font=("helvetica", 8)).place(
-            x=7, y=50, anchor="nw"
-        )
+        tk.Label(
+            self._sim_tab_canvas, text="Air Resistance:", font=("helvetica", 8)
+        ).place(x=7, y=50, anchor="nw")
         self.air_res_entry = tk.Spinbox(
-            self._sim_tab,
+            self._sim_tab_canvas,
             width=7,
             from_=0,
             to=1,
@@ -196,11 +193,11 @@ class GUIWidgets:
         )
         self.air_res_entry.place(x=100, y=50)
 
-        tk.Label(self._sim_tab, text="Ground Friction:", font=("helvetica", 8)).place(
-            x=7, y=80, anchor="nw"
-        )
+        tk.Label(
+            self._sim_tab_canvas, text="Ground Friction:", font=("helvetica", 8)
+        ).place(x=7, y=80, anchor="nw")
         self.friction_entry = tk.Spinbox(
-            self._sim_tab,
+            self._sim_tab_canvas,
             width=7,
             from_=0,
             to=1,
@@ -209,7 +206,7 @@ class GUIWidgets:
         self.friction_entry.place(x=100, y=80)
 
         self.temp_sc = tk.Scale(
-            self._sim_tab,
+            self._sim_tab_canvas,
             from_=0,
             to=5,
             orient=tk.HORIZONTAL,
@@ -222,12 +219,12 @@ class GUIWidgets:
             cursor="hand2",
         )
         self.temp_sc.place(x=100, y=153, anchor="center")
-        tk.Label(self._sim_tab, text="Temperature:", font=("helvetica", 8)).place(
-            x=7, y=110, anchor="nw"
-        )
+        tk.Label(
+            self._sim_tab_canvas, text="Temperature:", font=("helvetica", 8)
+        ).place(x=7, y=110, anchor="nw")
 
         self.speed_sc = tk.Scale(
-            self._sim_tab,
+            self._sim_tab_canvas,
             from_=0,
             to=3,
             orient=tk.HORIZONTAL,
@@ -240,13 +237,13 @@ class GUIWidgets:
             cursor="hand2",
         )
         self.speed_sc.place(x=100, y=233, anchor="center")
-        tk.Label(self._sim_tab, text="Simulation Speed:", font=("helvetica", 8)).place(
-            x=7, y=190, anchor="nw"
-        )
+        tk.Label(
+            self._sim_tab_canvas, text="Simulation Speed:", font=("helvetica", 8)
+        ).place(x=7, y=190, anchor="nw")
 
         self.show_fps = tk.BooleanVar(self.tk)
         self.fps_chk = tk.Checkbutton(
-            self._sim_tab,
+            self._sim_tab_canvas,
             text="Display FPS",
             font=("helvetica", 8),
             variable=self.show_fps,
@@ -255,7 +252,7 @@ class GUIWidgets:
 
         self.show_num = tk.BooleanVar(self.tk)
         self.num_chk = tk.Checkbutton(
-            self._sim_tab,
+            self._sim_tab_canvas,
             text="Display # Particles",
             font=("helvetica", 8),
             variable=self.show_num,
@@ -264,7 +261,7 @@ class GUIWidgets:
 
         self.show_links = tk.BooleanVar(self.tk)
         self.links_chk = tk.Checkbutton(
-            self._sim_tab,
+            self._sim_tab_canvas,
             text="Display links",
             font=("helvetica", 8),
             variable=self.show_links,
@@ -278,7 +275,7 @@ class GUIWidgets:
 
         self.top_bool = tk.BooleanVar(self.tk)
         self.top_chk = tk.Checkbutton(
-            self._sim_tab,
+            self._sim_tab_canvas,
             text="top",
             font=("helvetica", 8),
             variable=self.top_bool,
@@ -287,7 +284,7 @@ class GUIWidgets:
 
         self.bottom_bool = tk.BooleanVar(self.tk)
         self.bottom_chk = tk.Checkbutton(
-            self._sim_tab,
+            self._sim_tab_canvas,
             text="bottom",
             font=("helvetica", 8),
             variable=self.bottom_bool,
@@ -296,7 +293,7 @@ class GUIWidgets:
 
         self.left_bool = tk.BooleanVar(self.tk)
         self.left_chk = tk.Checkbutton(
-            self._sim_tab,
+            self._sim_tab_canvas,
             text="left",
             font=("helvetica", 8),
             variable=self.left_bool,
@@ -305,7 +302,7 @@ class GUIWidgets:
 
         self.right_bool = tk.BooleanVar(self.tk)
         self.right_chk = tk.Checkbutton(
-            self._sim_tab,
+            self._sim_tab_canvas,
             text="right",
             font=("helvetica", 8),
             variable=self.right_bool,
@@ -319,21 +316,21 @@ class GUIWidgets:
 
         self.grid_bool = tk.BooleanVar(self.tk, True)
         self.grid_chk = tk.Checkbutton(
-            self._sim_tab,
+            self._sim_tab_canvas,
             text="Use Grid",
             font=("helvetica", 8),
             variable=self.grid_bool,
         )
         self.grid_chk.place(x=10, y=425, anchor="nw")
 
-        tk.Label(self._sim_tab, text="Grid-Res:", font=("helvetica", 8)).place(
+        tk.Label(self._sim_tab_canvas, text="Grid-Res:", font=("helvetica", 8)).place(
             x=7, y=455, anchor="nw"
         )
-        tk.Label(self._sim_tab, text="X:", font=("helvetica", 8)).place(
+        tk.Label(self._sim_tab_canvas, text="X:", font=("helvetica", 8)).place(
             x=60, y=455, anchor="nw"
         )
         self.grid_res_x = tk.Spinbox(
-            self._sim_tab,
+            self._sim_tab_canvas,
             width=7,
             from_=1,
             to=200,
@@ -341,11 +338,11 @@ class GUIWidgets:
         )
         self.grid_res_x.place(x=80, y=455)
 
-        tk.Label(self._sim_tab, text="Y:", font=("helvetica", 8)).place(
+        tk.Label(self._sim_tab_canvas, text="Y:", font=("helvetica", 8)).place(
             x=60, y=480, anchor="nw"
         )
         self.grid_res_y = tk.Spinbox(
-            self._sim_tab,
+            self._sim_tab_canvas,
             width=7,
             from_=1,
             to=200,
@@ -358,11 +355,11 @@ class GUIWidgets:
         )
         self._sim_tab_canvas.create_line(10, 525, 190, 525, fill="grey50")
 
-        tk.Label(self._sim_tab, text="Min Spawn-Delay:", font=("helvetica", 8)).place(
-            x=7, y=533, anchor="nw"
-        )
+        tk.Label(
+            self._sim_tab_canvas, text="Min Spawn-Delay:", font=("helvetica", 8)
+        ).place(x=7, y=533, anchor="nw")
         self.delay_entry = tk.Spinbox(
-            self._sim_tab,
+            self._sim_tab_canvas,
             width=7,
             from_=0,
             to=1,
@@ -372,7 +369,7 @@ class GUIWidgets:
 
         self.calculate_radii_diff_bool = tk.BooleanVar(self.tk, False)
         self.calculate_radii_diff_chk = tk.Checkbutton(
-            self._sim_tab,
+            self._sim_tab_canvas,
             text="Better Radii-Calculation",
             font=("helvetica", 8),
             variable=self.calculate_radii_diff_bool,
@@ -383,7 +380,7 @@ class GUIWidgets:
             file=os.path.join(self._path, "Assets/dots.gif"), master=self.tk
         ).subsample(11, 11)
         self.extra_btn = tk.Button(
-            self._sim_tab,
+            self._sim_tab_canvas,
             image=self._extra_img,
             cursor="hand2",
             bg="#F0F0F0",
@@ -393,13 +390,15 @@ class GUIWidgets:
         self.extra_btn.place(x=7, y=580)
 
         # layout tab2
-        self._particle_tab_canvas = tk.Canvas(self._particle_tab, width=200, height=height)
+        self._particle_tab_canvas = tk.Canvas(self._particle_tab)
         self._particle_tab_canvas.pack()
 
         tk.Label(self._particle_tab, text="Radius:", font=("helvetica", 8)).place(
             x=7, y=20, anchor="nw"
         )
-        self.radius_entry = tk.Spinbox(self._particle_tab, width=7, from_=1, to=300, increment=1)
+        self.radius_entry = tk.Spinbox(
+            self._particle_tab, width=7, from_=1, to=300, increment=1
+        )
         self._set_entry(self.radius_entry, "4")
         self.radius_entry.place(x=100, y=20)
 
@@ -407,7 +406,9 @@ class GUIWidgets:
             x=7, y=50, anchor="nw"
         )
         self.color_var = tk.StringVar(self.tk, "random")
-        self._color_entry = tk.Entry(self._particle_tab, width=8, textvariable=self.color_var)
+        self._color_entry = tk.Entry(
+            self._particle_tab, width=8, textvariable=self.color_var
+        )
         self._color_entry.place(x=100, y=50)
         self.color_var.trace("w", self._change_color_entry)
 
@@ -464,7 +465,10 @@ class GUIWidgets:
 
         self.locked_bool = tk.BooleanVar(self.tk, False)
         self.locked_chk = tk.Checkbutton(
-            self._particle_tab, text="Locked", font=("helvetica", 8), variable=self.locked_bool
+            self._particle_tab,
+            text="Locked",
+            font=("helvetica", 8),
+            variable=self.locked_bool,
         )
         self.locked_chk.place(x=7, y=190, anchor="nw")
 
@@ -477,18 +481,18 @@ class GUIWidgets:
         )
         self.do_collision_chk.place(x=7, y=210, anchor="nw")
 
-        tk.Label(self._particle_tab, text="Attraction-radius:", font=("helvetica", 8)).place(
-            x=7, y=250, anchor="nw"
-        )
+        tk.Label(
+            self._particle_tab, text="Attraction-radius:", font=("helvetica", 8)
+        ).place(x=7, y=250, anchor="nw")
         self.attr_r_entry = tk.Spinbox(
             self._particle_tab, width=7, from_=-1, to=500, increment=1
         )
         self._set_entry(self.attr_r_entry, "-1")
         self.attr_r_entry.place(x=100, y=250)
 
-        tk.Label(self._particle_tab, text="Attr-strength:", font=("helvetica", 8)).place(
-            x=7, y=273, anchor="nw"
-        )
+        tk.Label(
+            self._particle_tab, text="Attr-strength:", font=("helvetica", 8)
+        ).place(x=7, y=273, anchor="nw")
         self.attr_strength_entry = tk.Spinbox(
             self._particle_tab, width=7, from_=0, to=50, increment=0.1
         )
@@ -504,18 +508,18 @@ class GUIWidgets:
         )
         self.gravity_mode_chk.place(x=7, y=290, anchor="nw")
 
-        tk.Label(self._particle_tab, text="Repulsion-radius:", font=("helvetica", 8)).place(
-            x=7, y=313, anchor="nw"
-        )
+        tk.Label(
+            self._particle_tab, text="Repulsion-radius:", font=("helvetica", 8)
+        ).place(x=7, y=313, anchor="nw")
         self.repel_r_entry = tk.Spinbox(
             self._particle_tab, width=7, from_=0, to=500, increment=1
         )
         self._set_entry(self.repel_r_entry, "10")
         self.repel_r_entry.place(x=100, y=323)
 
-        tk.Label(self._particle_tab, text="Repel-strength:", font=("helvetica", 8)).place(
-            x=7, y=336, anchor="nw"
-        )
+        tk.Label(
+            self._particle_tab, text="Repel-strength:", font=("helvetica", 8)
+        ).place(x=7, y=336, anchor="nw")
         self.repel_strength_entry = tk.Spinbox(
             self._particle_tab, width=7, from_=0, to=50, increment=0.1
         )
@@ -531,9 +535,9 @@ class GUIWidgets:
         )
         self.linked_group_chk.place(x=7, y=376, anchor="nw")
 
-        tk.Label(self._particle_tab, text="Link-breaking-force:", font=("helvetica", 8)).place(
-            x=7, y=400, anchor="nw"
-        )
+        tk.Label(
+            self._particle_tab, text="Link-breaking-force:", font=("helvetica", 8)
+        ).place(x=7, y=400, anchor="nw")
         tk.Label(self._particle_tab, text="Attr:", font=("helvetica", 8)).place(
             x=7, y=420, anchor="nw"
         )
@@ -551,9 +555,9 @@ class GUIWidgets:
         self._set_entry(self.link_repel_break_entry, "-1")
         self.link_repel_break_entry.place(x=140, y=420)
 
-        tk.Label(self._particle_tab, text="Particle-group:", font=("helvetica", 8)).place(
-            x=7, y=450, anchor="nw"
-        )
+        tk.Label(
+            self._particle_tab, text="Particle-group:", font=("helvetica", 8)
+        ).place(x=7, y=450, anchor="nw")
         self.groups_entry = ttk.Combobox(self._particle_tab, width=10)
         self.groups_entry.place(x=10, y=470, anchor="nw")
 
@@ -604,25 +608,27 @@ class GUIWidgets:
             bg="light green",
         )
         self.set_selected_btn.place(x=15, y=height - 30)
-        self.set_all_btn = tk.Button(self._particle_tab, text="Set All", bg="light blue")
+        self.set_all_btn = tk.Button(
+            self._particle_tab, text="Set All", bg="light blue"
+        )
         self.set_all_btn.place(x=95, y=height - 30)
 
     def _reset_mode(self) -> None:
-        self._gui_canvas.itemconfig(self._select_rect, state="hidden")
-        self._gui_canvas.itemconfig(self._move_rect, state="hidden")
-        self._gui_canvas.itemconfig(self._add_rect, state="hidden")
+        self._bar_canvas.itemconfig(self._select_rect, state="hidden")
+        self._bar_canvas.itemconfig(self._move_rect, state="hidden")
+        self._bar_canvas.itemconfig(self._add_rect, state="hidden")
 
     def _set_select_mode(self) -> None:
         self._reset_mode()
-        self._gui_canvas.itemconfig(self._select_rect, state="normal")
+        self._bar_canvas.itemconfig(self._select_rect, state="normal")
 
     def _set_move_mode(self) -> None:
         self._reset_mode()
-        self._gui_canvas.itemconfig(self._move_rect, state="normal")
+        self._bar_canvas.itemconfig(self._move_rect, state="normal")
 
     def _set_add_mode(self) -> None:
         self._reset_mode()
-        self._gui_canvas.itemconfig(self._add_rect, state="normal")
+        self._bar_canvas.itemconfig(self._add_rect, state="normal")
 
     @staticmethod
     def _set_entry(entry: Union[tk.Entry, tk.Spinbox], text: str) -> None:
@@ -655,6 +661,6 @@ class GUIWidgets:
 
     def get_mouse_pos(self) -> Tuple[int, int]:
         return (
-            self.tk.winfo_pointerx() - self.tk.winfo_rootx() - _CANVAS_X,
-            self.tk.winfo_pointery() - self.tk.winfo_rooty() - _CANVAS_Y,
+            self.tk.winfo_pointerx() - self.canvas.winfo_rootx(),
+            self.tk.winfo_pointery() - self.canvas.winfo_rooty(),
         )
