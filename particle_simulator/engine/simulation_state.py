@@ -16,16 +16,19 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
-from particle_simulator.conversion import builders_to_particles, particles_to_builders
-from particle_simulator.error import Error
-from particle_simulator.geometry import Rectangle
-from particle_simulator.grid import Grid
-from particle_simulator.interaction_transformer import (
+from particle_simulator.engine.conversion import (
+    builders_to_particles,
+    particles_to_builders,
+)
+from particle_simulator.engine.error import Error
+from particle_simulator.engine.geometry import Rectangle
+from particle_simulator.engine.grid import Grid
+from particle_simulator.engine.interaction_transformer import (
     InteractionTransformer,
     apply_collisions,
     remove_broken_links,
 )
-from particle_simulator.particle import (
+from particle_simulator.engine.particle import (
     Particle,
     link_particles,
     unlink_particles,
@@ -33,9 +36,9 @@ from particle_simulator.particle import (
     radii_compute_magnitude_strategy,
     default_compute_magnitude_strategy,
 )
-from particle_simulator.particle_factory import ParticleBuilder
-from particle_simulator.particle_interaction import ParticleInteraction
-from particle_simulator.simulation_data import SimulationData
+from particle_simulator.engine.particle_factory import ParticleBuilder
+from particle_simulator.engine.particle_interaction import ParticleInteraction
+from particle_simulator.engine.simulation_data import SimulationData
 
 Mode = Literal["SELECT", "MOVE", "ADD"]
 

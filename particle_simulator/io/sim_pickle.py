@@ -13,10 +13,10 @@ import numpy as np
 
 from particle_simulator.color import generate_random
 from particle_simulator.controller_state import ControllerState
-from particle_simulator.particle_factory import ParticleFactory, ParticleBuilder
-from particle_simulator.particle_properties import ParticleProperties
+from particle_simulator.engine.particle_factory import ParticleFactory, ParticleBuilder
+from particle_simulator.engine.particle_properties import ParticleProperties
 from particle_simulator.sim_gui_settings import SimGUISettings
-from particle_simulator.simulation_data import SimulationData
+from particle_simulator.engine.simulation_data import SimulationData
 
 ParticlesPickle = List[Dict[str, Any]]
 PickleSettings = Dict[str, Tuple[Any]]

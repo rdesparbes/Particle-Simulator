@@ -2,10 +2,10 @@ from typing import List, Dict
 
 import pytest
 
-from particle_simulator.gui import GUI
-from particle_simulator.particle import Particle
-from particle_simulator.particle_properties import ParticleProperties
-from particle_simulator.simulation_state import SimulationState
+from particle_simulator.gui.gui import GUI
+from particle_simulator.engine.particle import Particle
+from particle_simulator.engine.particle_properties import ParticleProperties
+from particle_simulator.engine.simulation_state import SimulationState
 
 
 def test_gui_can_display_sorted_groups_of_sim_state() -> None:

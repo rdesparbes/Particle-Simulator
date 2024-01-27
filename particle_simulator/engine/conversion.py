@@ -3,8 +3,8 @@ from typing import Sequence, List
 
 import numpy as np
 
-from particle_simulator.particle import Particle
-from particle_simulator.particle_factory import ParticleBuilder
+from particle_simulator.engine.particle import Particle
+from particle_simulator.engine.particle_factory import ParticleBuilder
 
 
 def builders_to_particles(builders: Sequence[ParticleBuilder]) -> List[Particle]:

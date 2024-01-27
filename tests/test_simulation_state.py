@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from particle_simulator.particle import Particle
-from particle_simulator.simulation_state import SimulationState
+from particle_simulator.engine.particle import Particle
+from particle_simulator.engine.simulation_state import SimulationState
 
 
 @pytest.fixture(name="sim_state")

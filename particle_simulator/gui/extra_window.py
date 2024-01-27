@@ -6,9 +6,9 @@ from typing import Optional
 
 import numpy as np
 
-from .color import color_to_hex
-from .error import Error
-from .simulation_state import SimulationState
+from particle_simulator.color import color_to_hex
+from particle_simulator.engine.error import Error
+from particle_simulator.engine.simulation_state import SimulationState
 
 
 class ExtraWindow:

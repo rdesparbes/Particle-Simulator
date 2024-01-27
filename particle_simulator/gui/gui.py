@@ -9,15 +9,15 @@ import numpy.typing as npt
 from PIL import ImageTk, Image
 
 from .code_window import CodeWindow
-from .color import generate_random
+from particle_simulator.color import generate_random
 from .extra_window import ExtraWindow
 from .gui_widgets import GUIWidgets
-from .particle import Particle
-from .particle_factory import ParticleFactory
-from .particle_properties import ParticleProperties
-from .save_manager import SaveManager
-from .sim_gui_settings import SimGUISettings
-from .simulation_state import SimulationState
+from particle_simulator.engine.particle import Particle
+from particle_simulator.engine.particle_factory import ParticleFactory
+from particle_simulator.engine.particle_properties import ParticleProperties
+from particle_simulator.io.save_manager import SaveManager
+from particle_simulator.sim_gui_settings import SimGUISettings
+from particle_simulator.engine.simulation_state import SimulationState
 
 
 class GUI(GUIWidgets):

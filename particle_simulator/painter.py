@@ -4,9 +4,9 @@ import cv2
 import numpy as np
 import numpy.typing as npt
 
-from particle_simulator.interaction_transformer import Link
-from particle_simulator.particle import Particle
-from particle_simulator.simulation_state import SimulationState
+from particle_simulator.engine.interaction_transformer import Link
+from particle_simulator.engine.particle import Particle
+from particle_simulator.engine.simulation_state import SimulationState
 
 MAX_COLOR = 235
 

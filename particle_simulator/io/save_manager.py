@@ -3,8 +3,8 @@ import pickle
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 from typing import Optional
 
-from . import sim_pickle
-from .controller_state import ControllerState
+from particle_simulator.io import sim_pickle
+from particle_simulator.controller_state import ControllerState
 
 
 class SaveManager:

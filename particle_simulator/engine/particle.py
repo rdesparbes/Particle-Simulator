@@ -13,9 +13,9 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
-from particle_simulator.geometry import Circle, Rectangle, rotate_2d
-from particle_simulator.particle_interaction import ParticleInteraction
-from particle_simulator.particle_properties import ParticleProperties
+from particle_simulator.engine.geometry import Circle, Rectangle, rotate_2d
+from particle_simulator.engine.particle_interaction import ParticleInteraction
+from particle_simulator.engine.particle_properties import ParticleProperties
 
 ComputeMagnitudeStrategy = Callable[
     ["Particle", "Particle", float, Optional[float]], float

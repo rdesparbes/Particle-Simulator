@@ -2,7 +2,7 @@ from typing import Iterable, Iterator
 
 import numpy as np
 
-from .particle import Particle
+from particle_simulator.engine.particle import Particle
 
 
 class Grid:

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Tuple, Optional, Dict
 
-from particle_simulator.particle_properties import ParticleProperties
+from particle_simulator.engine.particle_properties import ParticleProperties
 
 
 @dataclass(kw_only=True)

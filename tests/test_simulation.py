@@ -4,8 +4,8 @@ from typing import Iterable, Union, Literal, Tuple
 
 import pytest
 
-from particle_simulator import sim_pickle
-from particle_simulator.sim_pickle import SimPickle, _parse_color
+from particle_simulator.io import sim_pickle
+from particle_simulator.io.sim_pickle import SimPickle, _parse_color
 from particle_simulator.simulation import Simulation
 
 

@@ -14,15 +14,22 @@ import numpy as np
 import numpy.typing as npt
 
 from .controller_state import ControllerState
-from .conversion import builders_to_particles, particles_to_builders
-from .error import Error
-from .geometry import Circle
-from .gui import GUI
-from .interaction_transformer import compute_links, InteractionTransformer, Link
+from particle_simulator.engine.conversion import (
+    builders_to_particles,
+    particles_to_builders,
+)
+from particle_simulator.engine.error import Error
+from particle_simulator.engine.geometry import Circle
+from particle_simulator.gui.gui import GUI
+from particle_simulator.engine.interaction_transformer import (
+    compute_links,
+    InteractionTransformer,
+    Link,
+)
 from .painter import paint_image
-from .particle import Particle
-from .particle_factory import ParticleFactory
-from .simulation_state import SimulationState
+from particle_simulator.engine.particle import Particle
+from particle_simulator.engine.particle_factory import ParticleFactory
+from particle_simulator.engine.simulation_state import SimulationState
 
 
 def _no_event(action: Callable[[], None]) -> Callable[[tk.Event], None]:

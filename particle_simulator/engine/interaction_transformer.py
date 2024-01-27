@@ -1,7 +1,7 @@
 from typing import Callable, Mapping, NamedTuple, List
 
-from particle_simulator.particle import Particle, unlink_particles
-from particle_simulator.particle_interaction import ParticleInteraction
+from particle_simulator.engine.particle import Particle, unlink_particles
+from particle_simulator.engine.particle_interaction import ParticleInteraction
 
 InteractionTransformer = Callable[
     [Particle, Mapping[Particle, ParticleInteraction]], None

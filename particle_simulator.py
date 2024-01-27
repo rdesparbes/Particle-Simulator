@@ -2,9 +2,9 @@ import random
 
 import numpy as np
 
-from particle_simulator.particle_properties import ParticleProperties
+from particle_simulator.engine.particle_properties import ParticleProperties
 from particle_simulator.simulation import Simulation
-from particle_simulator.particle import Particle
+from particle_simulator.engine.particle import Particle
 
 sim_controller = Simulation(
     width=650,
