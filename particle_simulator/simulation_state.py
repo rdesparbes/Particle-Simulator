@@ -244,7 +244,6 @@ class SimulationState(SimulationData):
             )
             if interaction is None:
                 continue
-            particle.compute_collision(near_particle)
             interactions[particle][near_particle] = interaction
             interactions[near_particle][particle] = -interaction
 
@@ -336,6 +335,14 @@ class SimulationState(SimulationData):
             and interaction.link_percentage <= 1.0
         ]
 
+    def _apply_collisions(
+        self, interactions: Mapping[Particle, Mapping[Particle, ParticleInteraction]]
+    ):
+        for particle, near_particle, _interaction in self._iter_interactions(
+            interactions
+        ):
+            particle.compute_collision(near_particle)
+
     def simulate_step(self) -> List[Link]:
         if self._toggle_pause:
             self.paused = not self.paused
@@ -346,6 +353,7 @@ class SimulationState(SimulationData):
         links: List[Link] = []
         if not self.paused:
             interactions = self._compute_interactions()
+            self._apply_collisions(interactions)
             forces: Dict[Particle, npt.NDArray[np.float_]] = {
                 particle: sum(
                     (interaction.force for interaction in interactions_dict.values()),
