@@ -23,7 +23,7 @@ from .simulation_state import SimulationState
 class GUI(GUIWidgets):
     def __init__(self, sim: SimulationState, title: str = "Simulation") -> None:
         super().__init__(sim.width, sim.height, title)
-        self.save_manager = SaveManager(file_location=os.path.dirname(self.path))
+        self.save_manager = SaveManager(file_location=os.path.dirname(self._path))
         self.code_window: Optional[CodeWindow] = None
         self.extra_window: Optional[ExtraWindow] = None
         self.tk.protocol("WM_DELETE_WINDOW", self.destroy)
@@ -59,7 +59,7 @@ class GUI(GUIWidgets):
 
     def _register_sim(self, sim: SimulationState) -> None:
         self.pause_button.configure(
-            image=self.play_photo if sim.paused else self.pause_photo,
+            image=self._play_photo if sim.paused else self._pause_photo,
             command=sim.toggle_paused,
         )
         self.link_btn.configure(command=sim.link_selection)
@@ -153,7 +153,7 @@ class GUI(GUIWidgets):
         self.sim.mouse_mode = "ADD"
 
     def _create_extra_window(self) -> None:
-        self.extra_window = ExtraWindow(self.sim, str(self.path))
+        self.extra_window = ExtraWindow(self.sim, str(self._path))
 
     def _create_code_window(self) -> None:
         self.code_window = CodeWindow()
@@ -320,7 +320,7 @@ class GUI(GUIWidgets):
             messagebox.showerror(error.name, str(error.exception))
         photo = ImageTk.PhotoImage(image=Image.fromarray(image.astype(np.uint8)))
         self.pause_button.config(
-            image=self.play_photo if self.sim.paused else self.pause_photo
+            image=self._play_photo if self.sim.paused else self._pause_photo
         )
 
         self.canvas.delete("all")
