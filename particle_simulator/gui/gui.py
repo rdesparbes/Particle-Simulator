@@ -2,22 +2,22 @@ import bisect
 import os
 import tkinter as tk
 from tkinter import messagebox
-from typing import Sequence, Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Set
 
 import numpy as np
 import numpy.typing as npt
 from PIL import ImageTk, Image
 
-from .code_window import CodeWindow
 from particle_simulator.color import generate_random
-from .extra_window import ExtraWindow
-from .gui_widgets import GUIWidgets
 from particle_simulator.engine.particle import Particle
 from particle_simulator.engine.particle_factory import ParticleFactory
 from particle_simulator.engine.particle_properties import ParticleProperties
+from particle_simulator.engine.simulation_state import SimulationState
 from particle_simulator.io.save_manager import SaveManager
 from particle_simulator.sim_gui_settings import SimGUISettings
-from particle_simulator.engine.simulation_state import SimulationState
+from .code_window import CodeWindow
+from .extra_window import ExtraWindow
+from .gui_widgets import GUIWidgets
 
 
 class GUI(GUIWidgets):
@@ -278,16 +278,21 @@ class GUI(GUIWidgets):
         }
 
     def _copy_from_selected(self) -> None:
-        particle_settings: Dict[str, Any] = {}
-        for i, p in enumerate(self.sim.selection):
+        particle_settings: Optional[Dict[str, Any]] = None
+        for p in self.sim.selection:
             variable_names = self._part_to_dict(p)
-            for gui_attr, part_val in variable_names.items():
+            if particle_settings is None:
+                particle_settings = variable_names
+            to_remove: Set[str] = set()
+            for gui_attr, part_val in particle_settings.items():
                 widget: tk.Widget = getattr(self, gui_attr)
-                if i == 0:
-                    particle_settings[gui_attr] = part_val
+                if variable_names[gui_attr] == part_val:
                     self._set_widget_value(widget, part_val)
-                elif particle_settings[gui_attr] != part_val:
+                else:
                     self._set_widget_default(widget)
+                    to_remove.add(gui_attr)
+            for gui_attr in to_remove:
+                del particle_settings[gui_attr]
 
     def _set_widget_value(self, widget: tk.Widget, value: Any) -> None:
         if isinstance(widget, tk.BooleanVar):
