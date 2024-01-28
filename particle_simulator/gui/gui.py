@@ -254,53 +254,61 @@ class GUI(GUIWidgets):
         self._set_entry(self.velocity_y_entry, str(p.velocity[1]))
         self._set_entry(self.radius_entry, str(p.radius))
 
-    def _copy_from_selected(self) -> None:
-        selection: Sequence[Particle] = self.sim.selection
+    @staticmethod
+    def _part_to_dict(p: Particle) -> Dict[str, Any]:
+        return {
+            "radius_entry": p.radius,
+            "color_var": p.color,
+            "mass_entry": p.props.mass,
+            "velocity_x_entry": p.velocity[0],
+            "velocity_y_entry": p.velocity[1],
+            "bounciness_entry": p.props.bounciness,
+            "do_collision_bool": p.props.collisions,
+            "locked_bool": p.props.locked,
+            "linked_group_bool": p.props.linked_group_particles,
+            "attr_r_entry": p.props.attract_r,
+            "repel_r_entry": p.props.repel_r,
+            "attr_strength_entry": p.props.attraction_strength,
+            "repel_strength_entry": p.props.repulsion_strength,
+            "link_attr_break_entry": p.props.link_attr_breaking_force,
+            "link_repel_break_entry": p.props.link_repel_breaking_force,
+            "groups_entry": p.props.group,
+            "separate_group_bool": p.props.separate_group,
+            "gravity_mode_bool": p.props.gravity_mode,
+        }
 
+    def _copy_from_selected(self) -> None:
         particle_settings: Dict[str, Any] = {}
-        for i, p in enumerate(selection):
-            variable_names: Dict[str, Any] = {
-                "radius_entry": p.radius,
-                "color_var": p.color,
-                "mass_entry": p.props.mass,
-                "velocity_x_entry": p.velocity[0],
-                "velocity_y_entry": p.velocity[1],
-                "bounciness_entry": p.props.bounciness,
-                "do_collision_bool": p.props.collisions,
-                "locked_bool": p.props.locked,
-                "linked_group_bool": p.props.linked_group_particles,
-                "attr_r_entry": p.props.attract_r,
-                "repel_r_entry": p.props.repel_r,
-                "attr_strength_entry": p.props.attraction_strength,
-                "repel_strength_entry": p.props.repulsion_strength,
-                "link_attr_break_entry": p.props.link_attr_breaking_force,
-                "link_repel_break_entry": p.props.link_repel_breaking_force,
-                "groups_entry": p.props.group,
-                "separate_group_bool": p.props.separate_group,
-                "gravity_mode_bool": p.props.gravity_mode,
-            }
+        for i, p in enumerate(self.sim.selection):
+            variable_names = self._part_to_dict(p)
             for gui_attr, part_val in variable_names.items():
+                widget: tk.Widget = getattr(self, gui_attr)
                 if i == 0:
                     particle_settings[gui_attr] = part_val
+                    self._set_widget_value(widget, part_val)
+                elif particle_settings[gui_attr] != part_val:
+                    self._set_widget_default(widget)
 
-                same = particle_settings[gui_attr] == part_val
-                widget: tk.Widget = getattr(self, gui_attr)
-                if isinstance(widget, tk.BooleanVar):
-                    if same:
-                        widget.set(part_val)
-                    else:
-                        widget.set(False)
-                elif isinstance(widget, (tk.Entry, tk.Spinbox)):
-                    widget.delete(0, tk.END)
-                    if same:
-                        widget.insert(0, str(part_val))
-                elif isinstance(widget, tk.StringVar):
-                    if same:
-                        widget.set(str(part_val))
-                    else:
-                        widget.set("random")
-                else:
-                    raise NotImplementedError(f"Unexpected widget: {type(widget)}")
+    def _set_widget_value(self, widget: tk.Widget, value: Any) -> None:
+        if isinstance(widget, tk.BooleanVar):
+            widget.set(value)
+        elif isinstance(widget, (tk.Entry, tk.Spinbox)):
+            widget.delete(0, tk.END)
+            widget.insert(0, str(value))
+        elif isinstance(widget, tk.StringVar):
+            widget.set(str(value))
+        else:
+            raise NotImplementedError(f"Unexpected widget: {type(widget)}")
+
+    def _set_widget_default(self, widget: tk.Widget) -> None:
+        if isinstance(widget, tk.BooleanVar):
+            widget.set(False)
+        elif isinstance(widget, (tk.Entry, tk.Spinbox)):
+            widget.delete(0, tk.END)
+        elif isinstance(widget, tk.StringVar):
+            widget.set("random")
+        else:
+            raise NotImplementedError(f"Unexpected widget: {type(widget)}")
 
     def _update(self) -> None:
         if self.code_window is not None:
