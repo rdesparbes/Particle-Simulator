@@ -142,15 +142,14 @@ class Particle:
     ) -> Optional[ParticleInteraction]:
         if not self._are_compatible(p):
             return None
-        direction = np.subtract([p.x, p.y], [self.x, self.y])
-        distance: float = float(np.linalg.norm(direction))
+        distance: float = self.distance(p.x, p.y)
         if not (p._reaches(distance) or self._reaches(distance)):
             return None
         link_percentage: Optional[float] = None
         if distance == 0.0:
             force = self._compute_default_force(p)
         else:
-            direction = direction / distance
+            direction = np.array([p.x - self.x, p.y - self.y]) / distance
             link_length: Optional[float] = self.link_lengths.get(p)
             magnitude = compute_magnitude_strategy(self, p, distance, link_length)
             if link_length is None:
