@@ -1,13 +1,11 @@
-from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, NamedTuple
 
 import numpy as np
 import numpy.typing as npt
 
 
-@dataclass(slots=True, frozen=True)
-class ParticleInteraction:
-    force: npt.NDArray[np.float_] = field(default_factory=lambda: np.zeros(2))
+class ParticleInteraction(NamedTuple):
+    force: npt.NDArray[np.float_]
     link_percentage: Optional[float] = None
 
     def __neg__(self) -> "ParticleInteraction":
