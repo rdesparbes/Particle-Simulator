@@ -240,7 +240,7 @@ class Simulation:
 
     def _paint_image(self, link_colors: Iterable[Link]) -> npt.NDArray[np.uint8]:
         if not self.state.stress_visualization or self.state.paused:
-            return paint_image(self.state, None)
+            return paint_image(self.state, link_colors=None)
         return paint_image(self.state, link_colors)
 
     def save(self, filename: Optional[str] = None) -> None:
