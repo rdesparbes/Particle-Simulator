@@ -1,3 +1,4 @@
+import math
 import os
 import time
 import tkinter as tk
@@ -67,7 +68,7 @@ class ExtraWindow:
             x=25, y=85, anchor="nw"
         )
         self.wind_strength = tk.DoubleVar(
-            self.tk, value=10.0 * float(np.linalg.norm(self.sim.wind_force))
+            self.tk, value=10.0 * math.hypot(*self.sim.wind_force)
         )
         self.wind_strength_entry = tk.Spinbox(
             self.tk,

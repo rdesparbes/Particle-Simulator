@@ -106,7 +106,7 @@ class Particle:
         if self.props.gravity_mode or p.props.gravity_mode:
             return np.zeros(2)
         force = np.random.normal(size=2)
-        return force / np.linalg.norm(force) * -self.props.repulsion_strength
+        return force / math.hypot(*force) * -self.props.repulsion_strength
 
     def _compute_collision_delta_pos(
         self, translate_vector: npt.NDArray[np.float_], mass: float
@@ -290,7 +290,7 @@ class Particle:
         if not self.props.collisions or not p.props.collisions:
             return
         direction: npt.NDArray[np.float_] = np.subtract([p.x, p.y], [self.x, self.y])
-        distance = float(np.linalg.norm(direction))
+        distance = math.hypot(*direction)
         overlap = self.radius + p.radius - distance
         if overlap <= 0.0:
             return
@@ -299,7 +299,7 @@ class Particle:
         self.velocity = new_speed
         if distance == 0.0:
             direction = np.random.normal(size=2)
-            distance = float(np.linalg.norm(direction))
+            distance = math.hypot(*direction)
         direction /= distance
         translate_vector = overlap * direction
         if not self.props.locked:

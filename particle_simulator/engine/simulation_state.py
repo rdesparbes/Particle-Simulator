@@ -1,3 +1,4 @@
+import math
 from collections import deque, defaultdict
 from dataclasses import dataclass, field
 from typing import (
@@ -214,7 +215,7 @@ class SimulationState(SimulationData):
     ) -> npt.NDArray[np.float_]:
         forces = [force, self.wind_force * particle.radius]
         acceleration = np.sum(forces, axis=0) / particle.props.mass + self.g_vector
-        acc_magnitude = float(np.linalg.norm(acceleration))
+        acc_magnitude = math.hypot(*acceleration)
         if acc_magnitude > 0.0:
             clipped_magnitude = min(acc_magnitude, max_acceleration_magnitude)
             acceleration = acceleration / acc_magnitude * clipped_magnitude
