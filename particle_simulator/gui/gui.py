@@ -189,8 +189,8 @@ class GUI(GUIWidgets):
             show_fps=self._sim_tab.show_fps.get(),
             show_num=self._sim_tab.show_num.get(),
             show_links=self._sim_tab.show_links.get(),
-            grid_res_x=int(self._sim_tab.grid_res_x_var.get()),
-            grid_res_y=int(self._sim_tab.grid_res_y_var.get()),
+            grid_res_x=self._sim_tab.grid_res_x_var.get(),
+            grid_res_y=self._sim_tab.grid_res_y_var.get(),
             delay=self._sim_tab.delay_var.get(),
         )
 
