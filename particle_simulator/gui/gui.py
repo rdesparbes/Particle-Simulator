@@ -32,10 +32,10 @@ class GUI(GUIWidgets):
         self.sim = sim
 
     def _set_callbacks(self) -> None:
-        self.select_btn.configure(command=self._set_select_mode)
-        self.move_btn.configure(command=self._set_move_mode)
-        self.add_btn.configure(command=self._set_add_mode)
-        self.code_btn.configure(command=self._create_code_window)
+        self._bar_canvas.select_btn.configure(command=self._set_select_mode)
+        self._bar_canvas.move_btn.configure(command=self._set_move_mode)
+        self._bar_canvas.add_btn.configure(command=self._set_add_mode)
+        self._bar_canvas.code_btn.configure(command=self._create_code_window)
         self._sim_tab.gravity_entry.configure(command=self._set_gravity)
         self._sim_tab.air_res_entry.configure(command=self._set_air_res)
         self._sim_tab.friction_entry.configure(command=self._set_ground_friction)
@@ -60,12 +60,14 @@ class GUI(GUIWidgets):
         self._sim_tab.grid_res_y.configure(command=self._set_grid_y)
 
     def _register_sim(self, sim: SimulationState) -> None:
-        self.pause_button.configure(
-            image=self._play_photo if sim.paused else self._pause_photo,
+        self._bar_canvas.pause_button.configure(
+            image=self._bar_canvas._play_photo
+            if sim.paused
+            else self._bar_canvas._pause_photo,
             command=sim.toggle_paused,
         )
-        self.link_btn.configure(command=sim.link_selection)
-        self.unlink_btn.configure(command=sim.unlink_selection)
+        self._bar_canvas.link_btn.configure(command=sim.link_selection)
+        self._bar_canvas.unlink_btn.configure(command=sim.unlink_selection)
         self._set_entry(self._sim_tab.gravity_entry, str(sim.g))
         self._set_entry(self._sim_tab.air_res_entry, str(sim.air_res))
         self._set_entry(self._sim_tab.friction_entry, str(sim.ground_friction))
@@ -143,15 +145,15 @@ class GUI(GUIWidgets):
         self.sim.calculate_radii_diff = self._sim_tab.calculate_radii_diff_bool.get()
 
     def _set_select_mode(self) -> None:
-        super()._set_select_mode()
+        self._bar_canvas._set_select_mode()
         self.sim.mouse_mode = "SELECT"
 
     def _set_move_mode(self) -> None:
-        super()._set_move_mode()
+        self._bar_canvas._set_move_mode()
         self.sim.mouse_mode = "MOVE"
 
     def _set_add_mode(self) -> None:
-        super()._set_add_mode()
+        self._bar_canvas._set_add_mode()
         self.sim.mouse_mode = "ADD"
 
     def _create_extra_window(self) -> None:
@@ -346,8 +348,10 @@ class GUI(GUIWidgets):
             error = self.sim.errors.popleft()
             messagebox.showerror(error.name, str(error.exception))
         photo = ImageTk.PhotoImage(image=Image.fromarray(image.astype(np.uint8)))
-        self.pause_button.config(
-            image=self._play_photo if self.sim.paused else self._pause_photo
+        self._bar_canvas.pause_button.config(
+            image=self._bar_canvas._play_photo
+            if self.sim.paused
+            else self._bar_canvas._pause_photo
         )
 
         self.canvas.delete("all")

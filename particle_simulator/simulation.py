@@ -76,8 +76,8 @@ class Simulation:
         self._bind_events()
 
     def _bind_commands(self) -> None:
-        self.gui.save_btn.configure(command=self.save)
-        self.gui.load_btn.configure(command=self.load)
+        self.gui._bar_canvas.save_btn.configure(command=self.save)
+        self.gui._bar_canvas.load_btn.configure(command=self.load)
         self.gui._particle_tab.set_selected_btn.configure(command=self.set_selected)
         self.gui._particle_tab.set_all_btn.configure(command=self.set_all)
 
