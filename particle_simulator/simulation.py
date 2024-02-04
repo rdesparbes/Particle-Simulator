@@ -6,7 +6,6 @@ from typing import (
     Optional,
     Tuple,
     Iterable,
-    Callable,
     List,
 )
 
@@ -30,13 +29,7 @@ from .painter import paint_image
 from particle_simulator.engine.particle import Particle
 from particle_simulator.engine.particle_factory import ParticleFactory
 from particle_simulator.engine.simulation_state import SimulationState
-
-
-def _no_event(action: Callable[[], None]) -> Callable[[tk.Event], None]:
-    def wrapper(_event: tk.Event) -> None:
-        return action()
-
-    return wrapper
+from .utils import any_args
 
 
 class Simulation:
@@ -82,21 +75,21 @@ class Simulation:
         self.gui._particle_tab.set_all_btn.configure(command=self.set_all)
 
     def _bind_sim_events(self) -> None:
-        self.gui.tk.bind("<space>", _no_event(self.state.toggle_paused))
-        self.gui.tk.bind("<Delete>", _no_event(self.state.remove_selection))
-        self.gui.tk.bind("<Control-a>", _no_event(self.state.select_all))
-        self.gui.tk.bind("<Control-c>", _no_event(self.state.copy_selection))
-        self.gui.tk.bind("<Control-x>", _no_event(self.state.cut_selection))
-        self.gui.tk.bind("<Control-v>", _no_event(self.state.paste))
-        self.gui.tk.bind("<Control-l>", _no_event(self.state.lock_selection))
+        self.gui.tk.bind("<space>", any_args(self.state.toggle_paused))
+        self.gui.tk.bind("<Delete>", any_args(self.state.remove_selection))
+        self.gui.tk.bind("<Control-a>", any_args(self.state.select_all))
+        self.gui.tk.bind("<Control-c>", any_args(self.state.copy_selection))
+        self.gui.tk.bind("<Control-x>", any_args(self.state.cut_selection))
+        self.gui.tk.bind("<Control-v>", any_args(self.state.paste))
+        self.gui.tk.bind("<Control-l>", any_args(self.state.lock_selection))
         self.gui.tk.bind(
-            "<Control-Shift-KeyPress-L>", _no_event(self.state.unlock_selection)
+            "<Control-Shift-KeyPress-L>", any_args(self.state.unlock_selection)
         )
-        self.gui.tk.bind("<l>", _no_event(self.state.link_selection))
+        self.gui.tk.bind("<l>", any_args(self.state.link_selection))
         self.gui.tk.bind(
-            "<Alt_R><l>", _no_event(partial(self.state.link_selection, fit_link=True))
+            "<Alt_R><l>", any_args(partial(self.state.link_selection, fit_link=True))
         )
-        self.gui.tk.bind("<Shift-L>", _no_event(self.state.unlink_selection))
+        self.gui.tk.bind("<Shift-L>", any_args(self.state.unlink_selection))
 
     def _bind_events(self) -> None:
         self.gui.canvas.bind("<B1-Motion>", self._mouse_m)
@@ -106,10 +99,10 @@ class Simulation:
         self.gui.canvas.bind("<Button-3>", self._right_mouse)
         self.gui.canvas.bind("<MouseWheel>", self._on_scroll)
 
-        self.gui.tk.bind("<KeyPress-r>", _no_event(self._enter_rotate_mode))
-        self.gui.tk.bind("<KeyRelease-r>", _no_event(self._exit_rotate_mode))
-        self.gui.tk.bind("<Control-s>", _no_event(self.save))
-        self.gui.tk.bind("<Control-o>", _no_event(self.load))
+        self.gui.tk.bind("<KeyPress-r>", any_args(self._enter_rotate_mode))
+        self.gui.tk.bind("<KeyRelease-r>", any_args(self._exit_rotate_mode))
+        self.gui.tk.bind("<Control-s>", any_args(self.save))
+        self.gui.tk.bind("<Control-o>", any_args(self.load))
 
         self._bind_sim_events()
 

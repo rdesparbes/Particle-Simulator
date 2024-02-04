@@ -18,6 +18,7 @@ from particle_simulator.sim_gui_settings import SimGUISettings
 from .code_window import CodeWindow
 from .extra_window import ExtraWindow
 from .gui_widgets import GUIWidgets
+from ..utils import any_args
 
 
 class GUI(GUIWidgets):
@@ -36,11 +37,11 @@ class GUI(GUIWidgets):
         self._bar_canvas.move_btn.configure(command=self._set_move_mode)
         self._bar_canvas.add_btn.configure(command=self._set_add_mode)
         self._bar_canvas.code_btn.configure(command=self._create_code_window)
-        self._sim_tab.gravity_entry.configure(command=self._set_gravity)
-        self._sim_tab.air_res_entry.configure(command=self._set_air_res)
-        self._sim_tab.friction_entry.configure(command=self._set_ground_friction)
-        self._sim_tab.temp_sc.configure(command=self._set_temperature)
-        self._sim_tab.speed_sc.configure(command=self._set_speed)
+        self._sim_tab.gravity_var.trace("w", any_args(self._set_gravity))
+        self._sim_tab.air_res_var.trace("w", any_args(self._set_air_res))
+        self._sim_tab.friction_var.trace("w", any_args(self._set_ground_friction))
+        self._sim_tab.temp_var.trace("w", any_args(self._set_temperature))
+        self._sim_tab.speed_var.trace("w", any_args(self._set_speed))
         self._sim_tab.fps_chk.configure(command=self._set_show_fps)
         self._sim_tab.num_chk.configure(command=self._set_show_num)
         self._sim_tab.links_chk.configure(command=self._set_show_links)
@@ -49,15 +50,15 @@ class GUI(GUIWidgets):
         self._sim_tab.left_chk.configure(command=self._set_left)
         self._sim_tab.right_chk.configure(command=self._set_right)
         self._sim_tab.grid_chk.configure(command=self._set_use_grid)
-        self._sim_tab.delay_entry.configure(command=self._set_min_spawn_delay)
+        self._sim_tab.delay_var.trace("w", any_args(self._set_min_spawn_delay))
         self._sim_tab.calculate_radii_diff_chk.configure(
             command=self._set_calculate_radii_diff
         )
         self._sim_tab.extra_btn.configure(command=self._create_extra_window)
         self._particle_tab.group_add_btn.configure(command=self._add_group)
         self._particle_tab.copy_selected_btn.configure(command=self._copy_from_selected)
-        self._sim_tab.grid_res_x.configure(command=self._set_grid_x)
-        self._sim_tab.grid_res_y.configure(command=self._set_grid_y)
+        self._sim_tab.grid_res_x_var.trace("w", any_args(self._set_grid_x))
+        self._sim_tab.grid_res_y_var.trace("w", any_args(self._set_grid_y))
 
     def _register_sim(self, sim: SimulationState) -> None:
         self._bar_canvas.pause_button.configure(
@@ -68,11 +69,11 @@ class GUI(GUIWidgets):
         )
         self._bar_canvas.link_btn.configure(command=sim.link_selection)
         self._bar_canvas.unlink_btn.configure(command=sim.unlink_selection)
-        self._set_entry(self._sim_tab.gravity_entry, str(sim.g))
-        self._set_entry(self._sim_tab.air_res_entry, str(sim.air_res))
-        self._set_entry(self._sim_tab.friction_entry, str(sim.ground_friction))
-        self._sim_tab.temp_sc.set(sim.temperature)
-        self._sim_tab.speed_sc.set(sim.speed)
+        self._sim_tab.gravity_var.set(sim.g)
+        self._sim_tab.air_res_var.set(sim.air_res)
+        self._sim_tab.friction_var.set(sim.ground_friction)
+        self._sim_tab.temp_var.set(sim.temperature)
+        self._sim_tab.speed_var.set(sim.speed)
         self._sim_tab.show_fps.set(sim.show_fps)
         self._sim_tab.show_num.set(sim.show_num)
         self._sim_tab.show_links.set(sim.show_links)
@@ -80,7 +81,7 @@ class GUI(GUIWidgets):
         self._sim_tab.bottom_bool.set(sim.bottom)
         self._sim_tab.left_bool.set(sim.left)
         self._sim_tab.right_bool.set(sim.right)
-        self._set_entry(self._sim_tab.delay_entry, str(sim.min_spawn_delay))
+        self._sim_tab.delay_var.set(sim.min_spawn_delay)
         self._particle_tab.group_select_btn.configure(
             command=lambda: sim.select_group(self._particle_tab.groups_entry.get())
         )
@@ -94,19 +95,19 @@ class GUI(GUIWidgets):
         self.sim = sim
 
     def _set_air_res(self) -> None:
-        self.sim.air_res = float(self._sim_tab.air_res_entry.get())
+        self.sim.air_res = self._sim_tab.air_res_var.get()
 
     def _set_gravity(self) -> None:
-        self.sim.g = float(self._sim_tab.gravity_entry.get())
+        self.sim.g = self._sim_tab.gravity_var.get()
 
     def _set_ground_friction(self) -> None:
-        self.sim.ground_friction = float(self._sim_tab.friction_entry.get())
+        self.sim.ground_friction = self._sim_tab.friction_var.get()
 
-    def _set_temperature(self, new_temp: str) -> None:
-        self.sim.temperature = float(new_temp)
+    def _set_temperature(self) -> None:
+        self.sim.temperature = self._sim_tab.temp_var.get()
 
-    def _set_speed(self, new_speed: str) -> None:
-        self.sim.speed = float(new_speed)
+    def _set_speed(self) -> None:
+        self.sim.speed = self._sim_tab.speed_var.get()
 
     def _set_show_fps(self) -> None:
         self.sim.show_fps = self._sim_tab.show_fps.get()
@@ -133,13 +134,13 @@ class GUI(GUIWidgets):
         self.sim.use_grid = self._sim_tab.grid_bool.get()
 
     def _set_grid_x(self) -> None:
-        self.sim.grid_res_x = int(self._sim_tab.grid_res_x.get())
+        self.sim.grid_res_x = self._sim_tab.grid_res_x_var.get()
 
     def _set_grid_y(self, *_args: Any) -> None:
-        self.sim.grid_res_y = int(self._sim_tab.grid_res_y.get())
+        self.sim.grid_res_y = self._sim_tab.grid_res_y_var.get()
 
     def _set_min_spawn_delay(self) -> None:
-        self.sim.min_spawn_delay = float(self._sim_tab.delay_entry.get())
+        self.sim.min_spawn_delay = self._sim_tab.delay_var.get()
 
     def _set_calculate_radii_diff(self) -> None:
         self.sim.calculate_radii_diff = self._sim_tab.calculate_radii_diff_bool.get()
@@ -188,9 +189,9 @@ class GUI(GUIWidgets):
             show_fps=self._sim_tab.show_fps.get(),
             show_num=self._sim_tab.show_num.get(),
             show_links=self._sim_tab.show_links.get(),
-            grid_res_x=int(self._sim_tab.grid_res_x.get()),
-            grid_res_y=int(self._sim_tab.grid_res_y.get()),
-            delay=float(self._sim_tab.delay_entry.get()),
+            grid_res_x=int(self._sim_tab.grid_res_x_var.get()),
+            grid_res_y=int(self._sim_tab.grid_res_y_var.get()),
+            delay=self._sim_tab.delay_var.get(),
         )
 
     def set_sim_settings(self, sim_settings: SimGUISettings) -> None:
@@ -199,9 +200,9 @@ class GUI(GUIWidgets):
         self._sim_tab.show_fps.set(s.show_fps)
         self._sim_tab.show_num.set(s.show_num)
         self._sim_tab.show_links.set(s.show_links)
-        self._set_entry(self._sim_tab.grid_res_x, str(s.grid_res_x))
-        self._set_entry(self._sim_tab.grid_res_y, str(s.grid_res_y))
-        self._set_entry(self._sim_tab.delay_entry, str(s.delay))
+        self._sim_tab.grid_res_x_var.set(s.grid_res_x)
+        self._sim_tab.grid_res_y_var.set(s.grid_res_y)
+        self._sim_tab.delay_var.set(s.delay)
 
     def get_particle_settings(self) -> ParticleFactory:
         props = ParticleProperties(
@@ -301,7 +302,8 @@ class GUI(GUIWidgets):
     def _set_widget_value(self, widget: tk.Widget, value: Any) -> None:
         if isinstance(widget, tk.Variable):
             widget.set(value)
-        elif isinstance(widget, (tk.Entry, tk.Spinbox)):
+        elif isinstance(widget, tk.Entry):
+            # TODO: replace group_entry by a tk.Variable
             widget.delete(0, tk.END)
             widget.insert(0, str(value))
         else:

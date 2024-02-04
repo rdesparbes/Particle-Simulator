@@ -2,6 +2,8 @@ import os
 import tkinter as tk
 from tkinter import ttk
 
+from particle_simulator.gui.variable import get_double_var, get_int_var
+
 
 class SimulationWidget(ttk.Frame):
     def __init__(self, master: tk.Widget, resource_path: str) -> None:
@@ -12,40 +14,43 @@ class SimulationWidget(ttk.Frame):
         tk.Label(self._sim_tab_canvas, text="Gravity:", font=("helvetica", 8)).place(
             x=7, y=20, anchor="nw"
         )
-        self.gravity_entry = tk.Spinbox(
+        self._gravity_entry = tk.Spinbox(
             self._sim_tab_canvas,
             width=7,
             from_=0,
             to=1,
             increment=0.1,
         )
-        self.gravity_entry.place(x=100, y=20)
+        self.gravity_var = get_double_var(self._gravity_entry)
+        self._gravity_entry.place(x=100, y=20)
 
         tk.Label(
             self._sim_tab_canvas, text="Air Resistance:", font=("helvetica", 8)
         ).place(x=7, y=50, anchor="nw")
-        self.air_res_entry = tk.Spinbox(
+        self._air_res_entry = tk.Spinbox(
             self._sim_tab_canvas,
             width=7,
             from_=0,
             to=1,
             increment=0.01,
         )
-        self.air_res_entry.place(x=100, y=50)
+        self.air_res_var = get_double_var(self._air_res_entry, 0.0)
+        self._air_res_entry.place(x=100, y=50)
 
         tk.Label(
             self._sim_tab_canvas, text="Ground Friction:", font=("helvetica", 8)
         ).place(x=7, y=80, anchor="nw")
-        self.friction_entry = tk.Spinbox(
+        self._friction_entry = tk.Spinbox(
             self._sim_tab_canvas,
             width=7,
             from_=0,
             to=1,
             increment=0.01,
         )
-        self.friction_entry.place(x=100, y=80)
+        self.friction_var = get_double_var(self._friction_entry)
+        self._friction_entry.place(x=100, y=80)
 
-        self.temp_sc = tk.Scale(
+        self._temp_sc = tk.Scale(
             self._sim_tab_canvas,
             from_=0,
             to=5,
@@ -58,12 +63,13 @@ class SimulationWidget(ttk.Frame):
             activebackground="midnight blue",
             cursor="hand2",
         )
-        self.temp_sc.place(x=100, y=153, anchor="center")
+        self.temp_var = get_double_var(self._temp_sc)
+        self._temp_sc.place(x=100, y=153, anchor="center")
         tk.Label(
             self._sim_tab_canvas, text="Temperature:", font=("helvetica", 8)
         ).place(x=7, y=110, anchor="nw")
 
-        self.speed_sc = tk.Scale(
+        self._speed_sc = tk.Scale(
             self._sim_tab_canvas,
             from_=0,
             to=3,
@@ -76,7 +82,8 @@ class SimulationWidget(ttk.Frame):
             activebackground="midnight blue",
             cursor="hand2",
         )
-        self.speed_sc.place(x=100, y=233, anchor="center")
+        self.speed_var = get_double_var(self._speed_sc)
+        self._speed_sc.place(x=100, y=233, anchor="center")
         tk.Label(
             self._sim_tab_canvas, text="Simulation Speed:", font=("helvetica", 8)
         ).place(x=7, y=190, anchor="nw")
@@ -169,26 +176,28 @@ class SimulationWidget(ttk.Frame):
         tk.Label(self._sim_tab_canvas, text="X:", font=("helvetica", 8)).place(
             x=60, y=455, anchor="nw"
         )
-        self.grid_res_x = tk.Spinbox(
+        self._grid_res_x = tk.Spinbox(
             self._sim_tab_canvas,
             width=7,
             from_=1,
             to=200,
             increment=1,
         )
-        self.grid_res_x.place(x=80, y=455)
+        self.grid_res_x_var = get_int_var(self._grid_res_x)
+        self._grid_res_x.place(x=80, y=455)
 
         tk.Label(self._sim_tab_canvas, text="Y:", font=("helvetica", 8)).place(
             x=60, y=480, anchor="nw"
         )
-        self.grid_res_y = tk.Spinbox(
+        self._grid_res_y = tk.Spinbox(
             self._sim_tab_canvas,
             width=7,
             from_=1,
             to=200,
             increment=1,
         )
-        self.grid_res_y.place(x=80, y=480)
+        self.grid_res_y_var = get_int_var(self._grid_res_y)
+        self._grid_res_y.place(x=80, y=480)
 
         self._sim_tab_canvas.create_text(
             100, 515, text="Extra", font=("helvetica", 9), anchor="center"
@@ -198,14 +207,15 @@ class SimulationWidget(ttk.Frame):
         tk.Label(
             self._sim_tab_canvas, text="Min Spawn-Delay:", font=("helvetica", 8)
         ).place(x=7, y=533, anchor="nw")
-        self.delay_entry = tk.Spinbox(
+        self._delay_entry = tk.Spinbox(
             self._sim_tab_canvas,
             width=7,
             from_=0,
             to=1,
             increment=0.01,
         )
-        self.delay_entry.place(x=100, y=533)
+        self.delay_var = get_double_var(self._delay_entry)
+        self._delay_entry.place(x=100, y=533)
 
         self.calculate_radii_diff_bool = tk.BooleanVar(self, False)
         self.calculate_radii_diff_chk = tk.Checkbutton(

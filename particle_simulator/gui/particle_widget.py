@@ -5,7 +5,7 @@ from tkinter import ttk, colorchooser
 from typing import Optional, Tuple
 
 from particle_simulator.color import color_to_hex
-from particle_simulator.gui.utils import get_double_var
+from particle_simulator.gui.variable import get_double_var
 
 
 class ParticleWidget(ttk.Frame):
