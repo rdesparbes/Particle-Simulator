@@ -225,18 +225,13 @@ class SimulationState(SimulationData):
         self._prev_mx, self._prev_my = self.mx, self.my
         self.mx, self.my = new_mouse_pos
 
+    @staticmethod
     def _update_interactions(
-        self,
         interactions: Dict[Particle, Dict[Particle, ParticleInteraction]],
         particle: Particle,
         near_particles: Iterable[Particle],
+        compute_magnitude_strategy: ComputeMagnitudeStrategy,
     ) -> None:
-        if self.calculate_radii_diff:
-            compute_magnitude_strategy: ComputeMagnitudeStrategy = (
-                radii_compute_magnitude_strategy
-            )
-        else:
-            compute_magnitude_strategy = default_compute_magnitude_strategy
         for near_particle in near_particles:
             if particle.props.locked or near_particle in interactions[particle]:
                 continue
@@ -271,6 +266,12 @@ class SimulationState(SimulationData):
     def _compute_interactions(
         self,
     ) -> Dict[Particle, Dict[Particle, ParticleInteraction]]:
+        if self.calculate_radii_diff:
+            compute_magnitude_strategy: ComputeMagnitudeStrategy = (
+                radii_compute_magnitude_strategy
+            )
+        else:
+            compute_magnitude_strategy = default_compute_magnitude_strategy
         grid: Optional[Grid] = None
         if self.use_grid:
             grid = Grid(
@@ -292,7 +293,9 @@ class SimulationState(SimulationData):
                 near_particles = grid.return_particles(particle)
             else:
                 near_particles = self.particles
-            self._update_interactions(interactions, particle, near_particles)
+            self._update_interactions(
+                interactions, particle, near_particles, compute_magnitude_strategy
+            )
         return interactions
 
     def _apply_forces(
