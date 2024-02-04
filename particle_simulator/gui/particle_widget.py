@@ -2,9 +2,17 @@ import os
 import re
 import tkinter as tk
 from tkinter import ttk, colorchooser
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 from particle_simulator.color import color_to_hex
+
+
+def get_double_var(spinbox: tk.Spinbox, value: float = 0.0) -> tk.DoubleVar:
+    double_var = tk.DoubleVar(value=value)
+    spinbox.delete(0, tk.END)
+    spinbox.insert(0, str(value))
+    spinbox.configure(textvariable=double_var, format="%.2f")
+    return double_var
 
 
 class ParticleWidget(ttk.Frame):
@@ -16,9 +24,9 @@ class ParticleWidget(ttk.Frame):
         tk.Label(self, text="Radius:", font=("helvetica", 8)).place(
             x=7, y=20, anchor="nw"
         )
-        self.radius_entry = tk.Spinbox(self, width=7, from_=1, to=300, increment=1)
-        self._set_entry(self.radius_entry, "4")
-        self.radius_entry.place(x=100, y=20)
+        self._radius_entry = tk.Spinbox(self, width=7, from_=1, to=300, increment=1)
+        self.radius_var = get_double_var(self._radius_entry, value=4.0)
+        self._radius_entry.place(x=100, y=20)
 
         tk.Label(self, text="Color:", font=("helvetica", 8)).place(
             x=7, y=50, anchor="nw"
@@ -44,28 +52,30 @@ class ParticleWidget(ttk.Frame):
         tk.Label(self, text="Mass:", font=("helvetica", 8)).place(
             x=7, y=80, anchor="nw"
         )
-        self.mass_entry = tk.Spinbox(self, width=7, from_=0.1, to=100, increment=0.1)
-        self._set_entry(self.mass_entry, "1")
-        self.mass_entry.place(x=100, y=80)
+        self._mass_entry = tk.Spinbox(self, width=7, from_=0.1, to=100, increment=0.1)
+        self.mass_var = get_double_var(self._mass_entry, value=1.0)
+        self._mass_entry.place(x=100, y=80)
 
         tk.Label(self, text="Bounciness:", font=("helvetica", 8)).place(
             x=7, y=110, anchor="nw"
         )
-        self.bounciness_entry = tk.Spinbox(self, width=7, from_=0, to=1, increment=0.1)
-        self._set_entry(self.bounciness_entry, "0.7")
-        self.bounciness_entry.place(x=100, y=110)
+        self._bounciness_entry = tk.Spinbox(self, width=7, from_=0, to=1, increment=0.1)
+        self.bounciness_var = get_double_var(self._bounciness_entry, value=0.7)
+        self._bounciness_entry.place(x=100, y=110)
 
         tk.Label(self, text="Velocity:", font=("helvetica", 8)).place(
             x=7, y=140, anchor="nw"
         )
         tk.Label(self, text="X:", font=("helvetica", 8)).place(x=60, y=140, anchor="nw")
-        self.velocity_x_entry = tk.Spinbox(self, width=7, from_=0, to=1, increment=0.1)
-        self._set_entry(self.velocity_x_entry, "0")
-        self.velocity_x_entry.place(x=100, y=140)
+        self._velocity_x_entry = tk.Spinbox(self, width=7, from_=0, to=1, increment=0.1)
+        self.velocity_x_var = get_double_var(self._velocity_x_entry, 0.0)
+        self._velocity_x_entry.place(x=100, y=140)
         tk.Label(self, text="Y:", font=("helvetica", 8)).place(x=60, y=162, anchor="nw")
-        self.velocity_y_entry = tk.Spinbox(self, width=7, from_=-5, to=5, increment=0.1)
-        self._set_entry(self.velocity_y_entry, "0")
-        self.velocity_y_entry.place(x=100, y=162)
+        self._velocity_y_entry = tk.Spinbox(
+            self, width=7, from_=-5, to=5, increment=0.1
+        )
+        self.velocity_y_var = get_double_var(self._velocity_y_entry, 0.0)
+        self._velocity_y_entry.place(x=100, y=162)
 
         self.locked_bool = tk.BooleanVar(master, False)
         self.locked_chk = tk.Checkbutton(
@@ -88,18 +98,18 @@ class ParticleWidget(ttk.Frame):
         tk.Label(self, text="Attraction-radius:", font=("helvetica", 8)).place(
             x=7, y=250, anchor="nw"
         )
-        self.attr_r_entry = tk.Spinbox(self, width=7, from_=-1, to=500, increment=1)
-        self._set_entry(self.attr_r_entry, "-1")
-        self.attr_r_entry.place(x=100, y=250)
+        self._attr_r_entry = tk.Spinbox(self, width=7, from_=-1, to=500, increment=1)
+        self.attr_r_var = get_double_var(self._attr_r_entry, -1.0)
+        self._attr_r_entry.place(x=100, y=250)
 
         tk.Label(self, text="Attr-strength:", font=("helvetica", 8)).place(
             x=7, y=273, anchor="nw"
         )
-        self.attr_strength_entry = tk.Spinbox(
+        self._attr_strength_entry = tk.Spinbox(
             self, width=7, from_=0, to=50, increment=0.1
         )
-        self._set_entry(self.attr_strength_entry, "0.5")
-        self.attr_strength_entry.place(x=100, y=273)
+        self.attr_strength_var = get_double_var(self._attr_strength_entry, 0.5)
+        self._attr_strength_entry.place(x=100, y=273)
 
         self.gravity_mode_bool = tk.BooleanVar(master, False)
         self.gravity_mode_chk = tk.Checkbutton(
@@ -113,18 +123,18 @@ class ParticleWidget(ttk.Frame):
         tk.Label(self, text="Repulsion-radius:", font=("helvetica", 8)).place(
             x=7, y=313, anchor="nw"
         )
-        self.repel_r_entry = tk.Spinbox(self, width=7, from_=0, to=500, increment=1)
-        self._set_entry(self.repel_r_entry, "10")
-        self.repel_r_entry.place(x=100, y=323)
+        self._repel_r_entry = tk.Spinbox(self, width=7, from_=0, to=500, increment=1)
+        self.repel_r_var = get_double_var(self._repel_r_entry, 10.0)
+        self._repel_r_entry.place(x=100, y=323)
 
         tk.Label(self, text="Repel-strength:", font=("helvetica", 8)).place(
             x=7, y=336, anchor="nw"
         )
-        self.repel_strength_entry = tk.Spinbox(
+        self._repel_strength_entry = tk.Spinbox(
             self, width=7, from_=0, to=50, increment=0.1
         )
-        self._set_entry(self.repel_strength_entry, "1")
-        self.repel_strength_entry.place(x=100, y=346)
+        self.repel_strength_var = get_double_var(self._repel_strength_entry, 1.0)
+        self._repel_strength_entry.place(x=100, y=346)
 
         self.linked_group_bool = tk.BooleanVar(master, True)
         self.linked_group_chk = tk.Checkbutton(
@@ -141,19 +151,19 @@ class ParticleWidget(ttk.Frame):
         tk.Label(self, text="Attr:", font=("helvetica", 8)).place(
             x=7, y=420, anchor="nw"
         )
-        self.link_attr_break_entry = tk.Spinbox(
+        self._link_attr_break_entry = tk.Spinbox(
             self, width=5, from_=0, to=5000, increment=0.1
         )
-        self._set_entry(self.link_attr_break_entry, "-1")
-        self.link_attr_break_entry.place(x=40, y=420)
+        self.link_attr_break_var = get_double_var(self._link_attr_break_entry, -1.0)
+        self._link_attr_break_entry.place(x=40, y=420)
         tk.Label(self, text="Repel:", font=("helvetica", 8)).place(
             x=100, y=420, anchor="nw"
         )
-        self.link_repel_break_entry = tk.Spinbox(
+        self._link_repel_break_entry = tk.Spinbox(
             self, width=5, from_=0, to=5000, increment=0.1
         )
-        self._set_entry(self.link_repel_break_entry, "-1")
-        self.link_repel_break_entry.place(x=140, y=420)
+        self.link_repel_break_var = get_double_var(self._link_repel_break_entry, -1.0)
+        self._link_repel_break_entry.place(x=140, y=420)
 
         tk.Label(self, text="Particle-group:", font=("helvetica", 8)).place(
             x=7, y=450, anchor="nw"
@@ -210,11 +220,6 @@ class ParticleWidget(ttk.Frame):
         self.set_selected_btn.place(x=15, y=570)
         self.set_all_btn = tk.Button(self, text="Set All", bg="light blue")
         self.set_all_btn.place(x=95, y=570)
-
-    @staticmethod
-    def _set_entry(entry: Union[tk.Entry, tk.Spinbox], text: str) -> None:
-        entry.delete(0, tk.END)
-        entry.insert(0, text)
 
     def _ask_color_entry(self, *_event: tk.Event) -> None:
         color, color_hex = colorchooser.askcolor(title="Choose color")

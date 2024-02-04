@@ -205,18 +205,14 @@ class GUI(GUIWidgets):
 
     def get_particle_settings(self) -> ParticleFactory:
         props = ParticleProperties(
-            mass=float(self._particle_tab.mass_entry.get()),
-            bounciness=float(self._particle_tab.bounciness_entry.get()),
-            attract_r=float(self._particle_tab.attr_r_entry.get()),
-            repel_r=float(self._particle_tab.repel_r_entry.get()),
-            attraction_strength=float(self._particle_tab.attr_strength_entry.get()),
-            repulsion_strength=float(self._particle_tab.repel_strength_entry.get()),
-            link_attr_breaking_force=float(
-                self._particle_tab.link_attr_break_entry.get()
-            ),
-            link_repel_breaking_force=float(
-                self._particle_tab.link_repel_break_entry.get()
-            ),
+            mass=self._particle_tab.mass_var.get(),
+            bounciness=self._particle_tab.bounciness_var.get(),
+            attract_r=self._particle_tab.attr_r_var.get(),
+            repel_r=self._particle_tab.repel_r_var.get(),
+            attraction_strength=self._particle_tab.attr_strength_var.get(),
+            repulsion_strength=self._particle_tab.repel_strength_var.get(),
+            link_attr_breaking_force=self._particle_tab.link_attr_break_var.get(),
+            link_repel_breaking_force=self._particle_tab.link_repel_break_var.get(),
             collisions=self._particle_tab.do_collision_bool.get(),
             locked=self._particle_tab.locked_bool.get(),
             linked_group_particles=self._particle_tab.linked_group_bool.get(),
@@ -230,31 +226,23 @@ class GUI(GUIWidgets):
         factory = ParticleFactory(
             color=color,
             props=props,
-            radius=float(self._particle_tab.radius_entry.get()),
+            radius=self._particle_tab.radius_var.get(),
             velocity=(
-                float(self._particle_tab.velocity_x_entry.get()),
-                float(self._particle_tab.velocity_y_entry.get()),
+                self._particle_tab.velocity_x_var.get(),
+                self._particle_tab.velocity_y_var.get(),
             ),
         )
         return factory
 
     def _set_particle_properties(self, p: ParticleProperties) -> None:
-        self._set_entry(self._particle_tab.mass_entry, str(p.mass))
-        self._set_entry(self._particle_tab.bounciness_entry, str(p.bounciness))
-        self._set_entry(self._particle_tab.attr_r_entry, str(p.attract_r))
-        self._set_entry(self._particle_tab.repel_r_entry, str(p.repel_r))
-        self._set_entry(
-            self._particle_tab.attr_strength_entry, str(p.attraction_strength)
-        )
-        self._set_entry(
-            self._particle_tab.repel_strength_entry, str(p.repulsion_strength)
-        )
-        self._set_entry(
-            self._particle_tab.link_attr_break_entry, str(p.link_attr_breaking_force)
-        )
-        self._set_entry(
-            self._particle_tab.link_repel_break_entry, str(p.link_repel_breaking_force)
-        )
+        self._particle_tab.mass_var.set(p.mass)
+        self._particle_tab.bounciness_var.set(p.bounciness)
+        self._particle_tab.attr_r_var.set(p.attract_r)
+        self._particle_tab.repel_r_var.set(p.repel_r)
+        self._particle_tab.attr_strength_var.set(p.attraction_strength)
+        self._particle_tab.repel_strength_var.set(p.repulsion_strength)
+        self._particle_tab.link_attr_break_var.set(p.link_attr_breaking_force)
+        self._particle_tab.link_repel_break_var.set(p.link_repel_breaking_force)
         self._particle_tab.do_collision_bool.set(p.collisions)
         self._particle_tab.locked_bool.set(p.locked)
         self._particle_tab.linked_group_bool.set(p.linked_group_particles)
@@ -266,28 +254,28 @@ class GUI(GUIWidgets):
         p = particle_settings
         self._particle_tab.color_var.set(str(p.color))
         self._set_particle_properties(p.props)
-        self._set_entry(self._particle_tab.velocity_x_entry, str(p.velocity[0]))
-        self._set_entry(self._particle_tab.velocity_y_entry, str(p.velocity[1]))
-        self._set_entry(self._particle_tab.radius_entry, str(p.radius))
+        self._particle_tab.velocity_x_var.set(p.velocity[0])
+        self._particle_tab.velocity_y_var.set(p.velocity[1])
+        self._particle_tab.radius_var.set(p.radius)
 
     @staticmethod
     def _part_to_dict(p: Particle) -> Dict[str, Any]:
         return {
-            "radius_entry": p.radius,
+            "radius_var": p.radius,
             "color_var": p.color,
-            "mass_entry": p.props.mass,
-            "velocity_x_entry": p.velocity[0],
-            "velocity_y_entry": p.velocity[1],
-            "bounciness_entry": p.props.bounciness,
+            "mass_var": p.props.mass,
+            "velocity_x_var": p.velocity[0],
+            "velocity_y_var": p.velocity[1],
+            "bounciness_var": p.props.bounciness,
             "do_collision_bool": p.props.collisions,
             "locked_bool": p.props.locked,
             "linked_group_bool": p.props.linked_group_particles,
-            "attr_r_entry": p.props.attract_r,
-            "repel_r_entry": p.props.repel_r,
-            "attr_strength_entry": p.props.attraction_strength,
-            "repel_strength_entry": p.props.repulsion_strength,
-            "link_attr_break_entry": p.props.link_attr_breaking_force,
-            "link_repel_break_entry": p.props.link_repel_breaking_force,
+            "attr_r_var": p.props.attract_r,
+            "repel_r_var": p.props.repel_r,
+            "attr_strength_var": p.props.attraction_strength,
+            "repel_strength_var": p.props.repulsion_strength,
+            "link_attr_break_var": p.props.link_attr_breaking_force,
+            "link_repel_break_var": p.props.link_repel_breaking_force,
             "groups_entry": p.props.group,
             "separate_group_bool": p.props.separate_group,
             "gravity_mode_bool": p.props.gravity_mode,
@@ -311,13 +299,11 @@ class GUI(GUIWidgets):
                 del particle_settings[gui_attr]
 
     def _set_widget_value(self, widget: tk.Widget, value: Any) -> None:
-        if isinstance(widget, tk.BooleanVar):
+        if isinstance(widget, tk.Variable):
             widget.set(value)
         elif isinstance(widget, (tk.Entry, tk.Spinbox)):
             widget.delete(0, tk.END)
             widget.insert(0, str(value))
-        elif isinstance(widget, tk.StringVar):
-            widget.set(str(value))
         else:
             raise NotImplementedError(f"Unexpected widget: {type(widget)}")
 
