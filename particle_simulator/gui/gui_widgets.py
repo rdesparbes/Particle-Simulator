@@ -1,7 +1,7 @@
 import os
 import tkinter as tk
 from tkinter import ttk
-from typing import Tuple, Union
+from typing import Tuple
 
 from particle_simulator.gui.bar_widget import BarWidget
 from particle_simulator.gui.particle_widget import ParticleWidget
@@ -28,11 +28,6 @@ class GUIWidgets:
 
         self.canvas = tk.Canvas(self.tk, width=width, height=height)
         self.canvas.pack(side="top")
-
-    @staticmethod
-    def _set_entry(entry: Union[tk.Entry, tk.Spinbox], text: str) -> None:
-        entry.delete(0, tk.END)
-        entry.insert(0, text)
 
     def get_mouse_pos(self) -> Tuple[int, int]:
         return (
