@@ -5,7 +5,7 @@ from tkinter import ttk, colorchooser
 from typing import Optional, Tuple
 
 from particle_simulator.color import color_to_hex
-from particle_simulator.gui.variable import get_double_var
+from particle_simulator.gui.variable import get_double_var, get_string_var
 
 
 class ParticleWidget(ttk.Frame):
@@ -162,6 +162,7 @@ class ParticleWidget(ttk.Frame):
             x=7, y=450, anchor="nw"
         )
         self.groups_entry = ttk.Combobox(self, width=10)
+        self.groups_var = get_string_var(self.groups_entry)
         self.groups_entry.place(x=10, y=470, anchor="nw")
 
         self.group_add_btn = tk.Button(

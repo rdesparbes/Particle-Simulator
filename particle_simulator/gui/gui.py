@@ -83,7 +83,7 @@ class GUI(GUIWidgets):
         self._sim_tab.right_bool.set(sim.right)
         self._sim_tab.delay_var.set(sim.min_spawn_delay)
         self._particle_tab.group_select_btn.configure(
-            command=lambda: sim.select_group(self._particle_tab.groups_entry.get())
+            command=lambda: sim.select_group(self._particle_tab.groups_var.get())
         )
         groups = sorted(sim.groups)
         self._particle_tab.groups_entry["values"] = groups
@@ -217,7 +217,7 @@ class GUI(GUIWidgets):
             collisions=self._particle_tab.do_collision_bool.get(),
             locked=self._particle_tab.locked_bool.get(),
             linked_group_particles=self._particle_tab.linked_group_bool.get(),
-            group=self._particle_tab.groups_entry.get(),
+            group=self._particle_tab.groups_var.get(),
             separate_group=self._particle_tab.separate_group_bool.get(),
             gravity_mode=self._particle_tab.gravity_mode_bool.get(),
         )
@@ -247,7 +247,7 @@ class GUI(GUIWidgets):
         self._particle_tab.do_collision_bool.set(p.collisions)
         self._particle_tab.locked_bool.set(p.locked)
         self._particle_tab.linked_group_bool.set(p.linked_group_particles)
-        self._set_entry(self._particle_tab.groups_entry, p.group)
+        self._particle_tab.groups_var.set(p.group)
         self._particle_tab.separate_group_bool.set(p.separate_group)
         self._particle_tab.gravity_mode_bool.set(p.gravity_mode)
 
@@ -277,7 +277,7 @@ class GUI(GUIWidgets):
             "repel_strength_var": p.props.repulsion_strength,
             "link_attr_break_var": p.props.link_attr_breaking_force,
             "link_repel_break_var": p.props.link_repel_breaking_force,
-            "groups_entry": p.props.group,
+            "groups_var": p.props.group,
             "separate_group_bool": p.props.separate_group,
             "gravity_mode_bool": p.props.gravity_mode,
         }
@@ -290,34 +290,26 @@ class GUI(GUIWidgets):
                 particle_settings = variable_names
             to_remove: Set[str] = set()
             for gui_attr, part_val in particle_settings.items():
-                widget: tk.Widget = getattr(self._particle_tab, gui_attr)
+                variable: tk.Variable = getattr(self._particle_tab, gui_attr)
                 if variable_names[gui_attr] == part_val:
-                    self._set_widget_value(widget, part_val)
+                    variable.set(part_val)
                 else:
-                    self._set_widget_default(widget)
+                    self._set_variable_default(variable)
                     to_remove.add(gui_attr)
             for gui_attr in to_remove:
                 del particle_settings[gui_attr]
 
-    def _set_widget_value(self, widget: tk.Widget, value: Any) -> None:
-        if isinstance(widget, tk.Variable):
-            widget.set(value)
-        elif isinstance(widget, tk.Entry):
-            # TODO: replace group_entry by a tk.Variable
-            widget.delete(0, tk.END)
-            widget.insert(0, str(value))
+    def _set_variable_default(self, variable: tk.Variable) -> None:
+        if isinstance(variable, tk.BooleanVar):
+            variable.set(False)
+        elif isinstance(variable, tk.IntVar):
+            variable.set(0)
+        elif isinstance(variable, tk.DoubleVar):
+            variable.set(0.0)
+        elif isinstance(variable, tk.StringVar):
+            variable.set("")
         else:
-            raise NotImplementedError(f"Unexpected widget: {type(widget)}")
-
-    def _set_widget_default(self, widget: tk.Widget) -> None:
-        if isinstance(widget, tk.BooleanVar):
-            widget.set(False)
-        elif isinstance(widget, tk.Entry):
-            widget.delete(0, tk.END)
-        elif isinstance(widget, tk.StringVar):
-            widget.set("random")
-        else:
-            raise NotImplementedError(f"Unexpected widget: {type(widget)}")
+            raise NotImplementedError(f"Unexpected variable: {type(variable)}")
 
     def _update(self) -> None:
         if self.code_window is not None:
