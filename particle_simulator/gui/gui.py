@@ -312,7 +312,7 @@ class GUI(GUIWidgets):
     def _set_widget_default(self, widget: tk.Widget) -> None:
         if isinstance(widget, tk.BooleanVar):
             widget.set(False)
-        elif isinstance(widget, (tk.Entry, tk.Spinbox)):
+        elif isinstance(widget, tk.Entry):
             widget.delete(0, tk.END)
         elif isinstance(widget, tk.StringVar):
             widget.set("random")
