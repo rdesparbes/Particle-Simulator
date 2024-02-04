@@ -36,26 +36,28 @@ class GUI(GUIWidgets):
         self.move_btn.configure(command=self._set_move_mode)
         self.add_btn.configure(command=self._set_add_mode)
         self.code_btn.configure(command=self._create_code_window)
-        self.gravity_entry.configure(command=self._set_gravity)
-        self.air_res_entry.configure(command=self._set_air_res)
-        self.friction_entry.configure(command=self._set_ground_friction)
-        self.temp_sc.configure(command=self._set_temperature)
-        self.speed_sc.configure(command=self._set_speed)
-        self.fps_chk.configure(command=self._set_show_fps)
-        self.num_chk.configure(command=self._set_show_num)
-        self.links_chk.configure(command=self._set_show_links)
-        self.top_chk.configure(command=self._set_top)
-        self.bottom_chk.configure(command=self._set_bottom)
-        self.left_chk.configure(command=self._set_left)
-        self.right_chk.configure(command=self._set_right)
-        self.grid_chk.configure(command=self._set_use_grid)
-        self.delay_entry.configure(command=self._set_min_spawn_delay)
-        self.calculate_radii_diff_chk.configure(command=self._set_calculate_radii_diff)
-        self.extra_btn.configure(command=self._create_extra_window)
-        self.group_add_btn.configure(command=self._add_group)
-        self.copy_selected_btn.configure(command=self._copy_from_selected)
-        self.grid_res_x.configure(command=self._set_grid_x)
-        self.grid_res_y.configure(command=self._set_grid_y)
+        self._sim_tab.gravity_entry.configure(command=self._set_gravity)
+        self._sim_tab.air_res_entry.configure(command=self._set_air_res)
+        self._sim_tab.friction_entry.configure(command=self._set_ground_friction)
+        self._sim_tab.temp_sc.configure(command=self._set_temperature)
+        self._sim_tab.speed_sc.configure(command=self._set_speed)
+        self._sim_tab.fps_chk.configure(command=self._set_show_fps)
+        self._sim_tab.num_chk.configure(command=self._set_show_num)
+        self._sim_tab.links_chk.configure(command=self._set_show_links)
+        self._sim_tab.top_chk.configure(command=self._set_top)
+        self._sim_tab.bottom_chk.configure(command=self._set_bottom)
+        self._sim_tab.left_chk.configure(command=self._set_left)
+        self._sim_tab.right_chk.configure(command=self._set_right)
+        self._sim_tab.grid_chk.configure(command=self._set_use_grid)
+        self._sim_tab.delay_entry.configure(command=self._set_min_spawn_delay)
+        self._sim_tab.calculate_radii_diff_chk.configure(
+            command=self._set_calculate_radii_diff
+        )
+        self._sim_tab.extra_btn.configure(command=self._create_extra_window)
+        self._particle_tab.group_add_btn.configure(command=self._add_group)
+        self._particle_tab.copy_selected_btn.configure(command=self._copy_from_selected)
+        self._sim_tab.grid_res_x.configure(command=self._set_grid_x)
+        self._sim_tab.grid_res_y.configure(command=self._set_grid_y)
 
     def _register_sim(self, sim: SimulationState) -> None:
         self.pause_button.configure(
@@ -64,39 +66,39 @@ class GUI(GUIWidgets):
         )
         self.link_btn.configure(command=sim.link_selection)
         self.unlink_btn.configure(command=sim.unlink_selection)
-        self._set_entry(self.gravity_entry, str(sim.g))
-        self._set_entry(self.air_res_entry, str(sim.air_res))
-        self._set_entry(self.friction_entry, str(sim.ground_friction))
-        self.temp_sc.set(sim.temperature)
-        self.speed_sc.set(sim.speed)
-        self.show_fps.set(sim.show_fps)
-        self.show_num.set(sim.show_num)
-        self.show_links.set(sim.show_links)
-        self.top_bool.set(sim.top)
-        self.bottom_bool.set(sim.bottom)
-        self.left_bool.set(sim.left)
-        self.right_bool.set(sim.right)
-        self._set_entry(self.delay_entry, str(sim.min_spawn_delay))
-        self.group_select_btn.configure(
-            command=lambda: sim.select_group(self.groups_entry.get())
+        self._set_entry(self._sim_tab.gravity_entry, str(sim.g))
+        self._set_entry(self._sim_tab.air_res_entry, str(sim.air_res))
+        self._set_entry(self._sim_tab.friction_entry, str(sim.ground_friction))
+        self._sim_tab.temp_sc.set(sim.temperature)
+        self._sim_tab.speed_sc.set(sim.speed)
+        self._sim_tab.show_fps.set(sim.show_fps)
+        self._sim_tab.show_num.set(sim.show_num)
+        self._sim_tab.show_links.set(sim.show_links)
+        self._sim_tab.top_bool.set(sim.top)
+        self._sim_tab.bottom_bool.set(sim.bottom)
+        self._sim_tab.left_bool.set(sim.left)
+        self._sim_tab.right_bool.set(sim.right)
+        self._set_entry(self._sim_tab.delay_entry, str(sim.min_spawn_delay))
+        self._particle_tab.group_select_btn.configure(
+            command=lambda: sim.select_group(self._particle_tab.groups_entry.get())
         )
         groups = sorted(sim.groups)
-        self.groups_entry["values"] = groups
+        self._particle_tab.groups_entry["values"] = groups
         if groups:
-            self.groups_entry.current(0)
+            self._particle_tab.groups_entry.current(0)
 
     def register_sim(self, sim: SimulationState) -> None:
         self._register_sim(sim)
         self.sim = sim
 
     def _set_air_res(self) -> None:
-        self.sim.air_res = float(self.air_res_entry.get())
+        self.sim.air_res = float(self._sim_tab.air_res_entry.get())
 
     def _set_gravity(self) -> None:
-        self.sim.g = float(self.gravity_entry.get())
+        self.sim.g = float(self._sim_tab.gravity_entry.get())
 
     def _set_ground_friction(self) -> None:
-        self.sim.ground_friction = float(self.friction_entry.get())
+        self.sim.ground_friction = float(self._sim_tab.friction_entry.get())
 
     def _set_temperature(self, new_temp: str) -> None:
         self.sim.temperature = float(new_temp)
@@ -105,40 +107,40 @@ class GUI(GUIWidgets):
         self.sim.speed = float(new_speed)
 
     def _set_show_fps(self) -> None:
-        self.sim.show_fps = self.show_fps.get()
+        self.sim.show_fps = self._sim_tab.show_fps.get()
 
     def _set_show_num(self) -> None:
-        self.sim.show_num = self.show_num.get()
+        self.sim.show_num = self._sim_tab.show_num.get()
 
     def _set_show_links(self) -> None:
-        self.sim.show_links = self.show_links.get()
+        self.sim.show_links = self._sim_tab.show_links.get()
 
     def _set_top(self) -> None:
-        self.sim.top = self.top_bool.get()
+        self.sim.top = self._sim_tab.top_bool.get()
 
     def _set_bottom(self) -> None:
-        self.sim.bottom = self.bottom_bool.get()
+        self.sim.bottom = self._sim_tab.bottom_bool.get()
 
     def _set_left(self) -> None:
-        self.sim.left = self.left_bool.get()
+        self.sim.left = self._sim_tab.left_bool.get()
 
     def _set_right(self) -> None:
-        self.sim.right = self.right_bool.get()
+        self.sim.right = self._sim_tab.right_bool.get()
 
     def _set_use_grid(self) -> None:
-        self.sim.use_grid = self.grid_bool.get()
+        self.sim.use_grid = self._sim_tab.grid_bool.get()
 
     def _set_grid_x(self) -> None:
-        self.sim.grid_res_x = int(self.grid_res_x.get())
+        self.sim.grid_res_x = int(self._sim_tab.grid_res_x.get())
 
     def _set_grid_y(self, *_args: Any) -> None:
-        self.sim.grid_res_y = int(self.grid_res_y.get())
+        self.sim.grid_res_y = int(self._sim_tab.grid_res_y.get())
 
     def _set_min_spawn_delay(self) -> None:
-        self.sim.min_spawn_delay = float(self.delay_entry.get())
+        self.sim.min_spawn_delay = float(self._sim_tab.delay_entry.get())
 
     def _set_calculate_radii_diff(self) -> None:
-        self.sim.calculate_radii_diff = self.calculate_radii_diff_bool.get()
+        self.sim.calculate_radii_diff = self._sim_tab.calculate_radii_diff_bool.get()
 
     def _set_select_mode(self) -> None:
         super()._set_select_mode()
@@ -164,16 +166,16 @@ class GUI(GUIWidgets):
     def _add_group(self) -> None:
         name = self.sim.add_group()
         index = self._create_group(name)
-        self.groups_entry.current(index)
+        self._particle_tab.groups_entry.current(index)
 
     def _create_group(self, name: str) -> int:
         try:
-            return self.groups_entry["values"].index(name)
+            return self._particle_tab.groups_entry["values"].index(name)
         except ValueError:
-            group_names: List[str] = list(self.groups_entry["values"])
+            group_names: List[str] = list(self._particle_tab.groups_entry["values"])
             index = bisect.bisect(group_names, name)
             group_names.insert(index, name)
-            self.groups_entry["values"] = group_names
+            self._particle_tab.groups_entry["values"] = group_names
             return index
 
     def create_group(self, name: str) -> None:
@@ -181,78 +183,90 @@ class GUI(GUIWidgets):
 
     def get_sim_settings(self) -> SimGUISettings:
         return SimGUISettings(
-            show_fps=self.show_fps.get(),
-            show_num=self.show_num.get(),
-            show_links=self.show_links.get(),
-            grid_res_x=int(self.grid_res_x.get()),
-            grid_res_y=int(self.grid_res_y.get()),
-            delay=float(self.delay_entry.get()),
+            show_fps=self._sim_tab.show_fps.get(),
+            show_num=self._sim_tab.show_num.get(),
+            show_links=self._sim_tab.show_links.get(),
+            grid_res_x=int(self._sim_tab.grid_res_x.get()),
+            grid_res_y=int(self._sim_tab.grid_res_y.get()),
+            delay=float(self._sim_tab.delay_entry.get()),
         )
 
     def set_sim_settings(self, sim_settings: SimGUISettings) -> None:
         s = sim_settings
 
-        self.show_fps.set(s.show_fps)
-        self.show_num.set(s.show_num)
-        self.show_links.set(s.show_links)
-        self._set_entry(self.grid_res_x, str(s.grid_res_x))
-        self._set_entry(self.grid_res_y, str(s.grid_res_y))
-        self._set_entry(self.delay_entry, str(s.delay))
+        self._sim_tab.show_fps.set(s.show_fps)
+        self._sim_tab.show_num.set(s.show_num)
+        self._sim_tab.show_links.set(s.show_links)
+        self._set_entry(self._sim_tab.grid_res_x, str(s.grid_res_x))
+        self._set_entry(self._sim_tab.grid_res_y, str(s.grid_res_y))
+        self._set_entry(self._sim_tab.delay_entry, str(s.delay))
 
     def get_particle_settings(self) -> ParticleFactory:
         props = ParticleProperties(
-            mass=float(self.mass_entry.get()),
-            bounciness=float(self.bounciness_entry.get()),
-            attract_r=float(self.attr_r_entry.get()),
-            repel_r=float(self.repel_r_entry.get()),
-            attraction_strength=float(self.attr_strength_entry.get()),
-            repulsion_strength=float(self.repel_strength_entry.get()),
-            link_attr_breaking_force=float(self.link_attr_break_entry.get()),
-            link_repel_breaking_force=float(self.link_repel_break_entry.get()),
-            collisions=self.do_collision_bool.get(),
-            locked=self.locked_bool.get(),
-            linked_group_particles=self.linked_group_bool.get(),
-            group=self.groups_entry.get(),
-            separate_group=self.separate_group_bool.get(),
-            gravity_mode=self.gravity_mode_bool.get(),
+            mass=float(self._particle_tab.mass_entry.get()),
+            bounciness=float(self._particle_tab.bounciness_entry.get()),
+            attract_r=float(self._particle_tab.attr_r_entry.get()),
+            repel_r=float(self._particle_tab.repel_r_entry.get()),
+            attraction_strength=float(self._particle_tab.attr_strength_entry.get()),
+            repulsion_strength=float(self._particle_tab.repel_strength_entry.get()),
+            link_attr_breaking_force=float(
+                self._particle_tab.link_attr_break_entry.get()
+            ),
+            link_repel_breaking_force=float(
+                self._particle_tab.link_repel_break_entry.get()
+            ),
+            collisions=self._particle_tab.do_collision_bool.get(),
+            locked=self._particle_tab.locked_bool.get(),
+            linked_group_particles=self._particle_tab.linked_group_bool.get(),
+            group=self._particle_tab.groups_entry.get(),
+            separate_group=self._particle_tab.separate_group_bool.get(),
+            gravity_mode=self._particle_tab.gravity_mode_bool.get(),
         )
-        color = self._parse_color()
+        color = self._particle_tab._parse_color()
         if color is None:
             color = generate_random()
         factory = ParticleFactory(
             color=color,
             props=props,
-            radius=float(self.radius_entry.get()),
+            radius=float(self._particle_tab.radius_entry.get()),
             velocity=(
-                float(self.velocity_x_entry.get()),
-                float(self.velocity_y_entry.get()),
+                float(self._particle_tab.velocity_x_entry.get()),
+                float(self._particle_tab.velocity_y_entry.get()),
             ),
         )
         return factory
 
     def _set_particle_properties(self, p: ParticleProperties) -> None:
-        self._set_entry(self.mass_entry, str(p.mass))
-        self._set_entry(self.bounciness_entry, str(p.bounciness))
-        self._set_entry(self.attr_r_entry, str(p.attract_r))
-        self._set_entry(self.repel_r_entry, str(p.repel_r))
-        self._set_entry(self.attr_strength_entry, str(p.attraction_strength))
-        self._set_entry(self.repel_strength_entry, str(p.repulsion_strength))
-        self._set_entry(self.link_attr_break_entry, str(p.link_attr_breaking_force))
-        self._set_entry(self.link_repel_break_entry, str(p.link_repel_breaking_force))
-        self.do_collision_bool.set(p.collisions)
-        self.locked_bool.set(p.locked)
-        self.linked_group_bool.set(p.linked_group_particles)
-        self._set_entry(self.groups_entry, p.group)
-        self.separate_group_bool.set(p.separate_group)
-        self.gravity_mode_bool.set(p.gravity_mode)
+        self._set_entry(self._particle_tab.mass_entry, str(p.mass))
+        self._set_entry(self._particle_tab.bounciness_entry, str(p.bounciness))
+        self._set_entry(self._particle_tab.attr_r_entry, str(p.attract_r))
+        self._set_entry(self._particle_tab.repel_r_entry, str(p.repel_r))
+        self._set_entry(
+            self._particle_tab.attr_strength_entry, str(p.attraction_strength)
+        )
+        self._set_entry(
+            self._particle_tab.repel_strength_entry, str(p.repulsion_strength)
+        )
+        self._set_entry(
+            self._particle_tab.link_attr_break_entry, str(p.link_attr_breaking_force)
+        )
+        self._set_entry(
+            self._particle_tab.link_repel_break_entry, str(p.link_repel_breaking_force)
+        )
+        self._particle_tab.do_collision_bool.set(p.collisions)
+        self._particle_tab.locked_bool.set(p.locked)
+        self._particle_tab.linked_group_bool.set(p.linked_group_particles)
+        self._set_entry(self._particle_tab.groups_entry, p.group)
+        self._particle_tab.separate_group_bool.set(p.separate_group)
+        self._particle_tab.gravity_mode_bool.set(p.gravity_mode)
 
     def set_particle_settings(self, particle_settings: ParticleFactory) -> None:
         p = particle_settings
-        self.color_var.set(str(p.color))
+        self._particle_tab.color_var.set(str(p.color))
         self._set_particle_properties(p.props)
-        self._set_entry(self.velocity_x_entry, str(p.velocity[0]))
-        self._set_entry(self.velocity_y_entry, str(p.velocity[1]))
-        self._set_entry(self.radius_entry, str(p.radius))
+        self._set_entry(self._particle_tab.velocity_x_entry, str(p.velocity[0]))
+        self._set_entry(self._particle_tab.velocity_y_entry, str(p.velocity[1]))
+        self._set_entry(self._particle_tab.radius_entry, str(p.radius))
 
     @staticmethod
     def _part_to_dict(p: Particle) -> Dict[str, Any]:
@@ -285,7 +299,7 @@ class GUI(GUIWidgets):
                 particle_settings = variable_names
             to_remove: Set[str] = set()
             for gui_attr, part_val in particle_settings.items():
-                widget: tk.Widget = getattr(self, gui_attr)
+                widget: tk.Widget = getattr(self._particle_tab, gui_attr)
                 if variable_names[gui_attr] == part_val:
                     self._set_widget_value(widget, part_val)
                 else:

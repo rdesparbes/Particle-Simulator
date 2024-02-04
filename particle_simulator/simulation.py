@@ -78,8 +78,8 @@ class Simulation:
     def _bind_commands(self) -> None:
         self.gui.save_btn.configure(command=self.save)
         self.gui.load_btn.configure(command=self.load)
-        self.gui.set_selected_btn.configure(command=self.set_selected)
-        self.gui.set_all_btn.configure(command=self.set_all)
+        self.gui._particle_tab.set_selected_btn.configure(command=self.set_selected)
+        self.gui._particle_tab.set_all_btn.configure(command=self.set_all)
 
     def _bind_sim_events(self) -> None:
         self.gui.tk.bind("<space>", _no_event(self.state.toggle_paused))

@@ -11,7 +11,7 @@ from particle_simulator.gui.gui import GUI
 def test_gui_can_display_sorted_groups_of_sim_state() -> None:
     sim_state = SimulationState(groups={"b": [], "a": []})
     gui = GUI(sim_state)
-    assert gui.groups_entry["values"] == ("a", "b")
+    assert gui._particle_tab.groups_entry["values"] == ("a", "b")
 
 
 def test_gui_can_display_groups_of_registered_particles() -> None:
@@ -22,8 +22,8 @@ def test_gui_can_display_groups_of_registered_particles() -> None:
     sim_state.register_particle(Particle(0.0, 0.0, props=ParticleProperties(group="b")))
     sim_state.register_particle(Particle(0.0, 0.0, props=ParticleProperties(group="a")))
 
-    assert gui.groups_entry.get() == ""
-    assert gui.groups_entry["values"] == ("a", "b")
+    assert gui._particle_tab.groups_entry.get() == ""
+    assert gui._particle_tab.groups_entry["values"] == ("a", "b")
 
 
 @pytest.mark.parametrize(
@@ -38,7 +38,7 @@ def test_gui_displays_expect_group_name(
 ) -> None:
     sim_state = SimulationState(groups=groups)
     gui = GUI(sim_state)
-    assert gui.groups_entry.get() == expected_text
+    assert gui._particle_tab.groups_entry.get() == expected_text
 
 
 @pytest.mark.parametrize("collisions", [True, False])
@@ -48,11 +48,11 @@ def test_copy_selected_btn_invoke_without_selected_particles_changes_nothing(
     # Arrange
     sim_state = SimulationState()
     gui = GUI(sim_state)
-    gui.do_collision_bool.set(collisions)
+    gui._particle_tab.do_collision_bool.set(collisions)
     # Act
-    gui.copy_selected_btn.invoke()
+    gui._particle_tab.copy_selected_btn.invoke()
     # Assert
-    assert gui.do_collision_bool.get() == collisions
+    assert gui._particle_tab.do_collision_bool.get() == collisions
 
 
 @pytest.mark.parametrize("collisions", [True, False])
@@ -73,9 +73,9 @@ def test_copy_selected_btn_invoke_with_selected_particles_all_same_param_sets_pa
         sim_state.select_particle(particle)
     gui = GUI(sim_state)
     # Act
-    gui.copy_selected_btn.invoke()
+    gui._particle_tab.copy_selected_btn.invoke()
     # Assert
-    assert gui.do_collision_bool.get() == collisions
+    assert gui._particle_tab.do_collision_bool.get() == collisions
 
 
 @pytest.mark.parametrize("collisions", [True, False])
@@ -97,6 +97,6 @@ def test_copy_selected_btn_invoke_with_selected_particles_heterogeneous_param_do
         sim_state.select_particle(particle)
     gui = GUI(sim_state)
     # Act
-    gui.copy_selected_btn.invoke()
+    gui._particle_tab.copy_selected_btn.invoke()
     # Assert
-    assert not gui.do_collision_bool.get()
+    assert not gui._particle_tab.do_collision_bool.get()
