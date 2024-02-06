@@ -37,6 +37,7 @@ class GUI(GUIWidgets):
         self._bar_canvas.move_btn.configure(command=self._set_move_mode)
         self._bar_canvas.add_btn.configure(command=self._set_add_mode)
         self._bar_canvas.code_btn.configure(command=self._create_code_window)
+
         self._sim_tab.gravity_var.trace("w", any_args(self._set_gravity))
         self._sim_tab.air_res_var.trace("w", any_args(self._set_air_res))
         self._sim_tab.friction_var.trace("w", any_args(self._set_ground_friction))
@@ -55,20 +56,19 @@ class GUI(GUIWidgets):
             command=self._set_calculate_radii_diff
         )
         self._sim_tab.extra_btn.configure(command=self._create_extra_window)
-        self._particle_tab.group_add_btn.configure(command=self._add_group)
-        self._particle_tab.copy_selected_btn.configure(command=self._copy_from_selected)
         self._sim_tab.grid_res_x_var.trace("w", any_args(self._set_grid_x))
         self._sim_tab.grid_res_y_var.trace("w", any_args(self._set_grid_y))
 
+        self._particle_tab.group_add_btn.configure(command=self._add_group)
+        self._particle_tab.copy_selected_btn.configure(command=self._copy_from_selected)
+
     def _register_sim(self, sim: SimulationState) -> None:
-        self._bar_canvas.pause_button.configure(
-            image=self._bar_canvas._play_photo
-            if sim.paused
-            else self._bar_canvas._pause_photo,
-            command=sim.toggle_paused,
-        )
+        self._bar_canvas.configure_pause(sim.toggle_paused)
+        sim.on_pause_toggle.subscribe(self._bar_canvas.set_paused)
+        self._bar_canvas.set_paused(sim.paused)
         self._bar_canvas.link_btn.configure(command=sim.link_selection)
         self._bar_canvas.unlink_btn.configure(command=sim.unlink_selection)
+
         self._sim_tab.gravity_var.set(sim.g)
         self._sim_tab.air_res_var.set(sim.air_res)
         self._sim_tab.friction_var.set(sim.ground_friction)
@@ -82,6 +82,7 @@ class GUI(GUIWidgets):
         self._sim_tab.left_bool.set(sim.left)
         self._sim_tab.right_bool.set(sim.right)
         self._sim_tab.delay_var.set(sim.min_spawn_delay)
+
         self._particle_tab.group_select_btn.configure(
             command=lambda: sim.select_group(self._particle_tab.groups_var.get())
         )
@@ -328,11 +329,6 @@ class GUI(GUIWidgets):
             error = self.sim.errors.popleft()
             messagebox.showerror(error.name, str(error.exception))
         photo = ImageTk.PhotoImage(image=Image.fromarray(image.astype(np.uint8)))
-        self._bar_canvas.pause_button.config(
-            image=self._bar_canvas._play_photo
-            if self.sim.paused
-            else self._bar_canvas._pause_photo
-        )
 
         self.canvas.delete("all")
         self.canvas.create_image(0, 0, image=photo, anchor=tk.NW)

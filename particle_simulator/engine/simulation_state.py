@@ -22,6 +22,7 @@ from particle_simulator.engine.conversion import (
     particles_to_builders,
 )
 from particle_simulator.engine.error import Error
+from particle_simulator.engine.event import event, eventclass
 from particle_simulator.engine.geometry import Rectangle
 from particle_simulator.engine.grid import Grid
 from particle_simulator.engine.interaction_transformer import (
@@ -44,6 +45,7 @@ from particle_simulator.engine.simulation_data import SimulationData
 Mode = Literal["SELECT", "MOVE", "ADD"]
 
 
+@eventclass
 @dataclass(kw_only=True)
 class SimulationState(SimulationData):
     # Mutable collections:
@@ -313,14 +315,19 @@ class SimulationState(SimulationData):
         particle.x += dx
         particle.y += dy
 
+    @event
+    def on_pause_toggle(self) -> bool:
+        self.paused = not self.paused
+        if not self.paused:
+            self.selection = []
+        self._toggle_pause = False
+        return self.paused
+
     def simulate_step(
         self, additional_transformers: Iterable[InteractionTransformer] = ()
     ) -> None:
         if self._toggle_pause:
-            self.paused = not self.paused
-            if not self.paused:
-                self.selection = []
-            self._toggle_pause = False
+            self.on_pause_toggle()
         if not self.paused:
             transformers: List[InteractionTransformer] = [
                 apply_collisions,

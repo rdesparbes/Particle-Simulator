@@ -1,5 +1,6 @@
 import os
 import tkinter as tk
+from typing import Callable
 
 
 class BarWidget(tk.Canvas):
@@ -16,7 +17,6 @@ class BarWidget(tk.Canvas):
         ).subsample(7, 7)
         self.pause_button = tk.Button(
             self,
-            image=self._pause_photo,
             cursor="hand2",
             border="0",
             bg="#1f3333",
@@ -139,6 +139,14 @@ class BarWidget(tk.Canvas):
             activebackground="#1f3333",
         )
         self.code_btn.place(x=width - 25, y=16, anchor="center")
+
+    def configure_pause(self, toggle_pause: Callable[[], None]) -> None:
+        self.pause_button.configure(command=toggle_pause)
+
+    def set_paused(self, paused: bool) -> None:
+        self.pause_button.config(
+            image=self._play_photo if paused else self._pause_photo
+        )
 
     def _reset_mode(self) -> None:
         self.itemconfig(self._select_rect, state="hidden")
