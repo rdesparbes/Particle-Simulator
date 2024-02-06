@@ -1,22 +1,29 @@
 from types import MethodType
-from typing import Callable, List, TypeVar, Generic, Any, Type
+from typing import Callable, TypeVar, Generic, Any, Type, Set
 
 _T = TypeVar("_T")
 
 
 class _Event(Generic[_T]):
     def __init__(self, broadcaster: Callable[..., _T]) -> None:
-        self._callbacks: List[Callable[[_T], None]] = []
+        self._callbacks: Set[Callable[[_T], None]] = set()
         self.broadcaster = broadcaster
 
     def subscribe(self, callback: Callable[[_T], None]) -> None:
-        self._callbacks.append(callback)
+        self._callbacks.add(callback)
 
     def unsubscribe(self, callback: Callable[[_T], None]) -> None:
         self._callbacks.remove(callback)
 
     def __call__(self, *args: Any, **kwargs: Any) -> _T:
-        result = self.broadcaster(*args, **kwargs)
+        try:
+            result = self.broadcaster(*args, **kwargs)
+        except TypeError as exception:
+            raise TypeError(
+                f"{exception}\nIf this is a method and `self` is missing, "
+                f"consider adding the `eventclass` decorator on top of the "
+                f"declaring class."
+            ) from exception
         for callback in self._callbacks:
             callback(result)
         return result
