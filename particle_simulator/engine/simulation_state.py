@@ -73,8 +73,17 @@ class SimulationState(SimulationData):
     mr: float = 5.0
     _prev_mx: int = field(default=0, init=False)
     _prev_my: int = field(default=0, init=False)
-    mouse_mode: Mode = "MOVE"
+    _mouse_mode: Mode = field(default="MOVE", init=False)
     min_spawn_delay: float = 0.05
+
+    @property
+    def mouse_mode(self) -> Mode:
+        return self._mouse_mode
+
+    @mouse_mode.setter
+    def mouse_mode(self, value: Mode) -> None:
+        self._mouse_mode = value
+        self.on_mouse_mode_changed()
 
     @property
     def _delta_mouse_pos(self) -> npt.NDArray[np.float_]:
@@ -320,6 +329,10 @@ class SimulationState(SimulationData):
             self.selection = []
         self._toggle_pause = False
         return self.paused
+
+    @event
+    def on_mouse_mode_changed(self) -> Mode:
+        return self._mouse_mode
 
     def simulate_step(
         self, additional_transformers: Iterable[InteractionTransformer] = ()

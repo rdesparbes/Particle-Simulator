@@ -63,11 +63,12 @@ class GUI(GUIWidgets):
         self._particle_tab.copy_selected_btn.configure(command=self._copy_from_selected)
 
     def _register_sim(self, sim: SimulationState) -> None:
-        self._bar_canvas.configure_pause(sim.toggle_paused)
         sim.on_pause_toggle.subscribe(self._bar_canvas.set_paused)
+        self._bar_canvas.configure_pause(sim.toggle_paused)
         self._bar_canvas.set_paused(sim.paused)
         self._bar_canvas.link_btn.configure(command=sim.link_selection)
         self._bar_canvas.unlink_btn.configure(command=sim.unlink_selection)
+        sim.on_mouse_mode_changed.subscribe(self._bar_canvas.set_mode)
         self._bar_canvas.set_mode(sim.mouse_mode)
 
         self._sim_tab.gravity_var.set(sim.g)
@@ -148,15 +149,12 @@ class GUI(GUIWidgets):
         self.sim.calculate_radii_diff = self._sim_tab.calculate_radii_diff_bool.get()
 
     def _set_select_mode(self) -> None:
-        self._bar_canvas._set_select_mode()
         self.sim.mouse_mode = "SELECT"
 
     def _set_move_mode(self) -> None:
-        self._bar_canvas._set_move_mode()
         self.sim.mouse_mode = "MOVE"
 
     def _set_add_mode(self) -> None:
-        self._bar_canvas._set_add_mode()
         self.sim.mouse_mode = "ADD"
 
     def _create_extra_window(self) -> None:
