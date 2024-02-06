@@ -5,7 +5,6 @@ from typing import (
     Tuple,
     List,
     Dict,
-    Literal,
     Collection,
     Iterable,
     Optional,
@@ -41,8 +40,7 @@ from particle_simulator.engine.particle import (
 from particle_simulator.engine.particle_factory import ParticleBuilder
 from particle_simulator.engine.particle_interaction import ParticleInteraction
 from particle_simulator.engine.simulation_data import SimulationData
-
-Mode = Literal["SELECT", "MOVE", "ADD"]
+from particle_simulator.mouse_mode import Mode
 
 
 @eventclass

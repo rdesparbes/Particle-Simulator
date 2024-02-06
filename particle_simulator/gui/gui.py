@@ -68,6 +68,7 @@ class GUI(GUIWidgets):
         self._bar_canvas.set_paused(sim.paused)
         self._bar_canvas.link_btn.configure(command=sim.link_selection)
         self._bar_canvas.unlink_btn.configure(command=sim.unlink_selection)
+        self._bar_canvas.set_mode(sim.mouse_mode)
 
         self._sim_tab.gravity_var.set(sim.g)
         self._sim_tab.air_res_var.set(sim.air_res)

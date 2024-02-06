@@ -2,6 +2,8 @@ import os
 import tkinter as tk
 from typing import Callable
 
+from particle_simulator.mouse_mode import Mode
+
 
 class BarWidget(tk.Canvas):
     def __init__(self, master: tk.Misc, width: int, resource_path: str) -> None:
@@ -164,3 +166,11 @@ class BarWidget(tk.Canvas):
     def _set_add_mode(self) -> None:
         self._reset_mode()
         self.itemconfig(self._add_rect, state="normal")
+
+    def set_mode(self, mode: Mode) -> None:
+        if mode == "SELECT":
+            self._set_select_mode()
+        elif mode == "MOVE":
+            self._set_move_mode()
+        else:
+            self._set_add_mode()
