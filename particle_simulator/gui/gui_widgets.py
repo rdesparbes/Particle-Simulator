@@ -23,7 +23,9 @@ class GUIWidgets:
         self._tab_control.add(self._particle_tab, text="Particle-Settings")
         self._tab_control.pack(side="right", fill="both", expand=True)
 
-        self._bar_canvas = BarWidget(self.tk, width=width, resource_path=self._path)
+        self._bar_canvas = BarWidget(
+            width=width, resource_path=self._path, master=self.tk
+        )
         self._bar_canvas.pack(side="top", fill="x")
 
         self.canvas = tk.Canvas(self.tk, width=width, height=height)

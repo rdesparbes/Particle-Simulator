@@ -1,14 +1,22 @@
 import os
 import tkinter as tk
-from typing import Callable
+from typing import Optional
 
+from particle_simulator.engine.event import eventclass, event
 from particle_simulator.mouse_mode import Mode
 
 
+@eventclass
 class BarWidget(tk.Canvas):
-    def __init__(self, master: tk.Misc, width: int, resource_path: str) -> None:
-        super().__init__(master, width=width, height=30, background="#1f3333")
-        self.create_line(80, 0, 80, 30, fill="grey30")
+    def __init__(
+        self,
+        resource_path: str,
+        width: int = 650,
+        height: int = 30,
+        master: Optional[tk.Misc] = None,
+    ) -> None:
+        super().__init__(master, width=width, height=height, background="#1f3333")
+        self.create_line(80, 0, 80, height, fill="grey30")
 
         self._play_photo = tk.PhotoImage(
             file=os.path.join(resource_path, "Assets/play.gif"), master=self
@@ -23,6 +31,7 @@ class BarWidget(tk.Canvas):
             border="0",
             bg="#1f3333",
             activebackground="#1f3333",
+            command=lambda: self.on_pause_button_pressed(),
         )
         self.pause_button.place(x=40, y=16, anchor="center")
 
@@ -114,7 +123,7 @@ class BarWidget(tk.Canvas):
             activebackground="#1f3333",
             relief="flat",
         )
-        self.save_btn.place(x=width - 110, y=16, anchor="center")
+        self.save_btn.place(x=540, y=16, anchor="center")
 
         self._load_img = tk.PhotoImage(
             file=os.path.join(resource_path, "Assets/load.gif"), master=self
@@ -127,7 +136,7 @@ class BarWidget(tk.Canvas):
             activebackground="#1f3333",
             relief="flat",
         )
-        self.load_btn.place(x=width - 75, y=16, anchor="center")
+        self.load_btn.place(x=575, y=16, anchor="center")
 
         self._code_img = tk.PhotoImage(
             file=os.path.join(resource_path, "Assets/code.gif"), master=self
@@ -140,10 +149,11 @@ class BarWidget(tk.Canvas):
             bg="#1f3333",
             activebackground="#1f3333",
         )
-        self.code_btn.place(x=width - 25, y=16, anchor="center")
+        self.code_btn.place(x=625, y=16, anchor="center")
 
-    def configure_pause(self, toggle_pause: Callable[[], None]) -> None:
-        self.pause_button.configure(command=toggle_pause)
+    @event
+    def on_pause_button_pressed(self) -> None:
+        return None
 
     def set_paused(self, paused: bool) -> None:
         self.pause_button.config(

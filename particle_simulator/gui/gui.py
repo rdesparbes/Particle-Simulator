@@ -66,7 +66,9 @@ class GUI(GUIWidgets):
         sim.on_group_created.subscribe(self._create_group)
 
         sim.on_pause_toggle.subscribe(self._bar_canvas.set_paused)
-        self._bar_canvas.configure_pause(sim.toggle_paused)
+        self._bar_canvas.on_pause_button_pressed.subscribe(
+            lambda _: sim.toggle_paused()
+        )
         self._bar_canvas.set_paused(sim.paused)
         self._bar_canvas.link_btn.configure(command=sim.link_selection)
         self._bar_canvas.unlink_btn.configure(command=sim.unlink_selection)
