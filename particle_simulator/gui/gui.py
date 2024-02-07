@@ -63,6 +63,8 @@ class GUI(GUIWidgets):
         self._particle_tab.copy_selected_btn.configure(command=self._copy_from_selected)
 
     def _register_sim(self, sim: SimulationState) -> None:
+        sim.on_group_created.subscribe(self._create_group)
+
         sim.on_pause_toggle.subscribe(self._bar_canvas.set_paused)
         self._bar_canvas.configure_pause(sim.toggle_paused)
         self._bar_canvas.set_paused(sim.paused)
@@ -168,10 +170,10 @@ class GUI(GUIWidgets):
 
     def _add_group(self) -> None:
         name = self.sim.add_group()
-        index = self._create_group(name)
+        index = self._create_group_id(name)
         self._particle_tab.groups_entry.current(index)
 
-    def _create_group(self, name: str) -> int:
+    def _create_group_id(self, name: str) -> int:
         try:
             return self._particle_tab.groups_entry["values"].index(name)
         except ValueError:
@@ -181,8 +183,8 @@ class GUI(GUIWidgets):
             self._particle_tab.groups_entry["values"] = group_names
             return index
 
-    def create_group(self, name: str) -> None:
-        self._create_group(name)
+    def _create_group(self, name: str) -> None:
+        self._create_group_id(name)
 
     def get_sim_settings(self) -> SimGUISettings:
         return SimGUISettings(

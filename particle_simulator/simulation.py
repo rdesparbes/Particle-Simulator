@@ -56,7 +56,6 @@ class Simulation:
             grid_res_y=gridres[1],
         )
         self.gui = GUI(self.state, title)
-        self.state.create_group_callbacks.append(self.gui.create_group)
 
         self.fps = 0.0
         self.fps_update_delay = fps_update_delay
@@ -204,10 +203,7 @@ class Simulation:
         )
 
     def from_controller_state(self, controller_state: ControllerState) -> None:
-        self.state = SimulationState(
-            **asdict(controller_state.sim_data),
-            create_group_callbacks=[self.gui.create_group]
-        )
+        self.state = SimulationState(**asdict(controller_state.sim_data))
         self._bind_sim_events()
 
         self.gui.register_sim(self.state)

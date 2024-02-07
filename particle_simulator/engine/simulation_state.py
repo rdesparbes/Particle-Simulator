@@ -8,7 +8,6 @@ from typing import (
     Collection,
     Iterable,
     Optional,
-    Callable,
     Deque,
     Mapping,
 )
@@ -50,7 +49,6 @@ class SimulationState(SimulationData):
     particles: List[Particle] = field(default_factory=list)
     groups: Dict[str, List[Particle]] = field(default_factory=lambda: {"group1": []})
     selection: List[Particle] = field(default_factory=list)
-    create_group_callbacks: List[Callable[[str], None]] = field(default_factory=list)
     errors: Deque[Error] = field(default_factory=deque, init=False)
     _clipboard: List[ParticleBuilder] = field(default_factory=list, init=False)
     # Geometry:
@@ -195,14 +193,17 @@ class SimulationState(SimulationData):
     def select_group(self, name: str) -> None:
         self.selection = list(self.groups[name])
 
+    @event
+    def on_group_created(self, name: str) -> str:
+        return name
+
     def _get_group(self, name: str) -> List[Particle]:
         try:
             return self.groups[name]
         except KeyError:
             new_group: List[Particle] = []
             self.groups[name] = new_group
-            for create_group_callback in self.create_group_callbacks:
-                create_group_callback(name)
+            self.on_group_created(name)
             return new_group
 
     def register_particle(self, particle: Particle) -> None:

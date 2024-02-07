@@ -22,13 +22,13 @@ def test_add_group(sim_state: SimulationState) -> None:
     assert sim_state.groups == {"group1": [], "group2": []}
 
 
-def test_register_particle_triggers_create_group_callbacks(
+def test_register_particle_triggers_on_group_created_event(
     sim_state: SimulationState,
 ) -> None:
     # Arrange
     create_group_callback = MagicMock()
     sim_state.groups = {}
-    sim_state.create_group_callbacks.append(create_group_callback)
+    sim_state.on_group_created.subscribe(create_group_callback)
     # Act
     sim_state.register_particle(Particle(0.0, 0.0))
     # Assert

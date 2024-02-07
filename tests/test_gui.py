@@ -17,7 +17,6 @@ def test_gui_can_display_sorted_groups_of_sim_state() -> None:
 def test_gui_can_display_groups_of_registered_particles() -> None:
     sim_state = SimulationState(groups={})
     gui = GUI(sim_state)
-    sim_state.create_group_callbacks.append(gui.create_group)
 
     sim_state.register_particle(Particle(0.0, 0.0, props=ParticleProperties(group="b")))
     sim_state.register_particle(Particle(0.0, 0.0, props=ParticleProperties(group="a")))
