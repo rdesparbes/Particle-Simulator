@@ -165,8 +165,8 @@ class GUI(GUIWidgets):
     def _create_code_window(self) -> None:
         self.code_window = CodeWindow()
         self.code_window.set_code(self.sim.code)
-        self.code_window.set_exec_callback(self.sim.execute)
-        self.code_window.set_save_callback(self.sim.set_code)
+        self.code_window.on_exec.subscribe(self.sim.execute)
+        self.code_window.on_save.subscribe(self.sim.set_code)
 
     def _add_group(self) -> None:
         name = self.sim.add_group()

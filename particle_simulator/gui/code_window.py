@@ -2,9 +2,11 @@ import threading
 import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import ttk
-from typing import Callable, Optional
+
+from particle_simulator.engine.event import event, eventclass
 
 
+@eventclass
 class CodeWindow:
     def __init__(self) -> None:
         self.tk = tk.Tk()
@@ -46,31 +48,31 @@ class CodeWindow:
             variable=self.use_threading,
         )
         self.threading_chk.place(x=460, y=435, anchor="ne")
-        self.save_callback: Optional[Callable[[str], None]] = None
-        self.exec_callback: Optional[Callable[[str], None]] = None
+
+    @property
+    def code(self) -> str:
+        return self.code_box.get("1.0", tk.END)
 
     def set_code(self, code: str) -> None:
         self.code_box.insert(tk.INSERT, code)
 
-    def set_save_callback(self, callback: Callable[[str], None]) -> None:
-        self.save_callback = callback
+    @event
+    def on_save(self, code: str) -> str:
+        return code
 
-    def set_exec_callback(self, callback: Callable[[str], None]) -> None:
-        self.exec_callback = callback
+    @event
+    def on_exec(self, code: str) -> str:
+        return code
 
     def execute(self) -> None:
-        if self.exec_callback is None:
-            return
-        code = self.code_box.get("1.0", tk.END)
-        if self.save_callback is not None:
-            self.save_callback(code)
+        code = self.code
+        self.on_save(code)
 
         if self.use_threading.get():
-            threading.Thread(target=self.exec_callback, args=[code]).start()
+            threading.Thread(target=self.on_exec, args=[code]).start()
         else:
-            self.exec_callback(code)
+            self.on_exec(code)
 
     def destroy(self) -> None:
-        if self.save_callback is not None:
-            self.save_callback(self.code_box.get("1.0", tk.END))
+        self.on_save(self.code)
         self.tk.destroy()
