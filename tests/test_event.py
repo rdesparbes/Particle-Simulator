@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Type, Protocol
 from unittest.mock import MagicMock
 
 import pytest
@@ -15,15 +15,21 @@ def fixture_on_say_hello() -> _Event[str]:
     return on_say_hello
 
 
-@pytest.fixture(name="event_class")
-def fixture_event_class() -> Type:
+@eventclass
+class Greeter(Protocol):
+    @event
+    def on_say_hello_to(self, name: str) -> str: ...
+
+
+@pytest.fixture(name="greeter")
+def fixture_greeter() -> Type[Greeter]:
     @eventclass
-    class Class:
+    class _Greeter:
         @event
         def on_say_hello_to(self, name: str) -> str:
             return f"Hello {name}!"
 
-    return Class
+    return _Greeter
 
 
 def test_subscribe_given_function(on_say_hello: _Event[str]) -> None:
@@ -56,16 +62,16 @@ def test_unsubscribe_given_unregistered_function_raises_key_error(
 
 def test_instance_of_decorated_class_does_not_change_of_type() -> None:
     @eventclass
-    class Class: ...
+    class EventClass: ...
 
-    event_obj = Class()
+    event_obj = EventClass()
 
-    assert isinstance(event_obj, Class)
+    assert isinstance(event_obj, EventClass)
 
 
-def test_subscribe_given_method(event_class: Type) -> None:
+def test_subscribe_given_method(greeter: Type[Greeter]) -> None:
     callback = MagicMock()
-    event_obj = event_class()
+    event_obj = greeter()
 
     event_obj.on_say_hello_to.subscribe(callback)
 
@@ -73,9 +79,11 @@ def test_subscribe_given_method(event_class: Type) -> None:
     callback.assert_called_once_with("Hello world!")
 
 
-def test_subscribe_given_two_instances_keeps_events_isolated(event_class: Type) -> None:
-    a = event_class()
-    b = event_class()
+def test_subscribe_given_two_instances_keeps_events_isolated(
+    greeter: Type[Greeter],
+) -> None:
+    a = greeter()
+    b = greeter()
     callback_a = MagicMock()
     callback_b = MagicMock()
 
@@ -87,7 +95,9 @@ def test_subscribe_given_two_instances_keeps_events_isolated(event_class: Type) 
     callback_b.assert_not_called()
 
 
-def test_forgetting_event_class_raises_type_error(event_class: Type) -> None:
-    event_obj = event_class()
+def test_forgetting_event_class_raises_type_error(
+    greeter: Type[Greeter],
+) -> None:
+    event_obj = greeter()
     with pytest.raises(TypeError, match="eventclass"):
         event_obj.on_say_hello_to()
