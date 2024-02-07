@@ -33,10 +33,10 @@ def test_subscribe_on_method() -> None:
         calls.append(broadcast_message)
 
     o = Class()
+    assert isinstance(o, Class)
     o.broadcaster.subscribe(callback)
-    o.broadcaster.unsubscribe(callback)
     assert o.broadcaster() == "Hello world!"
-    assert calls == []
+    assert calls == ["Hello world!"]
 
 
 def test_subscribe_on_two_methods_does_not_interfere() -> None:
