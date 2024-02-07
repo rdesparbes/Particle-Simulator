@@ -19,7 +19,7 @@ from particle_simulator.sim_gui_settings import SimGUISettings
 from particle_simulator.engine.simulation_data import SimulationData
 
 ParticlesPickle = List[Dict[str, Any]]
-PickleSettings = Dict[str, Tuple[Any]]
+PickleSettings = Dict[str, Sequence[Any]]
 SimPickle = TypedDict(
     "SimPickle",
     {
