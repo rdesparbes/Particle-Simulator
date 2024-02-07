@@ -1,4 +1,5 @@
-"""A module that defines tools to transform functions into events"""
+"""A module that defines decorators to transform functions and methods
+into events"""
 
 from types import MethodType
 from typing import Callable, TypeVar, Generic, Any, Type, Set, List
@@ -6,7 +7,7 @@ from typing import Callable, TypeVar, Generic, Any, Type, Set, List
 _T = TypeVar("_T")
 
 
-class Event(Generic[_T]):
+class _Event(Generic[_T]):
     def __init__(self, broadcaster: Callable[..., _T]) -> None:
         self._callbacks: Set[Callable[[_T], None]] = set()
         self.broadcaster = broadcaster
@@ -14,8 +15,8 @@ class Event(Generic[_T]):
     def subscribe(self, callback: Callable[[_T], None]) -> None:
         """Register the given callable as a subscriber.
 
-        :param callback: a subscriber that will be called each time the
-            event is triggered. It must be hashable
+        :param callback: a function-like object that will be called
+            each time the event is triggered. It must be hashable
         """
         self._callbacks.add(callback)
 
@@ -23,7 +24,7 @@ class Event(Generic[_T]):
         """Unregister the given callable.
 
         :param callback: the subscriber to unregister
-        :raises KeyError: if the given callback in not registered
+        :raises KeyError: if the given callable in not registered
         """
         self._callbacks.remove(callback)
 
@@ -44,11 +45,11 @@ class Event(Generic[_T]):
 def _duplicate_events(obj: object) -> None:
     for attr_name in dir(obj):
         attr = getattr(obj, attr_name)
-        if not isinstance(attr, Event):
+        if not isinstance(attr, _Event):
             continue
         # Creating a new Event specifically for "obj" to
         # avoid side effects on other instances:
-        event_for_instance = Event(attr.broadcaster)
+        event_for_instance = _Event(attr.broadcaster)
         setattr(
             obj,
             attr_name,
@@ -56,15 +57,14 @@ def _duplicate_events(obj: object) -> None:
         )
 
 
-def event(broadcaster: Callable[..., _T]) -> Event[_T]:
-    """A decorator that transforms a function into an :class:`Event`.
+def event(broadcaster: Callable[..., _T]) -> _Event[_T]:
+    """A decorator that transforms a function into an event.
     Other functions ("subscribers") can subscribe to this event,
     and will be called each time this event is triggered. The
     subscribers must take a single argument that corresponds
     to the output of the event.
 
-    .. warning:
-
+    .. warning::
         When decorating a method, the declaring class should be decorated
         with an :func:`eventclass`
 
@@ -86,7 +86,7 @@ def event(broadcaster: Callable[..., _T]) -> Event[_T]:
     :param broadcaster: The function to decorate, to turn it into an event
     :return: An event, which other functions can subscribe to or unsubscribe from
     """
-    return Event(broadcaster)
+    return _Event(broadcaster)
 
 
 def eventclass(class_: Type[_T]) -> Type[_T]:
