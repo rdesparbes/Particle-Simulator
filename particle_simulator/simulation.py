@@ -105,38 +105,20 @@ class Simulation:
 
         self._bind_sim_events()
 
-    def _iter_in_range(self, circle: Circle) -> Iterable[Particle]:
-        for particle in self.state.particles:
-            if particle.circle.is_in_range(circle):
-                yield particle
-
     def _mouse_p(self, event: tk.Event) -> None:
         mouse_circle = Circle(event.x, event.y, self.state.mr)
         if self.state.mouse_mode == "SELECT":
-            selected = False
-            for p in self._iter_in_range(mouse_circle):
-                self.state.select_particle(p)
-                selected = True
-            if not selected:
-                self.state.selection = []
+            self.state.select_or_reset_in_range(mouse_circle)
         elif self.state.mouse_mode == "MOVE":
-            selected = False
-            for p in self._iter_in_range(mouse_circle):
-                p.mouse = True
-                if p in self.state.selection:
-                    selected = True
-            if selected:
-                for particle in self.state.selection:
-                    particle.mouse = True
+            self.state.move_in_range(mouse_circle)
         elif self.state.mouse_mode == "ADD":
             self.state.selection = []
             self.add_particle(event.x, event.y)
 
     def _mouse_m(self, event: tk.Event) -> None:
         if self.state.mouse_mode == "SELECT":
-            mouse_circle = Circle(event.x, event.y, self.state.mr)
-            for p in self._iter_in_range(mouse_circle):
-                self.state.select_particle(p)
+            circle = Circle(event.x, event.y, self.state.mr)
+            self.state.select_in_range(circle)
         elif (
             self.state.mouse_mode == "ADD"
             and time.time() - self.last_particle_added_time

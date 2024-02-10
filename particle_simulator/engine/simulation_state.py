@@ -21,7 +21,7 @@ from particle_simulator.engine.conversion import (
 )
 from particle_simulator.engine.error import Error
 from particle_simulator.engine.event import event, eventclass
-from particle_simulator.engine.geometry import Rectangle
+from particle_simulator.engine.geometry import Rectangle, Circle
 from particle_simulator.engine.grid import Grid
 from particle_simulator.engine.interaction_transformer import (
     InteractionTransformer,
@@ -141,6 +141,33 @@ class SimulationState(SimulationData):
         if particle in self.selection:
             return
         self.selection.append(particle)
+
+    def _iter_in_range(self, circle: Circle) -> Iterable[Particle]:
+        for particle in self.particles:
+            if particle.circle.is_in_range(circle):
+                yield particle
+
+    def select_in_range(self, circle: Circle) -> None:
+        for p in self._iter_in_range(circle):
+            self.select_particle(p)
+
+    def select_or_reset_in_range(self, circle: Circle) -> None:
+        any_in_range = False
+        for p in self._iter_in_range(circle):
+            self.select_particle(p)
+            any_in_range = True
+        if not any_in_range:
+            self.selection = []
+
+    def move_in_range(self, circle: Circle) -> None:
+        any_selected = False
+        for p in self._iter_in_range(circle):
+            p.mouse = True
+            if p in self.selection:
+                any_selected = True
+        if any_selected:
+            for particle in self.selection:
+                particle.mouse = True
 
     def remove_particle(self, particle: Particle) -> None:
         self.particles.remove(particle)
