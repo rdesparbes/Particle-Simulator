@@ -143,7 +143,7 @@ class GUI(GUIWidgets):
     def _set_grid_x(self) -> None:
         self.sim.grid_res_x = self._sim_tab.grid_res_x_var.get()
 
-    def _set_grid_y(self, *_args: Any) -> None:
+    def _set_grid_y(self) -> None:
         self.sim.grid_res_y = self._sim_tab.grid_res_y_var.get()
 
     def _set_min_spawn_delay(self) -> None:

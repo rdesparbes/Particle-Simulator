@@ -36,7 +36,7 @@ from particle_simulator.engine.particle import (
     radii_compute_magnitude_strategy,
     default_compute_magnitude_strategy,
 )
-from particle_simulator.engine.particle_factory import ParticleBuilder
+from particle_simulator.engine.particle_factory import ParticleBuilder, ParticleFactory
 from particle_simulator.engine.particle_interaction import ParticleInteraction
 from particle_simulator.engine.simulation_data import SimulationData
 from particle_simulator.mouse_mode import Mode
@@ -101,9 +101,12 @@ class SimulationState(SimulationData):
     def _unlink(particles: Collection[Particle]) -> None:
         unlink_particles(particles)
 
-    def rotate_selection(self, x: float, y: float, angle: float) -> None:
+    def rotate_selection(self, factor: float) -> None:
         for p in self.selection:
-            p.rotate(x, y, angle=angle)
+            p.rotate(self.mx, self.my, factor * self.mr)
+
+    def update_mouse_radius(self, factor: float) -> None:
+        self.mr = max(self.mr * 2**factor, 1)
 
     def copy_selection(self) -> None:
         self._clipboard = []
@@ -147,21 +150,31 @@ class SimulationState(SimulationData):
             if particle.circle.is_in_range(circle):
                 yield particle
 
-    def select_in_range(self, circle: Circle) -> None:
-        for p in self._iter_in_range(circle):
+    def select_in_range(self) -> None:
+        for p in self._iter_in_range(self._cursor_circle):
             self.select_particle(p)
 
-    def select_or_reset_in_range(self, circle: Circle) -> None:
+    def remove_in_range(self) -> None:
+        temp = self.particles.copy()
+        for p in temp:
+            if p.circle.is_in_range(self._cursor_circle):
+                self.remove_particle(p)
+
+    @property
+    def _cursor_circle(self) -> Circle:
+        return Circle(self.mx, self.my, self.mr)
+
+    def select_or_reset_in_range(self) -> None:
         any_in_range = False
-        for p in self._iter_in_range(circle):
+        for p in self._iter_in_range(self._cursor_circle):
             self.select_particle(p)
             any_in_range = True
         if not any_in_range:
             self.selection = []
 
-    def move_in_range(self, circle: Circle) -> None:
+    def move_in_range(self) -> None:
         any_selected = False
-        for p in self._iter_in_range(circle):
+        for p in self._iter_in_range(self._cursor_circle):
             p.mouse = True
             if p in self.selection:
                 any_selected = True
@@ -196,6 +209,17 @@ class SimulationState(SimulationData):
     def unlock_selection(self) -> None:
         for p in self.selection:
             p.props.locked = False
+
+    def create_particle(self, factory: ParticleFactory) -> None:
+        particle = Particle(
+            x=self.mx,
+            y=self.my,
+            radius=factory.radius,
+            color=factory.color,
+            props=factory.props,
+            velocity=np.array(factory.velocity),
+        )
+        self.register_particle(particle)
 
     def change_link_lengths(self, particles: Iterable[Particle], amount: float) -> None:
         for p in particles:
