@@ -9,7 +9,9 @@ from particle_simulator.gui.simulation_widget import SimulationWidget
 
 
 class GUIWidgets:
-    def __init__(self, width: int, height: int, title: str) -> None:
+    def __init__(
+        self, title: str = "GUIWidgets", width: int = 650, height: int = 600
+    ) -> None:
         self._path = os.path.split(os.path.abspath(__file__))[0]
 
         self.tk = tk.Tk()
@@ -17,14 +19,15 @@ class GUIWidgets:
         self.tk.resizable(False, False)
 
         self._tab_control = ttk.Notebook(self.tk, width=200)
-        self._sim_tab = SimulationWidget(self._tab_control, self._path)
+        self._sim_tab = SimulationWidget(self._tab_control)
         self._tab_control.add(self._sim_tab, text="Sim-Settings")
-        self._particle_tab = ParticleWidget(self._tab_control, self._path)
+        self._particle_tab = ParticleWidget(self._tab_control)
         self._tab_control.add(self._particle_tab, text="Particle-Settings")
         self._tab_control.pack(side="right", fill="both", expand=True)
 
         self._bar_canvas = BarWidget(
-            width=width, resource_path=self._path, master=self.tk
+            master=self.tk,
+            width=width,
         )
         self._bar_canvas.pack(side="top", fill="x")
 

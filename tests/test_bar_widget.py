@@ -1,11 +1,10 @@
-import os
 from typing import List
 
 from particle_simulator.gui.bar_widget import BarWidget
 
 
 def test_on_pause_button_pressed() -> None:
-    bar_widget = BarWidget(os.path.join("particle_simulator", "gui"))
+    bar_widget = BarWidget()
     calls: List[None] = []
 
     def callback(value: None) -> None:

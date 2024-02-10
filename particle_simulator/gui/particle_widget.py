@@ -9,8 +9,9 @@ from particle_simulator.gui.variable import get_double_var, get_string_var
 
 
 class ParticleWidget(ttk.Frame):
-    def __init__(self, master: tk.Widget, resource_path: str) -> None:
+    def __init__(self, master: Optional[tk.Misc]) -> None:
         super().__init__(master, relief="flat")
+        resource_path = os.path.split(os.path.abspath(__file__))[0]
         self._particle_tab_canvas = tk.Canvas(self)
         self._particle_tab_canvas.pack()
 

@@ -13,9 +13,9 @@ from particle_simulator.engine.simulation_state import SimulationState
 
 
 class ExtraWindow:
-    def __init__(self, sim: SimulationState, path: str) -> None:
+    def __init__(self, sim: SimulationState) -> None:
         self.sim = sim
-        self.path = path
+        self.path = os.path.split(os.path.abspath(__file__))[0]
         self.tk = tk.Tk()
         self.tk.title("Extra Options")
         self.tk.resizable(width=False, height=False)

@@ -10,12 +10,12 @@ from particle_simulator.mouse_mode import Mode
 class BarWidget(tk.Canvas):
     def __init__(
         self,
-        resource_path: str,
+        master: Optional[tk.Misc] = None,
         width: int = 650,
         height: int = 30,
-        master: Optional[tk.Misc] = None,
     ) -> None:
         super().__init__(master, width=width, height=height, background="#1f3333")
+        resource_path = os.path.split(os.path.abspath(__file__))[0]
         self.create_line(80, 0, 80, height, fill="grey30")
 
         self._play_photo = tk.PhotoImage(
@@ -33,6 +33,7 @@ class BarWidget(tk.Canvas):
             activebackground="#1f3333",
             command=lambda: self.on_pause_button_pressed(),
         )
+        self.set_paused(True)
         self.pause_button.place(x=40, y=16, anchor="center")
 
         x = 125

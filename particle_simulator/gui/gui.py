@@ -23,7 +23,7 @@ from ..utils import any_args
 
 class GUI(GUIWidgets):
     def __init__(self, sim: SimulationState, title: str = "Simulation") -> None:
-        super().__init__(sim.width, sim.height, title)
+        super().__init__(title, sim.width, sim.height)
         self.save_manager = SaveManager(file_location=os.path.dirname(self._path))
         self.code_window: Optional[CodeWindow] = None
         self.extra_window: Optional[ExtraWindow] = None
@@ -162,7 +162,7 @@ class GUI(GUIWidgets):
         self.sim.mouse_mode = "ADD"
 
     def _create_extra_window(self) -> None:
-        self.extra_window = ExtraWindow(self.sim, str(self._path))
+        self.extra_window = ExtraWindow(self.sim)
 
     def _create_code_window(self) -> None:
         self.code_window = CodeWindow()
