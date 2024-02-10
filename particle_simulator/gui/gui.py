@@ -186,7 +186,9 @@ class GUI(GUIWidgets):
             return index
 
     def _create_group(self, name: str) -> None:
-        self._create_group_id(name)
+        index = self._create_group_id(name)
+        if not self._particle_tab.groups_entry.get():
+            self._particle_tab.groups_entry.current(index)
 
     def get_sim_settings(self) -> SimGUISettings:
         return SimGUISettings(

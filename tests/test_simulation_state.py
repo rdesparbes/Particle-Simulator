@@ -17,9 +17,9 @@ def fixture_sim_state() -> SimulationState:
 
 
 def test_add_group(sim_state: SimulationState) -> None:
+    assert sim_state.groups == {}
+    assert sim_state.add_group() == "group1"
     assert sim_state.groups == {"group1": []}
-    assert sim_state.add_group() == "group2"
-    assert sim_state.groups == {"group1": [], "group2": []}
 
 
 def test_register_particle_triggers_on_group_created_event(

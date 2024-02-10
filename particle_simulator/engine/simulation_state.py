@@ -47,7 +47,7 @@ from particle_simulator.mouse_mode import Mode
 class SimulationState(SimulationData):
     # Mutable collections:
     particles: List[Particle] = field(default_factory=list)
-    groups: Dict[str, List[Particle]] = field(default_factory=lambda: {"group1": []})
+    groups: Dict[str, List[Particle]] = field(default_factory=dict)
     selection: List[Particle] = field(default_factory=list)
     errors: Deque[Error] = field(default_factory=deque, init=False)
     _clipboard: List[ParticleBuilder] = field(default_factory=list, init=False)

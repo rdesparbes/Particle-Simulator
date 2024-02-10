@@ -21,7 +21,7 @@ def test_gui_can_display_groups_of_registered_particles() -> None:
     sim_state.register_particle(Particle(0.0, 0.0, props=ParticleProperties(group="b")))
     sim_state.register_particle(Particle(0.0, 0.0, props=ParticleProperties(group="a")))
 
-    assert gui._particle_tab.groups_entry.get() == ""
+    assert gui._particle_tab.groups_entry.get() == "b"
     assert gui._particle_tab.groups_entry["values"] == ("a", "b")
 
 
