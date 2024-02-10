@@ -208,7 +208,7 @@ class GUI(GUIWidgets):
         self._sim_tab.grid_res_y_var.set(s.grid_res_y)
         self._sim_tab.delay_var.set(s.delay)
 
-    def get_particle_settings(self) -> ParticleFactory:
+    def get_particle_factory(self) -> ParticleFactory:
         props = ParticleProperties(
             mass=self._particle_tab.mass_var.get(),
             bounciness=self._particle_tab.bounciness_var.get(),

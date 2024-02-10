@@ -12,23 +12,23 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
-from .controller_state import ControllerState
 from particle_simulator.engine.conversion import (
     builders_to_particles,
     particles_to_builders,
 )
 from particle_simulator.engine.error import Error
 from particle_simulator.engine.geometry import Circle
-from particle_simulator.gui.gui import GUI
 from particle_simulator.engine.interaction_transformer import (
     compute_links,
     InteractionTransformer,
     Link,
 )
-from .painter import paint_image
 from particle_simulator.engine.particle import Particle
 from particle_simulator.engine.particle_factory import ParticleFactory
 from particle_simulator.engine.simulation_state import SimulationState
+from particle_simulator.gui.gui import GUI
+from .controller_state import ControllerState
+from .painter import paint_image
 from .utils import any_args
 
 
@@ -171,9 +171,9 @@ class Simulation:
     def _exit_rotate_mode(self) -> None:
         self.rotate_mode = False
 
-    def _get_particle_settings(self) -> Optional[ParticleFactory]:
+    def _get_particle_factory(self) -> Optional[ParticleFactory]:
         try:
-            return self.gui.get_particle_settings()
+            return self.gui.get_particle_factory()
         except Exception as error:
             self.state.errors.append(Error("Input-Error", error))
         return None
@@ -181,7 +181,7 @@ class Simulation:
     def _set_particles(self, particles: Iterable[Particle]) -> None:
         for p in particles:
             # Update for each particle in case of 'random' and avoid sharing properties:
-            factory = self._get_particle_settings()
+            factory = self._get_particle_factory()
             if factory is not None:
                 p.radius = factory.radius
                 p.color = factory.color
@@ -198,7 +198,7 @@ class Simulation:
         return ControllerState(
             sim_data=self.state,
             gui_settings=self.gui.get_sim_settings(),
-            gui_particle_state=self.gui.get_particle_settings(),
+            gui_particle_state=self.gui.get_particle_factory(),
             particles=particles_to_builders(self.state.particles),
         )
 
@@ -213,19 +213,22 @@ class Simulation:
         for particle in builders_to_particles(controller_state.particles):
             self.state.register_particle(particle)
 
+    def _add_particle(self, x: float, y: float, p: ParticleFactory) -> None:
+        particle = Particle(
+            x=x,
+            y=y,
+            radius=p.radius,
+            color=p.color,
+            props=p.props,
+            velocity=np.array(p.velocity),
+        )
+        self.state.register_particle(particle)
+        self.last_particle_added_time = time.time()
+
     def add_particle(self, x: float, y: float) -> None:
-        p = self._get_particle_settings()
-        if p is not None:
-            particle = Particle(
-                x=x,
-                y=y,
-                radius=p.radius,
-                color=p.color,
-                props=p.props,
-                velocity=np.array(p.velocity),
-            )
-            self.state.register_particle(particle)
-            self.last_particle_added_time = time.time()
+        particle_factory = self._get_particle_factory()
+        if particle_factory is not None:
+            self._add_particle(x, y, particle_factory)
 
     def _paint_image(self, link_colors: Iterable[Link]) -> npt.NDArray[np.uint8]:
         if not self.state.stress_visualization or self.state.paused:
