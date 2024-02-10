@@ -6,6 +6,9 @@ from particle_simulator.engine.particle_interaction import ParticleInteraction
 InteractionTransformer = Callable[
     [Particle, Mapping[Particle, ParticleInteraction]], None
 ]
+"""A function that uses a ParticleInteraction mapping to modify in place 
+the given Particle
+"""
 
 
 class Link(NamedTuple):
