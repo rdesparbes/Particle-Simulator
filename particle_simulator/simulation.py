@@ -44,7 +44,7 @@ class SimulationGUI(Protocol):
     def get_particle_factory(self) -> ParticleFactory:
         pass
 
-    def set_particle_settings(self, particle_settings: ParticleFactory) -> None:
+    def set_particle_factory(self, particle_factory: ParticleFactory) -> None:
         pass
 
     def update(
@@ -146,7 +146,7 @@ class Simulation:
         self.state = SimulationState(**asdict(controller_state.sim_data))
 
         self.gui.register_sim(self.state)
-        self.gui.set_particle_settings(controller_state.gui_particle_state)
+        self.gui.set_particle_factory(controller_state.gui_particle_state)
         self.gui.set_sim_settings(controller_state.gui_settings)
 
         for particle in builders_to_particles(controller_state.particles):

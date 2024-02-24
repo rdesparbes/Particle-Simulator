@@ -370,8 +370,8 @@ class GUI(GUIWidgets):
         self._particle_tab.separate_group_bool.set(p.separate_group)
         self._particle_tab.gravity_mode_bool.set(p.gravity_mode)
 
-    def set_particle_settings(self, particle_settings: ParticleFactory) -> None:
-        p = particle_settings
+    def set_particle_factory(self, particle_factory: ParticleFactory) -> None:
+        p = particle_factory
         self._particle_tab.color_var.set(str(p.color))
         self._set_particle_properties(p.props)
         self._particle_tab.velocity_x_var.set(p.velocity[0])
