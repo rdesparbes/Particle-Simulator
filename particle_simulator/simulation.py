@@ -28,7 +28,6 @@ from particle_simulator.engine.simulation_state import SimulationState
 from particle_simulator.gui.gui import GUI
 from .controller_state import ControllerState
 from .painter import paint_image
-from .utils import any_args
 
 
 class Simulation:
@@ -55,6 +54,7 @@ class Simulation:
             grid_res_y=gridres[1],
         )
         self.gui = GUI(self.state, title)
+        self.gui.register_controller(self)
 
         self.fps = 0.0
         self.fps_update_delay = fps_update_delay
@@ -63,48 +63,7 @@ class Simulation:
         self.prev_fps_update_time = time.time()
         self.prev_time = self.prev_fps_update_time
 
-        self._bind_commands()
-        self._bind_events()
-
-    def _bind_commands(self) -> None:
-        self.gui._bar_canvas.save_btn.configure(command=self.save)
-        self.gui._bar_canvas.load_btn.configure(command=self.load)
-        self.gui._particle_tab.set_selected_btn.configure(command=self.set_selected)
-        self.gui._particle_tab.set_all_btn.configure(command=self.set_all)
-
-    def _bind_sim_events(self) -> None:
-        self.gui.tk.bind("<space>", any_args(self.state.toggle_paused))
-        self.gui.tk.bind("<Delete>", any_args(self.state.remove_selection))
-        self.gui.tk.bind("<Control-a>", any_args(self.state.select_all))
-        self.gui.tk.bind("<Control-c>", any_args(self.state.copy_selection))
-        self.gui.tk.bind("<Control-x>", any_args(self.state.cut_selection))
-        self.gui.tk.bind("<Control-v>", any_args(self.state.paste))
-        self.gui.tk.bind("<Control-l>", any_args(self.state.lock_selection))
-        self.gui.tk.bind(
-            "<Control-Shift-KeyPress-L>", any_args(self.state.unlock_selection)
-        )
-        self.gui.tk.bind("<l>", any_args(self.state.link_selection))
-        self.gui.tk.bind(
-            "<Alt_R><l>", any_args(partial(self.state.link_selection, fit_link=True))
-        )
-        self.gui.tk.bind("<Shift-L>", any_args(self.state.unlink_selection))
-
-    def _bind_events(self) -> None:
-        self.gui.canvas.bind("<B1-Motion>", any_args(self._mouse_m))
-        self.gui.canvas.bind("<Button-1>", any_args(self._mouse_p))
-        self.gui.canvas.bind("<ButtonRelease-1>", any_args(self._mouse_r))
-        self.gui.canvas.bind("<B3-Motion>", any_args(self.state.remove_in_range))
-        self.gui.canvas.bind("<Button-3>", any_args(self.state.remove_in_range))
-        self.gui.canvas.bind("<MouseWheel>", self._on_scroll)
-
-        self.gui.tk.bind("<KeyPress-r>", any_args(self._enter_rotate_mode))
-        self.gui.tk.bind("<KeyRelease-r>", any_args(self._exit_rotate_mode))
-        self.gui.tk.bind("<Control-s>", any_args(self.save))
-        self.gui.tk.bind("<Control-o>", any_args(self.load))
-
-        self._bind_sim_events()
-
-    def _mouse_p(self) -> None:
+    def mouse_button_1_pressed(self) -> None:
         if self.state.mouse_mode == "SELECT":
             self.state.select_or_reset_in_range()
         elif self.state.mouse_mode == "MOVE":
@@ -113,7 +72,7 @@ class Simulation:
             self.state.selection = []
             self.add_particle()
 
-    def _mouse_m(self) -> None:
+    def mouse_button_1_pressed_while_moving(self) -> None:
         if self.state.mouse_mode == "SELECT":
             self.state.select_in_range()
         elif (
@@ -123,7 +82,7 @@ class Simulation:
         ):
             self.add_particle()
 
-    def _mouse_r(self) -> None:
+    def mouse_button_1_released(self) -> None:
         if self.state.mouse_mode == "MOVE" or self.state.pasting:
             for p in self.state.particles:
                 p.mouse = False
@@ -174,7 +133,6 @@ class Simulation:
 
     def from_controller_state(self, controller_state: ControllerState) -> None:
         self.state = SimulationState(**asdict(controller_state.sim_data))
-        self._bind_sim_events()
 
         self.gui.register_sim(self.state)
         self.gui.set_particle_settings(controller_state.gui_particle_state)

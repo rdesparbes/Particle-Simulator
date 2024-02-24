@@ -1,6 +1,7 @@
 import bisect
 import os
 import tkinter as tk
+from functools import partial
 from tkinter import messagebox
 from typing import Dict, Any, Optional, List, Set
 
@@ -20,6 +21,8 @@ from .extra_window import ExtraWindow
 from .gui_widgets import GUIWidgets
 from ..utils import any_args
 
+SimController = Any
+
 
 class GUI(GUIWidgets):
     def __init__(self, sim: SimulationState, title: str = "Simulation") -> None:
@@ -28,9 +31,49 @@ class GUI(GUIWidgets):
         self.code_window: Optional[CodeWindow] = None
         self.extra_window: Optional[ExtraWindow] = None
         self.tk.protocol("WM_DELETE_WINDOW", self.destroy)
-        self._register_sim(sim)
-        self._set_callbacks()
         self.sim = sim
+        self._register_sim()
+        self._set_callbacks()
+
+    def _bind_commands(self, controller: SimController) -> None:
+        self._bar_canvas.save_btn.configure(command=controller.save)
+        self._bar_canvas.load_btn.configure(command=controller.load)
+        self._particle_tab.set_selected_btn.configure(command=controller.set_selected)
+        self._particle_tab.set_all_btn.configure(command=controller.set_all)
+
+    def _bind_sim_events(self) -> None:
+        self.canvas.bind("<B3-Motion>", any_args(self.sim.remove_in_range))
+        self.canvas.bind("<Button-3>", any_args(self.sim.remove_in_range))
+
+        self.tk.bind("<space>", any_args(self.sim.toggle_paused))
+        self.tk.bind("<Delete>", any_args(self.sim.remove_selection))
+        self.tk.bind("<Control-a>", any_args(self.sim.select_all))
+        self.tk.bind("<Control-c>", any_args(self.sim.copy_selection))
+        self.tk.bind("<Control-x>", any_args(self.sim.cut_selection))
+        self.tk.bind("<Control-v>", any_args(self.sim.paste))
+        self.tk.bind("<Control-l>", any_args(self.sim.lock_selection))
+        self.tk.bind("<Control-Shift-KeyPress-L>", any_args(self.sim.unlock_selection))
+        self.tk.bind("<l>", any_args(self.sim.link_selection))
+        self.tk.bind(
+            "<Alt_R><l>", any_args(partial(self.sim.link_selection, fit_link=True))
+        )
+        self.tk.bind("<Shift-L>", any_args(self.sim.unlink_selection))
+
+    def register_controller(self, controller: SimController) -> None:
+        self.canvas.bind(
+            "<B1-Motion>", any_args(controller.mouse_button_1_pressed_while_moving)
+        )
+        self.canvas.bind("<Button-1>", any_args(controller.mouse_button_1_pressed))
+        self.canvas.bind(
+            "<ButtonRelease-1>", any_args(controller.mouse_button_1_released)
+        )
+        self.canvas.bind("<MouseWheel>", controller._on_scroll)
+
+        self.tk.bind("<KeyPress-r>", any_args(controller._enter_rotate_mode))
+        self.tk.bind("<KeyRelease-r>", any_args(controller._exit_rotate_mode))
+        self.tk.bind("<Control-s>", any_args(controller.save))
+        self.tk.bind("<Control-o>", any_args(controller.load))
+        self._bind_commands(controller)
 
     def _set_callbacks(self) -> None:
         self._bar_canvas.select_btn.configure(command=self._set_select_mode)
@@ -62,44 +105,46 @@ class GUI(GUIWidgets):
         self._particle_tab.group_add_btn.configure(command=self._add_group)
         self._particle_tab.copy_selected_btn.configure(command=self._copy_from_selected)
 
-    def _register_sim(self, sim: SimulationState) -> None:
-        sim.on_group_created.subscribe(self._create_group)
+    def _register_sim(self) -> None:
+        self.sim.on_group_created.subscribe(self._create_group)
 
-        sim.on_pause_toggle.subscribe(self._bar_canvas.set_paused)
+        self.sim.on_pause_toggle.subscribe(self._bar_canvas.set_paused)
         self._bar_canvas.on_pause_button_pressed.subscribe(
-            lambda _: sim.toggle_paused()
+            lambda _: self.sim.toggle_paused()
         )
-        self._bar_canvas.set_paused(sim.paused)
-        self._bar_canvas.link_btn.configure(command=sim.link_selection)
-        self._bar_canvas.unlink_btn.configure(command=sim.unlink_selection)
-        sim.on_mouse_mode_changed.subscribe(self._bar_canvas.set_mode)
-        self._bar_canvas.set_mode(sim.mouse_mode)
+        self._bar_canvas.set_paused(self.sim.paused)
+        self._bar_canvas.link_btn.configure(command=self.sim.link_selection)
+        self._bar_canvas.unlink_btn.configure(command=self.sim.unlink_selection)
+        self.sim.on_mouse_mode_changed.subscribe(self._bar_canvas.set_mode)
+        self._bar_canvas.set_mode(self.sim.mouse_mode)
 
-        self._sim_tab.gravity_var.set(sim.g)
-        self._sim_tab.air_res_var.set(sim.air_res)
-        self._sim_tab.friction_var.set(sim.ground_friction)
-        self._sim_tab.temp_var.set(sim.temperature)
-        self._sim_tab.speed_var.set(sim.speed)
-        self._sim_tab.show_fps.set(sim.show_fps)
-        self._sim_tab.show_num.set(sim.show_num)
-        self._sim_tab.show_links.set(sim.show_links)
-        self._sim_tab.top_bool.set(sim.top)
-        self._sim_tab.bottom_bool.set(sim.bottom)
-        self._sim_tab.left_bool.set(sim.left)
-        self._sim_tab.right_bool.set(sim.right)
-        self._sim_tab.delay_var.set(sim.min_spawn_delay)
+        self._sim_tab.gravity_var.set(self.sim.g)
+        self._sim_tab.air_res_var.set(self.sim.air_res)
+        self._sim_tab.friction_var.set(self.sim.ground_friction)
+        self._sim_tab.temp_var.set(self.sim.temperature)
+        self._sim_tab.speed_var.set(self.sim.speed)
+        self._sim_tab.show_fps.set(self.sim.show_fps)
+        self._sim_tab.show_num.set(self.sim.show_num)
+        self._sim_tab.show_links.set(self.sim.show_links)
+        self._sim_tab.top_bool.set(self.sim.top)
+        self._sim_tab.bottom_bool.set(self.sim.bottom)
+        self._sim_tab.left_bool.set(self.sim.left)
+        self._sim_tab.right_bool.set(self.sim.right)
+        self._sim_tab.delay_var.set(self.sim.min_spawn_delay)
 
         self._particle_tab.group_select_btn.configure(
-            command=lambda: sim.select_group(self._particle_tab.groups_var.get())
+            command=lambda: self.sim.select_group(self._particle_tab.groups_var.get())
         )
-        groups = sorted(sim.groups)
+        groups = sorted(self.sim.groups)
         self._particle_tab.groups_entry["values"] = groups
         if groups:
             self._particle_tab.groups_entry.current(0)
 
+        self._bind_sim_events()
+
     def register_sim(self, sim: SimulationState) -> None:
-        self._register_sim(sim)
         self.sim = sim
+        self._register_sim()
 
     def _set_air_res(self) -> None:
         self.sim.air_res = self._sim_tab.air_res_var.get()
