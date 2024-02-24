@@ -1,5 +1,4 @@
 import time
-import tkinter as tk
 from dataclasses import asdict
 from functools import partial
 from typing import (
@@ -88,16 +87,16 @@ class Simulation:
                 p.mouse = False
         self.state.pasting = False
 
-    def _on_scroll(self, event: tk.Event) -> None:
+    def on_scroll(self, factor: float) -> None:
         if self.rotate_mode:
-            self.state.rotate_selection(factor=event.delta / 500)
+            self.state.rotate_selection(factor)
         else:
-            self.state.update_mouse_radius(factor=event.delta / 500)
+            self.state.update_mouse_radius(factor)
 
-    def _enter_rotate_mode(self) -> None:
+    def enter_rotate_mode(self) -> None:
         self.rotate_mode = True
 
-    def _exit_rotate_mode(self) -> None:
+    def exit_rotate_mode(self) -> None:
         self.rotate_mode = False
 
     def _get_particle_factory(self) -> Optional[ParticleFactory]:

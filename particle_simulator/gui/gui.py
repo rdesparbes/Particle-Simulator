@@ -3,7 +3,7 @@ import os
 import tkinter as tk
 from functools import partial
 from tkinter import messagebox
-from typing import Dict, Any, Optional, List, Set
+from typing import Dict, Any, Optional, List, Set, Protocol
 
 import numpy as np
 import numpy.typing as npt
@@ -21,7 +21,37 @@ from .extra_window import ExtraWindow
 from .gui_widgets import GUIWidgets
 from ..utils import any_args
 
-SimController = Any
+
+class _SimController(Protocol):
+    def mouse_button_1_pressed(self) -> None:
+        pass
+
+    def mouse_button_1_pressed_while_moving(self) -> None:
+        pass
+
+    def mouse_button_1_released(self) -> None:
+        pass
+
+    def on_scroll(self, factor: float) -> None:
+        pass
+
+    def enter_rotate_mode(self) -> None:
+        pass
+
+    def exit_rotate_mode(self) -> None:
+        pass
+
+    def set_selected(self) -> None:
+        pass
+
+    def set_all(self) -> None:
+        pass
+
+    def save(self) -> None:
+        pass
+
+    def load(self) -> None:
+        pass
 
 
 class GUI(GUIWidgets):
@@ -34,12 +64,6 @@ class GUI(GUIWidgets):
         self.sim = sim
         self._register_sim()
         self._set_callbacks()
-
-    def _bind_commands(self, controller: SimController) -> None:
-        self._bar_canvas.save_btn.configure(command=controller.save)
-        self._bar_canvas.load_btn.configure(command=controller.load)
-        self._particle_tab.set_selected_btn.configure(command=controller.set_selected)
-        self._particle_tab.set_all_btn.configure(command=controller.set_all)
 
     def _bind_sim_events(self) -> None:
         self.canvas.bind("<B3-Motion>", any_args(self.sim.remove_in_range))
@@ -59,7 +83,7 @@ class GUI(GUIWidgets):
         )
         self.tk.bind("<Shift-L>", any_args(self.sim.unlink_selection))
 
-    def register_controller(self, controller: SimController) -> None:
+    def register_controller(self, controller: _SimController) -> None:
         self.canvas.bind(
             "<B1-Motion>", any_args(controller.mouse_button_1_pressed_while_moving)
         )
@@ -67,13 +91,19 @@ class GUI(GUIWidgets):
         self.canvas.bind(
             "<ButtonRelease-1>", any_args(controller.mouse_button_1_released)
         )
-        self.canvas.bind("<MouseWheel>", controller._on_scroll)
+        self.canvas.bind(
+            "<MouseWheel>", lambda event: controller.on_scroll(event.delta / 500)
+        )
 
-        self.tk.bind("<KeyPress-r>", any_args(controller._enter_rotate_mode))
-        self.tk.bind("<KeyRelease-r>", any_args(controller._exit_rotate_mode))
+        self.tk.bind("<KeyPress-r>", any_args(controller.enter_rotate_mode))
+        self.tk.bind("<KeyRelease-r>", any_args(controller.exit_rotate_mode))
         self.tk.bind("<Control-s>", any_args(controller.save))
         self.tk.bind("<Control-o>", any_args(controller.load))
-        self._bind_commands(controller)
+
+        self._bar_canvas.save_btn.configure(command=controller.save)
+        self._bar_canvas.load_btn.configure(command=controller.load)
+        self._particle_tab.set_selected_btn.configure(command=controller.set_selected)
+        self._particle_tab.set_all_btn.configure(command=controller.set_all)
 
     def _set_callbacks(self) -> None:
         self._bar_canvas.select_btn.configure(command=self._set_select_mode)
