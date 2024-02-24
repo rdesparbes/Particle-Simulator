@@ -60,7 +60,7 @@ class GUI(GUIWidgets):
         self.save_manager = SaveManager(file_location=os.path.dirname(self._path))
         self.code_window: Optional[CodeWindow] = None
         self.extra_window: Optional[ExtraWindow] = None
-        self.tk.protocol("WM_DELETE_WINDOW", self.destroy)
+        self.tk.protocol("WM_DELETE_WINDOW", self._destroy)
         self.sim = sim
         self._register_sim()
         self._set_callbacks()
@@ -431,7 +431,7 @@ class GUI(GUIWidgets):
 
         self._update()
 
-    def destroy(self) -> None:
+    def _destroy(self) -> None:
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
             self.sim.running = False
             self.tk.destroy()

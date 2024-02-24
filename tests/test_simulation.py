@@ -4,6 +4,7 @@ from typing import Iterable, Union, Literal, Tuple
 
 import pytest
 
+from particle_simulator.factory import build_simulation
 from particle_simulator.io import sim_pickle
 from particle_simulator.io.sim_pickle import SimPickle, _parse_color
 from particle_simulator.simulation import Simulation
@@ -39,7 +40,7 @@ def fixture_pickle_data(sim_file_name: str) -> SimPickle:
 
 @pytest.fixture(name="simulation", scope="session")
 def fixture_simulation(pickle_data: SimPickle) -> Simulation:
-    sim = Simulation()
+    sim = build_simulation()
     sim.from_controller_state(sim_pickle.from_dict(pickle_data))
     return sim
 
@@ -51,7 +52,7 @@ def test_simulation_write_then_load_generates_identical_file(
     dumped_data = sim_pickle.to_dict(simulation.to_controller_state())
 
     # Act
-    sim = Simulation()
+    sim = build_simulation()
     sim.from_controller_state(sim_pickle.from_dict(dumped_data))
 
     # Assert

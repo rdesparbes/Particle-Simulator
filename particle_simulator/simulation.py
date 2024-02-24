@@ -3,9 +3,10 @@ from dataclasses import asdict
 from functools import partial
 from typing import (
     Optional,
-    Tuple,
     Iterable,
     List,
+    Protocol,
+    Tuple,
 )
 
 import numpy as np
@@ -24,37 +25,47 @@ from particle_simulator.engine.interaction_transformer import (
 from particle_simulator.engine.particle import Particle
 from particle_simulator.engine.particle_factory import ParticleFactory
 from particle_simulator.engine.simulation_state import SimulationState
-from particle_simulator.gui.gui import GUI
 from .controller_state import ControllerState
 from .painter import paint_image
+from .sim_gui_settings import SimGUISettings
+
+
+class SimulationGUI(Protocol):
+    def register_sim(self, sim: SimulationState) -> None:
+        pass
+
+    def get_sim_settings(self) -> SimGUISettings:
+        pass
+
+    def set_sim_settings(self, sim_settings: SimGUISettings) -> None:
+        pass
+
+    def get_particle_factory(self) -> ParticleFactory:
+        pass
+
+    def set_particle_settings(self, particle_settings: ParticleFactory) -> None:
+        pass
+
+    def update(
+        self,
+        image: npt.NDArray[np.uint8],
+        fps: Optional[float] = None,
+    ) -> None:
+        pass
+
+    def get_mouse_pos(self) -> Tuple[int, int]:
+        pass
 
 
 class Simulation:
     def __init__(
         self,
-        width: int = 650,
-        height: int = 600,
-        title: str = "Simulation",
-        gridres: Tuple[int, int] = (50, 50),
-        temperature: float = 0,
-        g: float = 0.1,
-        air_res: float = 0.05,
-        ground_friction: float = 0,
+        state: SimulationState,
+        gui: SimulationGUI,
         fps_update_delay: float = 0.5,
     ):
-        self.state: SimulationState = SimulationState(
-            width=width,
-            height=height,
-            temperature=temperature,
-            g=g,
-            air_res=air_res,
-            ground_friction=ground_friction,
-            grid_res_x=gridres[0],
-            grid_res_y=gridres[1],
-        )
-        self.gui = GUI(self.state, title)
-        self.gui.register_controller(self)
-
+        self.state: SimulationState = state
+        self.gui = gui
         self.fps = 0.0
         self.fps_update_delay = fps_update_delay
         self.rotate_mode = False

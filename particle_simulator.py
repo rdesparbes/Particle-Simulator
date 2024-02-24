@@ -3,10 +3,11 @@ import random
 import numpy as np
 
 from particle_simulator.engine.particle_properties import ParticleProperties
+from particle_simulator.factory import build_simulation
 from particle_simulator.simulation import Simulation
 from particle_simulator.engine.particle import Particle
 
-sim_controller = Simulation(
+sim_controller = build_simulation(
     width=650,
     height=600,
     title="Simulation",
