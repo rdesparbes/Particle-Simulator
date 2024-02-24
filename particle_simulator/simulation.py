@@ -26,6 +26,7 @@ from particle_simulator.engine.particle import Particle
 from particle_simulator.engine.particle_factory import ParticleFactory
 from particle_simulator.engine.simulation_state import SimulationState
 from .controller_state import ControllerState
+from .io import sim_pickle
 from .painter import paint_image
 from .sim_gui_settings import SimGUISettings
 
@@ -162,20 +163,18 @@ class Simulation:
             return paint_image(self.state, link_colors=None)
         return paint_image(self.state, link_colors)
 
-    def save(self, filename: Optional[str] = None) -> None:
+    def save(self, filename: str) -> None:
         controller_state = self.to_controller_state()
         try:
-            self.gui.save_manager.save(controller_state, filename=filename)
+            sim_pickle.dump(controller_state, filename=filename)
         except Exception as error:
             self.state.errors.append(Error("Saving-Error", error))
 
-    def load(self, filename: Optional[str] = None) -> None:
+    def load(self, filename: str) -> None:
         if not self.state.paused:
             self.state.toggle_paused()
         try:
-            controller_state = self.gui.save_manager.load(filename=filename)
-            if controller_state is None:
-                return
+            controller_state = sim_pickle.load(filename)
             self.from_controller_state(controller_state)
         except Exception as error:
             self.state.errors.append(Error("Loading-Error", error))

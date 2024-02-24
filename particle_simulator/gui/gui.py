@@ -3,6 +3,7 @@ import os
 import tkinter as tk
 from functools import partial
 from tkinter import messagebox
+from tkinter.filedialog import asksaveasfilename, askopenfilename
 from typing import Dict, Any, Optional, List, Set, Protocol
 
 import numpy as np
@@ -14,7 +15,6 @@ from particle_simulator.engine.particle import Particle
 from particle_simulator.engine.particle_factory import ParticleFactory
 from particle_simulator.engine.particle_properties import ParticleProperties
 from particle_simulator.engine.simulation_state import SimulationState
-from particle_simulator.io.save_manager import SaveManager
 from particle_simulator.sim_gui_settings import SimGUISettings
 from .code_window import CodeWindow
 from .extra_window import ExtraWindow
@@ -47,23 +47,49 @@ class _SimController(Protocol):
     def set_all(self) -> None:
         pass
 
-    def save(self) -> None:
+    def save(self, filename: str) -> None:
         pass
 
-    def load(self) -> None:
+    def load(self, filename: str) -> None:
         pass
 
 
 class GUI(GUIWidgets):
     def __init__(self, sim: SimulationState, title: str = "Simulation") -> None:
         super().__init__(title, sim.width, sim.height)
-        self.save_manager = SaveManager(file_location=os.path.dirname(self._path))
+        self.file_path = os.path.join(os.path.dirname(self._path), "simulation")
         self.code_window: Optional[CodeWindow] = None
         self.extra_window: Optional[ExtraWindow] = None
         self.tk.protocol("WM_DELETE_WINDOW", self._destroy)
         self.sim = sim
         self._register_sim()
         self._set_callbacks()
+
+    def _get_save_path(self) -> Optional[str]:
+        file_location, file_name = os.path.split(self.file_path)
+        file_path = asksaveasfilename(
+            initialdir=file_location,
+            initialfile=file_name,
+            defaultextension=".sim",
+            filetypes=[("Simulation files", "*.sim"), ("All Files", "*.*")],
+        )
+        if not file_path:
+            return None
+        self.file_path = file_path
+        return file_path
+
+    def _get_load_path(self) -> Optional[str]:
+        file_location, file_name = os.path.split(self.file_path)
+        file_path = askopenfilename(
+            initialdir=file_location,
+            initialfile=file_name,
+            defaultextension=".sim",
+            filetypes=[("Simulation files", "*.sim"), ("All Files", "*.*")],
+        )
+        if not file_path:
+            return None
+        self.file_path = file_path
+        return file_path
 
     def _bind_sim_events(self) -> None:
         self.canvas.bind("<B3-Motion>", any_args(self.sim.remove_in_range))
@@ -97,13 +123,25 @@ class GUI(GUIWidgets):
 
         self.tk.bind("<KeyPress-r>", any_args(controller.enter_rotate_mode))
         self.tk.bind("<KeyRelease-r>", any_args(controller.exit_rotate_mode))
-        self.tk.bind("<Control-s>", any_args(controller.save))
-        self.tk.bind("<Control-o>", any_args(controller.load))
+        self.tk.bind("<Control-s>", any_args(lambda: self._save(controller)))
+        self.tk.bind("<Control-o>", any_args(lambda: self._load(controller)))
 
-        self._bar_canvas.save_btn.configure(command=controller.save)
-        self._bar_canvas.load_btn.configure(command=controller.load)
+        self._bar_canvas.save_btn.configure(command=lambda: self._save(controller))
+        self._bar_canvas.load_btn.configure(command=lambda: self._load(controller))
         self._particle_tab.set_selected_btn.configure(command=controller.set_selected)
         self._particle_tab.set_all_btn.configure(command=controller.set_all)
+
+    def _save(self, controller: _SimController) -> None:
+        file_path = self._get_save_path()
+        if file_path is None:
+            return
+        controller.save(file_path)
+
+    def _load(self, controller: _SimController) -> None:
+        file_path = self._get_load_path()
+        if file_path is None:
+            return
+        controller.load(file_path)
 
     def _set_callbacks(self) -> None:
         self._bar_canvas.select_btn.configure(command=self._set_select_mode)

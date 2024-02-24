@@ -1,3 +1,4 @@
+import pickle
 import re
 from typing import (
     Any,
@@ -15,8 +16,8 @@ from particle_simulator.color import generate_random
 from particle_simulator.controller_state import ControllerState
 from particle_simulator.engine.particle_factory import ParticleFactory, ParticleBuilder
 from particle_simulator.engine.particle_properties import ParticleProperties
-from particle_simulator.sim_gui_settings import SimGUISettings
 from particle_simulator.engine.simulation_data import SimulationData
+from particle_simulator.sim_gui_settings import SimGUISettings
 
 ParticlesPickle = List[Dict[str, Any]]
 PickleSettings = Dict[str, Sequence[Any]]
@@ -284,3 +285,15 @@ def from_dict(controller_pickle: SimPickle) -> ControllerState:
         gui_particle_state=particle_settings,
         particles=particles,
     )
+
+
+def dump(controller_state: ControllerState, filename: str) -> None:
+    data = to_dict(controller_state)
+    with open(filename, "wb") as file_object:
+        pickle.dump(data, file_object)
+
+
+def load(filename: str) -> ControllerState:
+    with open(filename, "rb") as file_object:
+        data = pickle.load(file_object)
+    return from_dict(data)
