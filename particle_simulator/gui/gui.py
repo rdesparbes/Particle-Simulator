@@ -19,6 +19,7 @@ from particle_simulator.sim_gui_settings import SimGUISettings
 from .code_window import CodeWindow
 from .extra_window import ExtraWindow
 from .gui_widgets import GUIWidgets
+from .variable import get_values, set_values
 from ..utils import any_args
 
 
@@ -204,7 +205,7 @@ class GUI(GUIWidgets):
             command=lambda: self.sim.select_group(self._particle_tab.groups_var.get())
         )
         groups = sorted(self.sim.groups)
-        self._particle_tab.groups_entry["values"] = groups
+        set_values(self._particle_tab.groups_entry, groups)
         if groups:
             self._particle_tab.groups_entry.current(0)
 
@@ -290,12 +291,12 @@ class GUI(GUIWidgets):
 
     def _create_group_id(self, name: str) -> int:
         try:
-            return self._particle_tab.groups_entry["values"].index(name)
+            return get_values(self._particle_tab.groups_entry).index(name)
         except ValueError:
-            group_names: List[str] = list(self._particle_tab.groups_entry["values"])
+            group_names: List[str] = list(get_values(self._particle_tab.groups_entry))
             index = bisect.bisect(group_names, name)
             group_names.insert(index, name)
-            self._particle_tab.groups_entry["values"] = group_names
+            set_values(self._particle_tab.groups_entry, group_names)
             return index
 
     def _create_group(self, name: str) -> None:

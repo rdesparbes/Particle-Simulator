@@ -1,5 +1,5 @@
 import tkinter as tk
-from typing import TypeVar, Union
+from typing import TypeVar, Union, Tuple, Sequence
 
 _NumberVar = TypeVar("_NumberVar", tk.IntVar, tk.DoubleVar)
 _Variable = TypeVar("_Variable", tk.IntVar, tk.DoubleVar, tk.StringVar)
@@ -42,3 +42,15 @@ def get_string_var(
     widget: Union[tk.Spinbox, tk.Entry], value: str = ""
 ) -> tk.StringVar:
     return _set_var_from_entry(tk.StringVar(value=value), widget)
+
+
+def get_values(entry: tk.Entry) -> Tuple[str, ...]:
+    values: Union[str, Tuple[str, ...]] = entry["values"]
+    # "values" contains an empty string when there is no values:
+    if isinstance(values, str):
+        return ()
+    return values
+
+
+def set_values(entry: tk.Entry, values: Sequence[str]) -> None:
+    entry["values"] = values
