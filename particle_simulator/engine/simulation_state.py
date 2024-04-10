@@ -312,16 +312,28 @@ class SimulationState(SimulationData):
             particle.y += dy
 
         if self.right and particle.x_max >= self.width:
-            particle.velocity *= [-particle.props.bounciness, 1 - self.ground_friction]
+            particle.velocity *= (
+                -particle.props.bounciness,
+                1.0 - self.ground_friction,
+            )
             particle.x = self.width - particle.radius
-        if self.left and particle.x_min <= 0:
-            particle.velocity *= [-particle.props.bounciness, 1 - self.ground_friction]
+        if self.left and particle.x_min <= 0.0:
+            particle.velocity *= (
+                -particle.props.bounciness,
+                1.0 - self.ground_friction,
+            )
             particle.x = particle.radius
         if self.bottom and particle.y_max >= self.height:
-            particle.velocity *= [1 - self.ground_friction, -particle.props.bounciness]
+            particle.velocity *= (
+                1.0 - self.ground_friction,
+                -particle.props.bounciness,
+            )
             particle.y = self.height - particle.radius
-        if self.top and particle.y_min <= 0:
-            particle.velocity *= [1 - self.ground_friction, -particle.props.bounciness]
+        if self.top and particle.y_min <= 0.0:
+            particle.velocity *= (
+                1.0 - self.ground_friction,
+                -particle.props.bounciness,
+            )
             particle.y = particle.radius
 
     def _compute_interactions(
