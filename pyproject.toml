@@ -1,0 +1,32 @@
+[project]
+name = "particle-simulator"
+version = "0.1.0"
+dependencies = [
+    "Pillow",
+    "opencv-python",
+    "numpy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy",
+    "pytest",
+    "types-Pillow",
+    "pytest-cov",
+    "black",
+    "pylint",
+]
+
+[tool.setuptools]
+packages = ["particle_simulator"]
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = """
+    missing-function-docstring,
+    missing-module-docstring,
+    missing-class-docstring,
+"""
+
+[tool.mypy]
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
