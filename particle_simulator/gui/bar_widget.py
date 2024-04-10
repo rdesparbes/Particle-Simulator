@@ -52,7 +52,7 @@ class BarWidget(tk.Canvas):
         )
         self.select_btn.place(x=x, y=16, anchor="center")
         self._select_rect = self.create_rectangle(
-            x - 12, 3, x + 12, 27, outline="blue", state="hidden"  # type: ignore[call-overload]
+            x - 12, 3, x + 12, 27, outline="blue", state="hidden"
         )
 
         x = 165
@@ -86,7 +86,7 @@ class BarWidget(tk.Canvas):
         )
         self.add_btn.place(x=x, y=15, anchor="center")
         self._add_rect = self.create_rectangle(
-            x - 13, 3, x + 11, 27, outline="blue", state="hidden"  # type: ignore[call-overload]
+            x - 13, 3, x + 11, 27, outline="blue", state="hidden"
         )
 
         self.link_btn = tk.Button(
